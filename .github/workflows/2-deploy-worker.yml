@@ -28,18 +28,16 @@ jobs:
           npm ci
 
       - name: Set Cloudflare Secrets
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: secret put TELEGRAM_BOT_TOKEN
-          workingDirectory: ./backend
+        run: |
+          cd backend
+          echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler secret put TELEGRAM_BOT_TOKEN
         env:
-          WRANGLER_INPUT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers
         id: deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
