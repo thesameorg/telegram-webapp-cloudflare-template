@@ -2,6 +2,10 @@ name: Deploy Cloudflare Worker
 
 on:
   workflow_call:
+    outputs:
+      worker_url:
+        description: "URL of the deployed worker"
+        value: ${{ jobs.deploy-worker.outputs.worker_url }}
 
 env:
   NODE_VERSION: '20'
@@ -10,6 +14,8 @@ jobs:
   deploy-worker:
     name: Deploy Worker
     runs-on: ubuntu-latest
+    outputs:
+      worker_url: ${{ steps.worker-url.outputs.url }}
 
     steps:
       - name: Checkout code
@@ -101,25 +107,4 @@ jobs:
           fi
 
           echo "✅ Worker deployment verified"
-
-      - name: Set up Telegram Webhook
-        run: |
-          echo "BOT_TOKEN=\"${{ secrets.TELEGRAM_BOT_TOKEN }}\""
-          echo "Setting up webhook"
-          WEBHOOK_URL="${{ steps.worker-url.outputs.url }}/webhook"
-          echo "Webhook URL: $WEBHOOK_URL"
-
-          webhook_response=$(curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/setWebhook" \
-            -d "url=$WEBHOOK_URL")
-
-          echo "Webhook setup response:"
-          echo "$webhook_response"
-
-          if echo "$webhook_response" | grep -q '"ok":true'; then
-            echo "✅ Webhook configured successfully"
-          else
-            echo "❌ Failed to configure webhook"
-            echo "$webhook_response" | grep -o '"description":"[^"]*"' || true
-            exit 1
-          fi
 
