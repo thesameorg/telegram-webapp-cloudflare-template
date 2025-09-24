@@ -30,7 +30,8 @@ jobs:
       - name: Set Cloudflare Secrets
         run: |
           cd backend
-          echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler secret put TELEGRAM_BOT_TOKEN
+          # Update existing secret or create if it doesn't exist
+          echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler secret put TELEGRAM_BOT_TOKEN --env="" || true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -40,7 +41,7 @@ jobs:
         run: |
           cd backend
           # Capture deployment output to get the actual URL
-          deployment_output=$(npx wrangler deploy 2>&1)
+          deployment_output=$(npx wrangler deploy --env="" 2>&1)
           echo "Deployment output:"
           echo "$deployment_output"
 
