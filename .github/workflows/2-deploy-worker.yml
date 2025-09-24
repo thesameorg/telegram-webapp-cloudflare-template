@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   deploy-worker:
@@ -25,7 +25,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm install
 
       - name: Set Cloudflare Secrets
         run: |

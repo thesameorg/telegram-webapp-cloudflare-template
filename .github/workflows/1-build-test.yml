@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   backend-test:
@@ -24,7 +24,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm install
 
       - name: Type check backend
         run: |
@@ -53,7 +53,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm ci
+          npm install
 
       - name: Type check frontend
         run: |
