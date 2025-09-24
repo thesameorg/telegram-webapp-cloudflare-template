@@ -1,0 +1,184 @@
+name: Setup Telegram Webhook
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to setup webhook for'
+        required: true
+        type: string
+      worker_url:
+        description: 'Worker URL (optional - will be auto-detected if not provided)'
+        required: false
+        type: string
+
+jobs:
+  setup-webhook:
+    name: Configure Telegram Webhook
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure environment and URLs
+        id: config
+        run: |
+          ENV="${{ inputs.environment }}"
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+
+          # Set bot token based on environment
+          if [ "$ENV" = "production" ]; then
+            echo "bot_token_secret=TELEGRAM_BOT_TOKEN_PROD" >> $GITHUB_OUTPUT
+            echo "worker_url=https://twa-cf-tpl-prod.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
+          else
+            echo "bot_token_secret=TELEGRAM_BOT_TOKEN_PREVIEW" >> $GITHUB_OUTPUT
+            echo "worker_url=https://twa-cf-tpl-preview.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
+          fi
+
+          # Override with manual input if provided
+          if [ "${{ inputs.worker_url }}" != "" ]; then
+            echo "worker_url=${{ inputs.worker_url }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Worker is accessible
+        run: |
+          WORKER_URL="${{ steps.config.outputs.worker_url }}"
+          echo "Verifying Worker at: $WORKER_URL"
+
+          # Wait for worker to be available
+          max_attempts=6
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts..."
+
+            if curl -s -f "$WORKER_URL/health" > /dev/null; then
+              echo "✅ Worker is accessible"
+              break
+            fi
+
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ Worker not accessible after $max_attempts attempts"
+              echo "Please check if the worker deployment completed successfully"
+              exit 1
+            fi
+
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+
+      - name: Get current webhook info
+        id: current-webhook
+        run: |
+          BOT_TOKEN="${{ secrets[steps.config.outputs.bot_token_secret] }}"
+
+          echo "Checking current webhook configuration..."
+          WEBHOOK_INFO=$(curl -s "https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo")
+
+          echo "Current webhook info:"
+          echo "$WEBHOOK_INFO" | jq .
+
+          # Store current URL for comparison
+          CURRENT_URL=$(echo "$WEBHOOK_INFO" | jq -r '.result.url // ""')
+          echo "current_url=$CURRENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Setup Telegram webhook
+        id: webhook
+        run: |
+          BOT_TOKEN="${{ secrets[steps.config.outputs.bot_token_secret] }}"
+          WEBHOOK_URL="${{ steps.config.outputs.worker_url }}/webhook"
+
+          echo "Setting up webhook for ${{ steps.config.outputs.environment }} environment"
+          echo "Webhook URL: $WEBHOOK_URL"
+
+          # Set webhook
+          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setWebhook" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"url\": \"$WEBHOOK_URL\",
+              \"allowed_updates\": [\"message\", \"callback_query\"],
+              \"drop_pending_updates\": true
+            }")
+
+          echo "Webhook setup response:"
+          echo "$RESPONSE" | jq .
+
+          # Check if successful
+          if echo "$RESPONSE" | jq -e '.ok' > /dev/null; then
+            echo "✅ Webhook configured successfully"
+            echo "webhook_url=$WEBHOOK_URL" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Failed to configure webhook"
+            echo "$RESPONSE" | jq -r '.description // "Unknown error"'
+            exit 1
+          fi
+
+      - name: Verify webhook setup
+        run: |
+          BOT_TOKEN="${{ secrets[steps.config.outputs.bot_token_secret] }}"
+
+          echo "Verifying webhook configuration..."
+          sleep 5
+
+          WEBHOOK_INFO=$(curl -s "https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo")
+          echo "Updated webhook info:"
+          echo "$WEBHOOK_INFO" | jq .
+
+          # Verify the URL was set correctly
+          ACTUAL_URL=$(echo "$WEBHOOK_INFO" | jq -r '.result.url')
+          EXPECTED_URL="${{ steps.webhook.outputs.webhook_url }}"
+
+          if [ "$ACTUAL_URL" = "$EXPECTED_URL" ]; then
+            echo "✅ Webhook URL verified: $ACTUAL_URL"
+          else
+            echo "❌ Webhook URL mismatch!"
+            echo "Expected: $EXPECTED_URL"
+            echo "Actual: $ACTUAL_URL"
+            exit 1
+          fi
+
+          # Check for any pending updates or errors
+          PENDING_UPDATES=$(echo "$WEBHOOK_INFO" | jq -r '.result.pending_update_count // 0')
+          LAST_ERROR=$(echo "$WEBHOOK_INFO" | jq -r '.result.last_error_message // ""')
+
+          echo "Pending updates: $PENDING_UPDATES"
+          if [ "$LAST_ERROR" != "" ]; then
+            echo "⚠️  Last error: $LAST_ERROR"
+          fi
+
+      - name: Test webhook (optional)
+        continue-on-error: true
+        run: |
+          echo "🧪 Testing webhook with a test message..."
+          echo "Note: This requires a valid chat ID to test properly"
+          echo "Webhook is configured at: ${{ steps.webhook.outputs.webhook_url }}"
+          echo "Bot can now receive updates from Telegram"
+
+      - name: Summary
+        run: |
+          echo "🚀 Webhook setup completed!"
+          echo "📍 Environment: ${{ steps.config.outputs.environment }}"
+          echo "🔗 Webhook URL: ${{ steps.webhook.outputs.webhook_url }}"
+          echo "🤖 Bot is now ready to receive updates"
+          echo ""
+          echo "Next steps:"
+          echo "1. Test the bot by sending /start in Telegram"
+          echo "2. Check webhook health with the webhook health check workflow"
+          echo "3. Monitor logs for any issues"
+
+  webhook-notification:
+    name: Notify Webhook Setup
+    runs-on: ubuntu-latest
+    needs: setup-webhook
+    if: always()
+    steps:
+      - name: Webhook Setup Status
+        run: |
+          if [ "${{ needs.setup-webhook.result }}" = "success" ]; then
+            echo "✅ Webhook setup successful"
+          else
+            echo "❌ Webhook setup failed"
+            exit 1
+          fi

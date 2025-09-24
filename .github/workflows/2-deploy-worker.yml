@@ -1,0 +1,102 @@
+name: Deploy Cloudflare Worker
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  deploy-worker:
+    name: Deploy Worker
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Set environment
+        id: env
+        run: |
+          echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env ${{ steps.env.outputs.environment }}
+          workingDirectory: ./backend
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ steps.env.outputs.environment == 'production' && secrets.TELEGRAM_BOT_TOKEN_PROD || secrets.TELEGRAM_BOT_TOKEN_PREVIEW }}
+
+      - name: Get Worker URL
+        id: worker-url
+        run: |
+          ENV="${{ steps.env.outputs.environment }}"
+          if [ "$ENV" = "production" ]; then
+            echo "url=https://twa-cf-tpl-prod.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://twa-cf-tpl-preview.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test Worker Health
+        run: |
+          sleep 10
+          echo "Testing Worker at: ${{ steps.worker-url.outputs.url }}"
+
+          # Test health endpoint
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/health")
+          if [ "$response" != "200" ]; then
+            echo "❌ Health check failed with status $response"
+            exit 1
+          fi
+
+          # Test hello endpoint
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/hello")
+          if [ "$response" != "200" ]; then
+            echo "❌ Hello API check failed with status $response"
+            exit 1
+          fi
+
+          echo "✅ Worker deployment verified"
+
+      - name: Output Worker URL
+        run: |
+          echo "🚀 Worker deployed successfully!"
+          echo "🔗 Worker URL: ${{ steps.worker-url.outputs.url }}"
+          echo "🏥 Health: ${{ steps.worker-url.outputs.url }}/health"
+          echo "👋 Hello API: ${{ steps.worker-url.outputs.url }}/api/hello"
+
+  deployment-notification:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-worker
+    if: always()
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy-worker.result }}" = "success" ]; then
+            echo "✅ Worker deployment successful"
+          else
+            echo "❌ Worker deployment failed"
+            exit 1
+          fi

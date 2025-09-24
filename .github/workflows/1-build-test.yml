@@ -1,0 +1,135 @@
+name: Build & Test
+
+on:
+  workflow_call:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Type check backend
+        run: |
+          cd backend
+          npm run typecheck
+
+      - name: Run backend tests (without webhook tests)
+        run: |
+          cd backend
+          # Only run health and hello API tests, skip webhook tests that need bot token
+          npm test -- --run tests/contract/health.test.ts tests/contract/hello.test.ts
+
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Type check frontend
+        run: |
+          cd frontend
+          npm run typecheck
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --run
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 1
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install root dependencies
+        run: npm install --prefix . || true
+
+      - name: Validate environment template
+        run: |
+          # Check if .env.example exists and has required variables
+          if [ ! -f ".env.example" ]; then
+            echo "❌ .env.example not found"
+            exit 1
+          fi
+
+          # Check for required environment variables in template
+          required_vars=("TELEGRAM_BOT_TOKEN" "CLOUDFLARE_ACCOUNT_ID" "ENVIRONMENT")
+          for var in "${required_vars[@]}"; do
+            if ! grep -q "$var" .env.example; then
+              echo "❌ Missing $var in .env.example"
+              exit 1
+            fi
+          done
+
+          echo "✅ Environment template validation passed"
+
+      - name: Validate project structure
+        run: |
+          # Check if all required directories exist
+          required_dirs=("backend/src" "frontend/src" "scripts" ".github/workflows")
+          for dir in "${required_dirs[@]}"; do
+            if [ ! -d "$dir" ]; then
+              echo "❌ Missing directory: $dir"
+              exit 1
+            fi
+          done
+
+          # Check if required files exist
+          required_files=("wrangler.toml" "README.md" "package.json")
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing file: $file"
+              exit 1
+            fi
+          done
+
+          echo "✅ Project structure validation passed"
