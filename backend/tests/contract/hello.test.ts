@@ -7,7 +7,7 @@ describe('GET /api/hello', () => {
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('application/json')
 
-    const result = await response.json()
+    const result = await response.json() as any
     expect(result).toMatchObject({
       message: 'Hello World',
       timestamp: expect.any(String),
@@ -17,7 +17,7 @@ describe('GET /api/hello', () => {
 
   it('should return valid timestamp', async () => {
     const response = await fetch('http://localhost:8787/api/hello')
-    const result = await response.json()
+    const result = await response.json() as any
 
     expect(() => new Date(result.timestamp)).not.toThrow()
 
@@ -30,7 +30,7 @@ describe('GET /api/hello', () => {
 
   it('should include correct environment information', async () => {
     const response = await fetch('http://localhost:8787/api/hello')
-    const result = await response.json()
+    const result = await response.json() as any
 
     expect(['local', 'preview', 'prod']).toContain(result.environment)
   })
