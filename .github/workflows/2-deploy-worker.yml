@@ -37,18 +37,18 @@ jobs:
 
       - name: Deploy to Cloudflare Workers
         id: deploy
-        uses: cloudflare/wrangler-action@v3.14.1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          workingDirectory: ./backend
+        run: |
+          cd backend
+          npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Get Worker URL
         id: worker-url
         run: |
-          # Get deployment URL from wrangler output
-          WORKER_URL=$(echo "${{ steps.deploy.outputs.deployment-url }}" | tr -d '\n')
+          # Use default worker URL format
+          WORKER_URL="https://twa-cf-tpl.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
           echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
 
       - name: Test Worker Health

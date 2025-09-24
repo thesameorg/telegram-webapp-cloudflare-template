@@ -34,18 +34,18 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         id: deploy-pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: twa-cf-tpl
-          directory: ./frontend/dist
+        run: |
+          cd frontend
+          npx wrangler pages deploy dist --project-name=twa-cf-tpl
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Get Pages URL
         id: pages-url
         run: |
-          # Get deployment URL from pages action output
-          PAGES_URL="${{ steps.deploy-pages.outputs.url }}"
+          # Use default pages URL format for now
+          PAGES_URL="https://twa-cf-tpl.pages.dev"
           echo "url=$PAGES_URL" >> $GITHUB_OUTPUT
 
       - name: Test Pages Deployment
