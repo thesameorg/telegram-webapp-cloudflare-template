@@ -32,18 +32,27 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Create Pages Project (if needed)
+        run: |
+          cd frontend
+          # Try to create the project, ignore if it already exists
+          npx wrangler pages project create twa-cf-tpl --production-branch=main 2>/dev/null || echo "Project might already exist, continuing..."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare Pages
         id: deploy-pages
         run: |
           cd frontend
           # Capture deployment output to get actual URL
-          deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl 2>&1)
+          deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)
           echo "Deployment output:"
           echo "$deployment_output"
 
           # Extract deployment URL if available
-          if echo "$deployment_output" | grep -q "https://"; then
-            deployment_url=$(echo "$deployment_output" | grep -o "https://[^[:space:]]*" | head -1)
+          if echo "$deployment_output" | grep -q "https://[^[:space:]]*\.pages\.dev"; then
+            deployment_url=$(echo "$deployment_output" | grep -o "https://[^[:space:]]*\.pages\.dev" | head -1)
             echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
           else
             echo "deployment_url=https://twa-cf-tpl.pages.dev" >> $GITHUB_OUTPUT
