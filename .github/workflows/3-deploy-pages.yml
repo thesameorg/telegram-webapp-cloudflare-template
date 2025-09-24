@@ -36,7 +36,18 @@ jobs:
         id: deploy-pages
         run: |
           cd frontend
-          npx wrangler pages deploy dist --project-name=twa-cf-tpl
+          # Capture deployment output to get actual URL
+          deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl 2>&1)
+          echo "Deployment output:"
+          echo "$deployment_output"
+
+          # Extract deployment URL if available
+          if echo "$deployment_output" | grep -q "https://"; then
+            deployment_url=$(echo "$deployment_output" | grep -o "https://[^[:space:]]*" | head -1)
+            echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
+          else
+            echo "deployment_url=https://twa-cf-tpl.pages.dev" >> $GITHUB_OUTPUT
+          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -44,8 +55,9 @@ jobs:
       - name: Get Pages URL
         id: pages-url
         run: |
-          # Use default pages URL format for now
-          PAGES_URL="https://twa-cf-tpl.pages.dev"
+          # Use deployment URL or default
+          PAGES_URL="${{ steps.deploy-pages.outputs.deployment_url }}"
+          echo "Pages URL: $PAGES_URL"
           echo "url=$PAGES_URL" >> $GITHUB_OUTPUT
 
       - name: Test Pages Deployment
@@ -53,11 +65,22 @@ jobs:
           sleep 15
           echo "Testing Pages at: ${{ steps.pages-url.outputs.url }}"
 
-          # Test if pages serve the index.html
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.pages-url.outputs.url }}/")
-          if [ "$response" != "200" ]; then
-            echo "⚠️  Pages check returned status $response (may be normal for preview URLs)"
+          # Test if pages serve the index.html with detailed output
+          echo "Testing Pages root endpoint..."
+          pages_response=$(curl -s -w "%{http_code}" "${{ steps.pages-url.outputs.url }}/")
+          pages_status=$(echo "$pages_response" | tail -c 4)
+          pages_body=$(echo "$pages_response" | head -c -4)
+
+          echo "Pages endpoint returned status: $pages_status"
+          echo "Pages response body length: $(echo "$pages_body" | wc -c) characters"
+
+          if [ "$pages_status" != "200" ]; then
+            echo "⚠️  Pages check returned status $pages_status (may be normal for preview URLs)"
+            if [ "$pages_status" == "000" ]; then
+              echo "❌ DNS resolution or connection failed"
+              exit 1
+            fi
           else
-            echo "Pages deployment verified"
+            echo "✅ Pages deployment verified"
           fi
 

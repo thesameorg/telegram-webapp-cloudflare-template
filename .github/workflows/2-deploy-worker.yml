@@ -39,7 +39,22 @@ jobs:
         id: deploy
         run: |
           cd backend
-          npx wrangler deploy
+          # Capture deployment output to get the actual URL
+          deployment_output=$(npx wrangler deploy 2>&1)
+          echo "Deployment output:"
+          echo "$deployment_output"
+
+          # Extract worker URL from deployment output
+          if echo "$deployment_output" | grep -q "https://.*\.workers\.dev"; then
+            worker_url=$(echo "$deployment_output" | grep -o "https://[^[:space:]]*\.workers\.dev[^[:space:]]*" | head -1)
+            echo "worker_url=$worker_url" >> $GITHUB_OUTPUT
+          else
+            # Fallback to standard format
+            worker_url="https://twa-cf-tpl.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+            echo "worker_url=$worker_url" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Detected Worker URL: $worker_url"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -47,8 +62,8 @@ jobs:
       - name: Get Worker URL
         id: worker-url
         run: |
-          # Use default worker URL format
-          WORKER_URL="https://twa-cf-tpl.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          WORKER_URL="${{ steps.deploy.outputs.worker_url }}"
+          echo "Worker URL: $WORKER_URL"
           echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
 
       - name: Test Worker Health
@@ -56,19 +71,33 @@ jobs:
           sleep 10
           echo "Testing Worker at: ${{ steps.worker-url.outputs.url }}"
 
-          # Test health endpoint
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/health")
-          if [ "$response" != "200" ]; then
-            echo "❌ Health check failed with status $response"
+          # Test health endpoint with detailed output
+          echo "Testing /health endpoint..."
+          health_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/health")
+          health_status=$(echo "$health_response" | tail -c 4)
+          health_body=$(echo "$health_response" | head -c -4)
+
+          echo "Health endpoint returned status: $health_status"
+          echo "Health endpoint response body: $health_body"
+
+          if [ "$health_status" != "200" ]; then
+            echo "❌ Health check failed with status $health_status"
             exit 1
           fi
 
-          # Test hello endpoint
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/hello")
-          if [ "$response" != "200" ]; then
-            echo "❌ Hello API check failed with status $response"
+          # Test hello endpoint with detailed output
+          echo "Testing /api/hello endpoint..."
+          hello_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/hello")
+          hello_status=$(echo "$hello_response" | tail -c 4)
+          hello_body=$(echo "$hello_response" | head -c -4)
+
+          echo "Hello endpoint returned status: $hello_status"
+          echo "Hello endpoint response body: $hello_body"
+
+          if [ "$hello_status" != "200" ]; then
+            echo "❌ Hello API check failed with status $hello_status"
             exit 1
           fi
 
-          echo "Worker deployment verified"
+          echo "✅ Worker deployment verified"
 
