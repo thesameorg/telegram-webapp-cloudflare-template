@@ -33,35 +33,35 @@
 - **Tests**: `backend/tests/`, `frontend/tests/`
 
 ## Phase 3.1: Setup & Environment
-- [ ] T001 Create project structure (backend/, frontend/, .env templates, wrangler.toml)
-- [ ] T002 [P] Initialize backend with Hono.js + TypeScript in `backend/package.json`
-- [ ] T003 [P] Initialize frontend with React + Vite + @twa-dev/sdk in `frontend/package.json`
-- [ ] T004 [P] Setup environment configuration templates (.env.example, wrangler configs)
+- [X] T001 Create project structure (backend/, frontend/, .env templates, wrangler.toml)
+- [X] T002 [P] Initialize backend with Hono.js + TypeScript in `backend/package.json`
+- [X] T003 [P] Initialize frontend with React + Vite + @twa-dev/sdk in `frontend/package.json`
+- [X] T004 [P] Setup environment configuration templates (.env.example, wrangler configs)
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T005 [P] Contract test POST /webhook in `backend/tests/contract/webhook.test.ts`
-- [ ] T006 [P] Contract test GET /health in `backend/tests/contract/health.test.ts`
-- [ ] T007 [P] Contract test GET /api/hello in `backend/tests/contract/hello.test.ts`
-- [ ] T008 [P] Frontend component test Hello World page in `frontend/tests/components/HelloWorld.test.tsx`
+- [X] T005 [P] Contract test POST /webhook in `backend/tests/contract/webhook.test.ts`
+- [X] T006 [P] Contract test GET /health in `backend/tests/contract/health.test.ts`
+- [X] T007 [P] Contract test GET /api/hello in `backend/tests/contract/hello.test.ts`
+- [X] T008 [P] Frontend component test Hello World page in `frontend/tests/components/HelloWorld.test.tsx`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T009 [P] Hono.js server setup with environment detection in `backend/src/index.ts`
-- [ ] T010 [P] Telegram webhook handler for /start command in `backend/src/webhook.ts`
-- [ ] T011 [P] Hello API endpoint with environment info in `backend/src/api/hello.ts`
-- [ ] T012 [P] Health check endpoint in `backend/src/api/health.ts`
-- [ ] T013 [P] React Hello World component in `frontend/src/components/HelloWorld.tsx`
-- [ ] T014 [P] Telegram Web App SDK integration in `frontend/src/utils/telegram.ts`
-- [ ] T015 Main App component with Web App setup in `frontend/src/App.tsx`
+- [X] T009 [P] Hono.js server setup with environment detection in `backend/src/index.ts`
+- [X] T010 [P] Telegram webhook handler for /start command in `backend/src/webhook.ts`
+- [X] T011 [P] Hello API endpoint with environment info in `backend/src/api/hello.ts`
+- [X] T012 [P] Health check endpoint in `backend/src/api/health.ts`
+- [X] T013 [P] React Hello World component in `frontend/src/components/HelloWorld.tsx`
+- [X] T014 [P] Telegram Web App SDK integration in `frontend/src/utils/telegram.ts`
+- [X] T015 Main App component with Web App setup in `frontend/src/App.tsx`
 
 ## Phase 3.4: Deployment & Integration
-- [ ] T016 GitHub Actions workflow for automated deployment and webhook configuration in `.github/workflows/deploy.yml`
-- [ ] T017 [P] Local development webhook setup script in `scripts/webhook-local.sh`
-- [ ] T018 [P] Environment validation script in `scripts/validate-env.sh`
+- [X] T016 GitHub Actions workflow for automated deployment and webhook configuration in `.github/workflows/deploy.yml`
+- [X] T017 [P] Local development webhook setup script in `scripts/webhook-local.sh`
+- [X] T018 [P] Environment validation script in `scripts/validate-env.sh`
 
 ## Phase 3.5: Documentation & Validation
-- [ ] T019 [P] Comprehensive README with deployment instructions
-- [ ] T020 Update quickstart.md with actual npm scripts
+- [X] T019 [P] Comprehensive README with deployment instructions
+- [X] T020 Update quickstart.md with actual npm scripts
 
 ## Dependencies
 - Setup (T001-T004) before everything

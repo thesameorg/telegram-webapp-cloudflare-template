@@ -25,40 +25,54 @@ Before starting, ensure you have:
 ```bash
 git clone <your-repo-url>
 cd twa-cf-tpl
+
+# Install backend dependencies
+cd backend
+npm install
+
+# Install frontend dependencies
+cd ../frontend
 npm install
 ```
 
 ### 2. Configure Environment
 ```bash
 # Copy environment template
-cp .env.example .env.local
+cp .env.example .env
 
-# Edit .env.local with your values:
-# TELEGRAM_BOT_TOKEN_LOCAL=your_local_bot_token
-# CLOUDFLARE_ACCOUNT_ID=your_account_id
+# Edit .env with your values:
+# TELEGRAM_BOT_TOKEN=your_bot_token_here
+# CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
+# ENVIRONMENT=local
 ```
 
-### 3. Deploy to Cloudflare
+### 3. Validate Setup
 ```bash
-# Deploy worker and pages
-npm run deploy:local
+# Validate environment configuration
+./scripts/validate-env.sh
 ```
 
 ### 4. Configure Local Webhook
 ```bash
 # Start cloudflared tunnel for local development
-npm run tunnel:start
-
-# Set webhook URL to tunnel (for local environment)
-npm run webhook:set:local
+./scripts/webhook-local.sh
 ```
 
-### 5. Test the Template
+### 5. Start Development Servers
 ```bash
-# Start development server
+# Start backend server (in one terminal)
+cd backend
 npm run dev
 
-# In another terminal, test the bot
+# Start frontend server (in another terminal)
+cd frontend
+npm run dev
+```
+
+### 6. Test the Template
+```bash
+# Send /start to your bot in Telegram
+# Or test via API
 curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage" \
   -H "Content-Type: application/json" \
   -d '{
@@ -71,8 +85,8 @@ curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage" \
 
 ### ✅ Bot Test
 1. Send `/start` to your local bot
-2. Expected response: "Hello World" message
-3. Check logs: `npm run logs:local`
+2. Expected response: "Hello World" message with Web App button
+3. Check Worker logs: `wrangler tail --local`
 
 ### ✅ Web App Test
 1. Open bot and click "Open Web App" button
@@ -90,24 +104,22 @@ curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage" \
 
 ### Preview Environment
 ```bash
-# Deploy to preview (gets Cloudflare deployment URL automatically)
+# Deploy to preview (via GitHub Actions on PR)
+# Or manually:
+cd backend
 npm run deploy:preview
 
-# Set preview webhook to deployment URL
-npm run webhook:set:preview
-
-# Test preview bot
+# Webhook is set automatically via GitHub Actions
 ```
 
 ### Production Environment
 ```bash
-# Deploy to production (gets Cloudflare deployment URL automatically)
+# Deploy to production (via GitHub Actions on merge to main)
+# Or manually:
+cd backend
 npm run deploy:prod
 
-# Set production webhook to deployment URL
-npm run webhook:set:prod
-
-# Test production bot
+# Webhook is set automatically via GitHub Actions
 ```
 
 ## Webhook URL Management
@@ -141,16 +153,17 @@ Each environment uses its own bot token and webhook URL to prevent conflicts.
 ### Debug Commands
 ```bash
 # Check webhook status
-npm run webhook:info:local
+./scripts/webhook-status.sh
 
 # View Worker logs
-npm run logs:local --tail
+wrangler tail --local
 
 # Test API endpoints
-npm run test:api:local
+curl http://localhost:8787/health
+curl http://localhost:8787/api/hello
 
 # Validate environment
-npm run validate:env:local
+./scripts/validate-env.sh
 ```
 
 ## Development Workflow
@@ -163,29 +176,27 @@ npm run validate:env:local
 
 ### 2. Testing Changes
 ```bash
-# Run unit tests
-npm test
+# Run backend tests
+cd backend && npm test
 
-# Run integration tests
-npm run test:integration
+# Run frontend tests
+cd frontend && npm test
 
-# Run E2E tests
-npm run test:e2e
+# Run type checking
+cd backend && npm run typecheck
+cd frontend && npm run typecheck
 ```
 
 ### 3. Deployment Process
 ```bash
 # 1. Validate environment
-npm run validate:env:preview
+./scripts/validate-env.sh
 
-# 2. Deploy to preview
-npm run deploy:preview
+# 2. Create PR for preview deployment
+git push origin feature-branch
 
-# 3. Run smoke tests
-npm run test:smoke:preview
-
-# 4. Deploy to production (if tests pass)
-npm run deploy:prod
+# 3. Merge to main for production deployment
+# GitHub Actions handles deployment automatically
 ```
 
 ## Next Steps

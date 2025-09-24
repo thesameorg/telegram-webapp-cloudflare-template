@@ -1,0 +1,28 @@
+{
+  "name": "twa-cf-tpl-backend",
+  "version": "1.0.0",
+  "description": "Telegram Web App + Bot Template Backend",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "deploy:local": "wrangler dev --local",
+    "deploy:preview": "wrangler deploy --env preview",
+    "deploy:prod": "wrangler deploy --env production",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.5.0",
+    "@hono/zod-validator": "^0.2.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "@types/node": "^20.16.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "wrangler": "^3.72.0"
+  }
+}
