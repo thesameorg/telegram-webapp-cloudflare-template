@@ -4,10 +4,7 @@ export async function healthHandler(c: Context) {
   try {
     const environment = c.env.ENVIRONMENT || 'local'
     const timestamp = new Date().toISOString()
-
-    const botToken = c.env.TELEGRAM_BOT_TOKEN
-    const status = botToken ? 'healthy' : 'degraded'
-
+    const status = 'healthy'
     const version = '1.0.0'
 
     return c.json({

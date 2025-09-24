@@ -49,7 +49,8 @@ dev-frontend:
 # Background development servers
 start-backend:
 	@echo "Starting backend dev server in background on http://localhost:8787"
-	@(cd backend && npx wrangler dev --local --port 8787 > ../logs/backend.log 2>&1 & echo $$! > ../pids/backend.pid && sleep 0.1)
+	@cd backend && nohup npx wrangler dev --local --port 8787 > ../logs/backend.log 2>&1 & echo $$! > ../pids/backend.pid
+	@sleep 1
 	@if [ -f pids/backend.pid ]; then \
 		echo "Backend started with PID: $$(cat pids/backend.pid)"; \
 		echo "Logs: tail -f logs/backend.log"; \
@@ -59,7 +60,8 @@ start-backend:
 
 start-frontend:
 	@echo "Starting frontend dev server in background"
-	@(cd frontend && npm run dev > ../logs/frontend.log 2>&1 & echo $$! > ../pids/frontend.pid && sleep 0.1)
+	@cd frontend && nohup npm run dev > ../logs/frontend.log 2>&1 & echo $$! > ../pids/frontend.pid
+	@sleep 1
 	@if [ -f pids/frontend.pid ]; then \
 		echo "Frontend started with PID: $$(cat pids/frontend.pid)"; \
 		echo "Logs: tail -f logs/frontend.log"; \

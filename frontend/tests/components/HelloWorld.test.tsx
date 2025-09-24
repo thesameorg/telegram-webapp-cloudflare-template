@@ -1,26 +1,38 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import HelloWorld from '../../src/components/HelloWorld'
 
+// Mock the useTelegram hook
+vi.mock('../../src/utils/telegram', () => ({
+  useTelegram: () => ({
+    webApp: {
+      platform: 'tdesktop',
+      version: '6.7',
+      colorScheme: 'light'
+    },
+    user: {
+      id: 123456789,
+      first_name: 'Test',
+      last_name: 'User',
+      username: 'testuser',
+      language_code: 'en'
+    },
+    isWebAppReady: true
+  })
+}))
+
 describe('HelloWorld Component', () => {
+
   it('should render Hello World text', () => {
     render(<HelloWorld />)
 
     expect(screen.getByText('Hello World')).toBeInTheDocument()
   })
 
-  it('should display current environment', () => {
+  it('should display welcome message', () => {
     render(<HelloWorld />)
 
-    const environmentText = screen.getByText(/Environment:/i)
-    expect(environmentText).toBeInTheDocument()
-  })
-
-  it('should display timestamp', () => {
-    render(<HelloWorld />)
-
-    const timestampText = screen.getByText(/Last updated:/i)
-    expect(timestampText).toBeInTheDocument()
+    expect(screen.getByText('Welcome to Telegram Web App!')).toBeInTheDocument()
   })
 
   it('should have proper styling classes', () => {

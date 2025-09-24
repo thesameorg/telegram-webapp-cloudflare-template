@@ -1,41 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useTelegram } from '../utils/telegram'
 
-interface HelloResponse {
-  message: string
-  timestamp: string
-  environment: string
-}
-
 export default function HelloWorld() {
-  const [helloData, setHelloData] = useState<HelloResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const { webApp, user, isWebAppReady } = useTelegram()
-
-  useEffect(() => {
-    const fetchHello = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/hello')
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        const data = await response.json()
-        setHelloData(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch hello data')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchHello()
-  }, [])
-
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString()
-  }
 
   return (
     <div
@@ -47,28 +13,30 @@ export default function HelloWorld() {
           Hello World
         </h1>
 
-        {loading && (
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        )}
+        <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+          <p className="text-lg font-semibold text-green-600">
+            Welcome to Telegram Web App!
+          </p>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            <strong>Error:</strong> {error}
+          <div className="text-sm text-gray-600">
+            <p><strong>Backend Status:</strong> <span id="health-status">Checking...</span></p>
+            <p><strong>Last Check:</strong> <span id="health-timestamp">-</span></p>
           </div>
-        )}
+        </div>
 
-        {helloData && (
-          <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-            <p className="text-lg font-semibold text-green-600">
-              {helloData.message}
-            </p>
-
-            <div className="text-sm text-gray-600 space-y-2">
-              <p><strong>Environment:</strong> {helloData.environment}</p>
-              <p><strong>Last updated:</strong> {formatTimestamp(helloData.timestamp)}</p>
-            </div>
-          </div>
-        )}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            fetch('/health')
+              .then(r => r.json())
+              .then(data => {
+                document.getElementById('health-status').textContent = data.status;
+                document.getElementById('health-timestamp').textContent = new Date(data.timestamp).toLocaleString();
+              })
+              .catch(() => {
+                document.getElementById('health-status').textContent = 'Error';
+              });
+          `
+        }} />
 
         <div className="bg-blue-50 p-4 rounded-lg">
           <h2 className="text-lg font-semibold text-blue-800 mb-3">

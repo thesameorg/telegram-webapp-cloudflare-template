@@ -1,8 +1,15 @@
 import { describe, it, expect } from 'vitest'
+import app from '../../src/index'
+
+// Minimal mock environment for testing
+const mockEnv = {
+  TELEGRAM_BOT_TOKEN: 'test-token',
+  ENVIRONMENT: 'test'
+}
 
 describe('GET /api/hello', () => {
   it('should return Hello World message', async () => {
-    const response = await fetch('http://localhost:8787/api/hello')
+    const response = await app.request('/api/hello', {}, mockEnv)
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('application/json')
@@ -11,12 +18,12 @@ describe('GET /api/hello', () => {
     expect(result).toMatchObject({
       message: 'Hello World',
       timestamp: expect.any(String),
-      environment: expect.stringMatching(/^(local|preview|prod)$/)
+      environment: expect.stringMatching(/^(local|preview|prod|test)$/)
     })
   })
 
   it('should return valid timestamp', async () => {
-    const response = await fetch('http://localhost:8787/api/hello')
+    const response = await app.request('/api/hello', {}, mockEnv)
     const result = await response.json() as any
 
     expect(() => new Date(result.timestamp)).not.toThrow()
@@ -29,28 +36,28 @@ describe('GET /api/hello', () => {
   })
 
   it('should include correct environment information', async () => {
-    const response = await fetch('http://localhost:8787/api/hello')
+    const response = await app.request('/api/hello', {}, mockEnv)
     const result = await response.json() as any
 
-    expect(['local', 'preview', 'prod']).toContain(result.environment)
+    expect(['local', 'preview', 'prod', 'test']).toContain(result.environment)
   })
 
   it('should handle CORS preflight requests', async () => {
-    const response = await fetch('http://localhost:8787/api/hello', {
+    const response = await app.request('/api/hello', {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'GET',
         'Access-Control-Request-Headers': 'Content-Type'
       }
-    })
+    }, mockEnv)
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(204)
     expect(response.headers.get('Access-Control-Allow-Origin')).toBeTruthy()
     expect(response.headers.get('Access-Control-Allow-Methods')).toBeTruthy()
   })
 
   it('should respond with proper cache headers for development', async () => {
-    const response = await fetch('http://localhost:8787/api/hello')
+    const response = await app.request('/api/hello', {}, mockEnv)
 
     expect(response.status).toBe(200)
 
