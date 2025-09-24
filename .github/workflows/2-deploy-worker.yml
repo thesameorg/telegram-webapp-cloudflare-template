@@ -2,11 +2,6 @@ name: Deploy Cloudflare Worker
 
 on:
   workflow_call:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        type: string
 
 env:
   NODE_VERSION: '18'
@@ -15,7 +10,6 @@ jobs:
   deploy-worker:
     name: Deploy Worker
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout code
@@ -33,30 +27,31 @@ jobs:
           cd backend
           npm ci
 
-      - name: Set environment
-        id: env
-        run: |
-          echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
-
-      - name: Deploy to Cloudflare Workers
+      - name: Set Cloudflare Secrets
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env ${{ steps.env.outputs.environment }}
+          command: secret put TELEGRAM_BOT_TOKEN
           workingDirectory: ./backend
         env:
-          TELEGRAM_BOT_TOKEN: ${{ steps.env.outputs.environment == 'production' && secrets.TELEGRAM_BOT_TOKEN_PROD || secrets.TELEGRAM_BOT_TOKEN_PREVIEW }}
+          WRANGLER_INPUT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+      - name: Deploy to Cloudflare Workers
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: ./backend
 
       - name: Get Worker URL
         id: worker-url
         run: |
-          ENV="${{ steps.env.outputs.environment }}"
-          if [ "$ENV" = "production" ]; then
-            echo "url=https://twa-cf-tpl-prod.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
-          else
-            echo "url=https://twa-cf-tpl-preview.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
-          fi
+          # Get deployment URL from wrangler output
+          WORKER_URL=$(echo "${{ steps.deploy.outputs.deployment-url }}" | tr -d '\n')
+          echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
 
       - name: Test Worker Health
         run: |
@@ -77,26 +72,5 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Worker deployment verified"
+          echo "Worker deployment verified"
 
-      - name: Output Worker URL
-        run: |
-          echo "🚀 Worker deployed successfully!"
-          echo "🔗 Worker URL: ${{ steps.worker-url.outputs.url }}"
-          echo "🏥 Health: ${{ steps.worker-url.outputs.url }}/health"
-          echo "👋 Hello API: ${{ steps.worker-url.outputs.url }}/api/hello"
-
-  deployment-notification:
-    name: Notify Deployment
-    runs-on: ubuntu-latest
-    needs: deploy-worker
-    if: always()
-    steps:
-      - name: Deployment Status
-        run: |
-          if [ "${{ needs.deploy-worker.result }}" = "success" ]; then
-            echo "✅ Worker deployment successful"
-          else
-            echo "❌ Worker deployment failed"
-            exit 1
-          fi
