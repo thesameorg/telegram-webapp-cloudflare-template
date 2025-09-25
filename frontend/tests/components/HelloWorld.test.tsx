@@ -15,7 +15,8 @@ vi.mock('../../src/utils/telegram', () => ({
       first_name: 'Test',
       last_name: 'User',
       username: 'testuser',
-      language_code: 'en'
+      language_code: 'en',
+      photo_url: 'https://cdn.arstechnica.net/wp-content/uploads/archive/bill-gates-outlook/outlook-default-person.png'
     },
     isWebAppReady: true
   })
