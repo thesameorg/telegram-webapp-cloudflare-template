@@ -71,7 +71,7 @@ jobs:
 
       - name: Test Pages Deployment
         run: |
-          sleep 15
+          sleep 5
           echo "Testing Pages at: ${{ steps.pages-url.outputs.url }}"
 
           # Test if pages serve the index.html with detailed output

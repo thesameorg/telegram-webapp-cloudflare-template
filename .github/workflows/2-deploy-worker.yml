@@ -76,7 +76,7 @@ jobs:
 
       - name: Test Worker Health
         run: |
-          sleep 10
+          sleep 5
           echo "Testing Worker at: ${{ steps.worker-url.outputs.url }}"
 
           # Test health endpoint with detailed output
