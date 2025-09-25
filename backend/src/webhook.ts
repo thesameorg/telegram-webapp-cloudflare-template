@@ -13,7 +13,38 @@ export async function handleWebhook(c: Context) {
       }, 500)
     }
 
-    // Create bot instance
+    // Validate content type
+    const contentType = c.req.header('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Content-Type must be application/json',
+        timestamp: new Date().toISOString()
+      }, 400)
+    }
+
+    // Parse and validate webhook body
+    let webhookData
+    try {
+      webhookData = await c.req.json()
+    } catch (error) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Invalid JSON in request body',
+        timestamp: new Date().toISOString()
+      }, 400)
+    }
+
+    // Basic validation of webhook structure
+    if (!webhookData || typeof webhookData.update_id === 'undefined') {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Invalid webhook data: missing update_id',
+        timestamp: new Date().toISOString()
+      }, 400)
+    }
+
+    // Create bot instance only after validation
     const bot = new Bot(botToken)
 
     // Handle /start command

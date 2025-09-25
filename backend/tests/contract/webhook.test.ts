@@ -4,6 +4,7 @@ import app from '../../src/index'
 // Minimal mock environment required by Hono
 const mockEnv = {
   TELEGRAM_BOT_TOKEN: 'test-token',
+  TELEGRAM_ADMIN_ID: '123456',
   ENVIRONMENT: 'test'
 }
 
