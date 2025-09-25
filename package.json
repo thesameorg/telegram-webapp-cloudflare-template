@@ -40,5 +40,8 @@
   },
   "devDependencies": {
     "wrangler": "^4.39.0"
+  },
+  "dependencies": {
+    "grammy": "^1.38.2"
   }
 }

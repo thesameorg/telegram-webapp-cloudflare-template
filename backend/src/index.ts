@@ -8,6 +8,7 @@ import { healthHandler } from './api/health'
 
 type Bindings = {
   TELEGRAM_BOT_TOKEN: string
+  TELEGRAM_ADMIN_ID: string
   WEBHOOK_SECRET?: string
   ENVIRONMENT: string
 }
@@ -25,6 +26,37 @@ app.use('*', cors({
 app.get('/health', healthHandler)
 app.get('/api/hello', helloHandler)
 app.post('/webhook', handleWebhook)
+
+// Test endpoint to send a message to admin
+app.post('/api/test-message', async (c) => {
+  try {
+    const botToken = c.env.TELEGRAM_BOT_TOKEN
+    const adminId = c.env.TELEGRAM_ADMIN_ID
+
+    if (!botToken || !adminId) {
+      return c.json({ error: 'Missing bot token or admin ID' }, 400)
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: adminId,
+        text: `🤖 Test message from backend!\n\nTime: ${new Date().toISOString()}\nEnvironment: ${c.env.ENVIRONMENT}`
+      })
+    })
+
+    const result = await response.json()
+
+    if (result.ok) {
+      return c.json({ success: true, message: 'Test message sent!' })
+    } else {
+      return c.json({ error: 'Failed to send message', details: result }, 400)
+    }
+  } catch (error) {
+    return c.json({ error: 'Internal error', details: error.message }, 500)
+  }
+})
 
 app.get('/', (c) => {
   const env = c.env.ENVIRONMENT || 'local'

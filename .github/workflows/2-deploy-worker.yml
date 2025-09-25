@@ -36,8 +36,9 @@ jobs:
       - name: Set Cloudflare Secrets
         run: |
           cd backend
-          # Update existing secret or create if it doesn't exist
+          # Update existing secrets or create if they don't exist
           echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler secret put TELEGRAM_BOT_TOKEN --env="" || true
+          echo "${{ secrets.TELEGRAM_ADMIN_ID }}" | npx wrangler secret put TELEGRAM_ADMIN_ID --env="" || true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

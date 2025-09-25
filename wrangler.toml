@@ -15,6 +15,7 @@ name = "twa-cf-tpl-prod"
 [vars]
 ENVIRONMENT = "local"
 TELEGRAM_BOT_TOKEN = "7747466363:AAFJ6APrEtFeGDT36epoD8ZAb7TaIl3BwNQ"
+TELEGRAM_ADMIN_ID = "62408647"
 
 # Environment-specific variables
 [env.preview.vars]
