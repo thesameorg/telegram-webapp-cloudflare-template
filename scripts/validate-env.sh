@@ -2,6 +2,9 @@
 
 set -e
 
+# Load environment variables
+source "$(dirname "$0")/load-env.sh"
+
 echo "🔍 Validating environment configuration..."
 
 # Colors for output
@@ -174,13 +177,13 @@ echo "📦 Checking dependencies..."
 if [ -d "backend/node_modules" ]; then
     echo -e "${GREEN}✅ Backend dependencies installed${NC}"
 else
-    echo -e "${YELLOW}⚠️  Backend dependencies not installed (run: cd backend && npm install)${NC}"
+    echo -e "${YELLOW}⚠️  Backend dependencies not installed (run: npm run install)${NC}"
 fi
 
 if [ -d "frontend/node_modules" ]; then
     echo -e "${GREEN}✅ Frontend dependencies installed${NC}"
 else
-    echo -e "${YELLOW}⚠️  Frontend dependencies not installed (run: cd frontend && npm install)${NC}"
+    echo -e "${YELLOW}⚠️  Frontend dependencies not installed (run: npm run install)${NC}"
 fi
 
 # Summary
@@ -192,9 +195,9 @@ if [ $ERRORS -eq 0 ]; then
     echo -e "${GREEN}🎉 All checks passed! Environment is ready.${NC}"
     echo ""
     echo "Next steps:"
-    echo "1. Set up local development: ./scripts/webhook-local.sh"
-    echo "2. Start backend: cd backend && npm run dev"
-    echo "3. Start frontend: cd frontend && npm run dev"
+    echo "1. Set up local development: npm run tunnel"
+    echo "2. Start backend: npm run dev:backend"
+    echo "3. Start frontend: npm run dev:frontend"
     exit 0
 else
     echo -e "${RED}❌ $ERRORS error(s) found. Please fix them before proceeding.${NC}"
@@ -202,7 +205,7 @@ else
     echo "Common fixes:"
     echo "1. Copy .env.example to .env and fill in your values"
     echo "2. Install Node.js from https://nodejs.org"
-    echo "3. Install dependencies: npm install in backend/ and frontend/"
+    echo "3. Install dependencies: npm run install"
     echo "4. Install cloudflared from https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/"
     exit 1
 fi

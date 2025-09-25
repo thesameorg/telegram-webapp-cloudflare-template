@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Load environment variables
+source "$(dirname "$0")/load-env.sh"
+
 echo "🔍 Checking Telegram webhook status..."
 
 if [ -z "$TELEGRAM_BOT_TOKEN" ]; then

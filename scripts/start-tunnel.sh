@@ -2,7 +2,10 @@
 
 set -e
 
-echo "🚀 Setting up local development webhook tunnel..."
+# Load environment variables
+source "$(dirname "$0")/load-env.sh"
+
+echo "🚀 Starting local development webhook tunnel..."
 
 # Check if cloudflared is installed
 if ! command -v cloudflared &> /dev/null; then
@@ -17,6 +20,21 @@ if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
     echo "   Please set it in your .env file or export it:"
     echo "   export TELEGRAM_BOT_TOKEN=your_bot_token"
     exit 1
+fi
+
+# Check if tunnel is already running
+if [ -f .tunnel_pid ]; then
+    EXISTING_PID=$(cat .tunnel_pid)
+    if ps -p $EXISTING_PID > /dev/null; then
+        echo "⚠️  Tunnel is already running (PID: $EXISTING_PID)"
+        if [ -f .tunnel_url ]; then
+            echo "🌐 Tunnel URL: $(cat .tunnel_url)"
+        fi
+        exit 0
+    else
+        echo "🧹 Cleaning up stale PID file..."
+        rm -f .tunnel_pid .tunnel_url
+    fi
 fi
 
 # Default port for wrangler dev
@@ -68,13 +86,13 @@ echo "$TUNNEL_URL" > .tunnel_url
 echo "$TUNNEL_PID" > .tunnel_pid
 
 echo ""
-echo "🎉 Local development setup complete!"
+echo "🎉 Local development tunnel setup complete!"
 echo "📱 Tunnel URL: $TUNNEL_URL"
 echo "🤖 Webhook URL: $WEBHOOK_URL"
 echo "🔄 Process ID: $TUNNEL_PID"
 echo ""
-echo "🛠️  To stop the tunnel, run: ./scripts/stop-tunnel.sh"
-echo "📋 To check webhook status: ./scripts/webhook-status.sh"
+echo "🛠️  To stop the tunnel: npm run tunnel:stop"
+echo "📋 To check status: npm run tunnel:status"
 echo ""
 echo "Now start your development server:"
-echo "  cd backend && npm run dev"
+echo "  npm run dev:backend"

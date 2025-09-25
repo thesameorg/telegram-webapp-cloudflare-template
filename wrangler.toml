@@ -11,15 +11,12 @@ name = "twa-cf-tpl-preview"
 [env.production]
 name = "twa-cf-tpl-prod"
 
-# Variables that are the same across all environments
+# Non-secret environment variables
 [vars]
 ENVIRONMENT = "local"
-TELEGRAM_BOT_TOKEN = "7747466363:AAFJ6APrEtFeGDT36epoD8ZAb7TaIl3BwNQ"
-TELEGRAM_ADMIN_ID = "62408647"
 
-# Environment-specific variables
 [env.preview.vars]
 ENVIRONMENT = "preview"
 
 [env.production.vars]
-ENVIRONMENT = "prod"
+ENVIRONMENT = "production"
