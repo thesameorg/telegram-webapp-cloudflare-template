@@ -196,7 +196,7 @@ if [ $ERRORS -eq 0 ]; then
     echo -e "${GREEN}🎉 All checks passed! Environment is ready.${NC}"
     echo ""
     echo "Next steps:"
-    echo "1. Set up local development: npm run tunnel"
+    echo "1. Set up local development: npm run tunnel:start"
     echo "2. Start backend: npm run dev:backend"
     echo "3. Start frontend: npm run dev:frontend"
     exit 0
