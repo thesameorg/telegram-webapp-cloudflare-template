@@ -1,5 +1,5 @@
 import { Context } from 'hono'
-import { Bot, webhookCallback } from 'grammy'
+import { Bot, webhookCallback, Context as GrammyContext } from 'grammy'
 
 export async function handleWebhook(c: Context) {
   try {
@@ -17,7 +17,7 @@ export async function handleWebhook(c: Context) {
     const bot = new Bot(botToken)
 
     // Handle /start command
-    bot.command('start', async (ctx) => {
+    bot.command('start', async (ctx: GrammyContext) => {
       const firstName = ctx.from?.first_name || 'User'
       const webAppUrl = 'https://603419c0.twa-cf-tpl.pages.dev'
 
@@ -36,8 +36,8 @@ export async function handleWebhook(c: Context) {
     })
 
     // Handle other messages
-    bot.on('message', async (ctx) => {
-      if (!ctx.message.text?.startsWith('/')) {
+    bot.on('message', async (ctx: GrammyContext) => {
+      if (ctx.message && !ctx.message.text?.startsWith('/')) {
         await ctx.reply('Thanks for your message! Use /start to see the web app.')
       }
     })

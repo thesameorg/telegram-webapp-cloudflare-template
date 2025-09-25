@@ -46,7 +46,7 @@ app.post('/api/test-message', async (c) => {
       })
     })
 
-    const result = await response.json()
+    const result = await response.json() as { ok: boolean; [key: string]: any }
 
     if (result.ok) {
       return c.json({ success: true, message: 'Test message sent!' })
@@ -54,7 +54,8 @@ app.post('/api/test-message', async (c) => {
       return c.json({ error: 'Failed to send message', details: result }, 400)
     }
   } catch (error) {
-    return c.json({ error: 'Internal error', details: error.message }, 500)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return c.json({ error: 'Internal error', details: errorMessage }, 500)
   }
 })
 
