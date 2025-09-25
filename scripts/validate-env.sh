@@ -119,10 +119,11 @@ else
     ERRORS=$((ERRORS + 1))
 fi
 
-if command -v cloudflared &> /dev/null; then
-    echo -e "${GREEN}✅ cloudflared is installed${NC}"
+if command -v ngrok &> /dev/null; then
+    echo -e "${GREEN}✅ ngrok is installed${NC}"
 else
-    echo -e "${YELLOW}⚠️  cloudflared is not installed (needed for local development)${NC}"
+    echo -e "${YELLOW}⚠️  ngrok is not installed (needed for local development)${NC}"
+    SHOULD_EXIT=true
 fi
 
 if command -v curl &> /dev/null; then
@@ -206,6 +207,6 @@ else
     echo "1. Copy .env.example to .env and fill in your values"
     echo "2. Install Node.js from https://nodejs.org"
     echo "3. Install dependencies: npm run install"
-    echo "4. Install cloudflared from https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/"
+    echo "4. Install ngrok from https://ngrok.com/download"
     exit 1
 fi

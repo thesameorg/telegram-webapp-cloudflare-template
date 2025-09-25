@@ -10,7 +10,7 @@ A complete template for building Telegram Web Apps with integrated bot functiona
 - **Cloudflare Deployment**: Workers + Pages with edge performance
 - **Environment Separation**: Local, preview, and production environments
 - **Automated CI/CD**: GitHub Actions with deployment and webhook setup
-- **Local Development**: cloudflared tunnel for real webhook testing
+- **Local Development**: ngrok tunnel for real webhook testing
 - **Contract Testing**: TDD approach with comprehensive test suite
 
 ## 📋 Prerequisites
@@ -21,7 +21,7 @@ A complete template for building Telegram Web Apps with integrated bot functiona
 - **Cloudflare Account** - [Sign up](https://dash.cloudflare.com/sign-up)
 
 ### Recommended
-- **cloudflared** - [Install](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) for local development
+- **ngrok** - [Install](https://ngrok.com/download) for local development
 - **jq** - [Install](https://jqlang.github.io/jq/download/) for JSON processing
 
 ## 🛠️ Quick Start
@@ -101,7 +101,7 @@ npm run dev
 This template supports three environments:
 
 ### Local Development
-- Uses cloudflared tunnel for webhooks
+- Uses ngrok tunnel for webhooks
 - Real bot token for authentic testing
 - Hot reload for both backend and frontend
 

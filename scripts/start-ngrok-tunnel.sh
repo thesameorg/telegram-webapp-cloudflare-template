@@ -5,12 +5,12 @@ set -e
 # Load environment variables
 source "$(dirname "$0")/load-env.sh"
 
-echo "🚀 Starting local development webhook tunnel..."
+echo "🚀 Starting local development webhook tunnel (ngrok)..."
 
-# Check if cloudflared is installed
-if ! command -v cloudflared &> /dev/null; then
-    echo "❌ cloudflared is not installed. Please install it first:"
-    echo "   https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/"
+# Check if ngrok is installed
+if ! command -v ngrok &> /dev/null; then
+    echo "❌ ngrok is not installed. Please install it first:"
+    echo "   https://ngrok.com/download"
     exit 1
 fi
 
@@ -23,17 +23,17 @@ if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
 fi
 
 # Check if tunnel is already running
-if [ -f .tunnel_pid ]; then
-    EXISTING_PID=$(cat .tunnel_pid)
+if [ -f pids/ngrok.pid ]; then
+    EXISTING_PID=$(cat pids/ngrok.pid)
     if ps -p $EXISTING_PID > /dev/null; then
-        echo "⚠️  Tunnel is already running (PID: $EXISTING_PID)"
-        if [ -f .tunnel_url ]; then
-            echo "🌐 Tunnel URL: $(cat .tunnel_url)"
+        echo "⚠️  ngrok tunnel is already running (PID: $EXISTING_PID)"
+        if [ -f pids/ngrok.url ]; then
+            echo "🌐 Tunnel URL: $(cat pids/ngrok.url)"
         fi
         exit 0
     else
         echo "🧹 Cleaning up stale PID file..."
-        rm -f .tunnel_pid .tunnel_url
+        rm -f pids/ngrok.pid pids/ngrok.url
     fi
 fi
 
@@ -41,25 +41,25 @@ fi
 PORT=${1:-3000}
 echo "📡 Using port: $PORT (frontend with backend proxy)"
 
-# Start cloudflared tunnel in background
-echo "🌐 Starting cloudflared tunnel..."
-cloudflared tunnel --url http://localhost:$PORT > tunnel.log 2>&1 &
-TUNNEL_PID=$!
+# Start ngrok tunnel in background
+echo "🌐 Starting ngrok tunnel..."
+ngrok http $PORT --host-header=localhost:$PORT --log=stdout > logs/ngrok.log 2>&1 &
+NGROK_PID=$!
 
 # Wait for tunnel to be ready
 echo "⏳ Waiting for tunnel to be ready..."
 for i in {1..20}; do
     sleep 1
-    TUNNEL_URL=$(grep -o 'https://[^[:space:]]*\.trycloudflare\.com' tunnel.log | head -1)
-    if [ ! -z "$TUNNEL_URL" ]; then
+    TUNNEL_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+    if [ ! -z "$TUNNEL_URL" ] && [ "$TUNNEL_URL" != "null" ]; then
         break
     fi
     echo "   Still waiting... (${i}s)"
 done
 
-if [ -z "$TUNNEL_URL" ]; then
-    echo "❌ Failed to start tunnel. Check tunnel.log for details."
-    kill $TUNNEL_PID 2>/dev/null || true
+if [ -z "$TUNNEL_URL" ] || [ "$TUNNEL_URL" == "null" ]; then
+    echo "❌ Failed to start ngrok tunnel. Check logs/ngrok.log for details."
+    kill $NGROK_PID 2>/dev/null || true
     exit 1
 fi
 
@@ -85,22 +85,26 @@ if echo "$WEBHOOK_RESPONSE" | jq -e '.ok' > /dev/null; then
 else
     echo "❌ Failed to set webhook:"
     echo "$WEBHOOK_RESPONSE" | jq '.'
-    kill $TUNNEL_PID 2>/dev/null || true
+    kill $NGROK_PID 2>/dev/null || true
     exit 1
 fi
 
 # Save tunnel info
-echo "$TUNNEL_URL" > .tunnel_url
-echo "$TUNNEL_PID" > .tunnel_pid
+echo "$TUNNEL_URL" > pids/ngrok.url
+echo "$NGROK_PID" > pids/ngrok.pid
 
 echo ""
 echo "🎉 Local development tunnel setup complete!"
 echo "📱 Tunnel URL: $TUNNEL_URL"
 echo "🤖 Webhook URL: $WEBHOOK_URL"
-echo "🔄 Process ID: $TUNNEL_PID"
+echo "🔄 Process ID: $NGROK_PID"
+
+
 echo ""
 echo "🛠️  To stop the tunnel: npm run tunnel:stop"
 echo "📋 To check status: npm run tunnel:status"
-echo ""
+
+
+
 echo "Now start your development server:"
 echo "  npm run dev:backend"

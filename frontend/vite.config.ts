@@ -7,6 +7,7 @@ export default defineConfig({
     port: 3000,
     host: true,
     strictPort: true, // Fail if port is busy instead of trying another
+    allowedHosts: ['*.ngrok-free.app', '*.trycloudflare.com'],
     proxy: {
       '/api': 'http://localhost:8787',
       '/health': 'http://localhost:8787',

@@ -35,8 +35,10 @@
     "ci-check": "npm run install && npm run typecheck && npm run test && npm run build",
     "clean": "./scripts/clean.sh",
     "validate": "./scripts/validate-env.sh",
-    "tunnel:start": "./scripts/start-tunnel.sh",
-    "tunnel:stop": "./scripts/stop-tunnel.sh",
+    "tunnel:start": "./scripts/start-ngrok-tunnel.sh",
+    "tunnel:stop": "./scripts/stop-ngrok-tunnel.sh",
+    "tunnel:start:ngrok": "./scripts/start-ngrok-tunnel.sh",
+    "tunnel:stop:ngrok": "./scripts/stop-ngrok-tunnel.sh",
     "tunnel:status": "./scripts/webhook-status.sh"
   },
   "repository": {

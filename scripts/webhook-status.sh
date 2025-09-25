@@ -30,13 +30,13 @@ else
 fi
 
 # Check if tunnel is running
-if [ -f .tunnel_url ]; then
-    TUNNEL_URL=$(cat .tunnel_url)
+if [ -f pids/ngrok.url ]; then
+    TUNNEL_URL=$(cat pids/ngrok.url)
     echo ""
     echo "🌐 Local tunnel: $TUNNEL_URL"
 
-    if [ -f .tunnel_pid ]; then
-        TUNNEL_PID=$(cat .tunnel_pid)
+    if [ -f pids/ngrok.pid ]; then
+        TUNNEL_PID=$(cat pids/ngrok.pid)
         if ps -p $TUNNEL_PID > /dev/null; then
             echo "✅ Tunnel process $TUNNEL_PID is running"
         else

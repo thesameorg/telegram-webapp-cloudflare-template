@@ -3,11 +3,11 @@
 # Load environment variables
 source "$(dirname "$0")/load-env.sh"
 
-echo "🛑 Stopping cloudflared tunnel..."
+echo "🛑 Stopping ngrok tunnel..."
 
 # Check if tunnel is running
-if [ -f .tunnel_pid ]; then
-    TUNNEL_PID=$(cat .tunnel_pid)
+if [ -f pids/ngrok.pid ]; then
+    TUNNEL_PID=$(cat pids/ngrok.pid)
     if ps -p $TUNNEL_PID > /dev/null; then
         kill $TUNNEL_PID
         echo "✅ Tunnel process $TUNNEL_PID stopped"
@@ -21,12 +21,12 @@ if [ -f .tunnel_pid ]; then
     else
         echo "⚠️  Tunnel process $TUNNEL_PID not found (may have already stopped)"
     fi
-    rm -f .tunnel_pid
+    rm -f pids/ngrok.pid
 else
     echo "⚠️  No tunnel PID file found - tunnel may not be running"
 fi
 
 # Clean up tunnel files
-rm -f .tunnel_url tunnel.log
+rm -f pids/ngrok.url logs/ngrok.log
 
 echo "🧹 Cleanup complete"

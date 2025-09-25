@@ -14,7 +14,7 @@ paths:
   /webhook:
     post:
       summary: Handle Telegram webhook updates
-      description: Receives webhook updates from Telegram Bot API. Environment determined by deployment URL (local via cloudflared tunnel, preview/prod via Cloudflare deployment URLs)
+      description: Receives webhook updates from Telegram Bot API. Environment determined by deployment URL
       requestBody:
         required: true
         content:
