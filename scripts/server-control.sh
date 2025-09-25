@@ -10,8 +10,8 @@ setup_dirs() {
 start_backend() {
     echo "Starting backend dev server in background on http://localhost:8787"
     setup_dirs
-    cd backend && nohup npx wrangler dev --local --port 8787 > ../logs/backend.log 2>&1 & echo $! > ../pids/backend.pid
-    cd ..
+    local current_dir=$(pwd)
+    (cd backend && nohup npx wrangler dev --local --port 8787 > "$current_dir/logs/backend.log" 2>&1 & echo $! > "$current_dir/pids/backend.pid")
     sleep 1
     if [ -f pids/backend.pid ]; then
         echo "Backend started with PID: $(cat pids/backend.pid)"
@@ -25,8 +25,8 @@ start_backend() {
 start_frontend() {
     echo "Starting frontend dev server in background"
     setup_dirs
-    cd frontend && nohup npm run dev > ../logs/frontend.log 2>&1 & echo $! > ../pids/frontend.pid
-    cd ..
+    local current_dir=$(pwd)
+    (cd frontend && nohup npm run dev > "$current_dir/logs/frontend.log" 2>&1 & echo $! > "$current_dir/pids/frontend.pid")
     sleep 1
     if [ -f pids/frontend.pid ]; then
         echo "Frontend started with PID: $(cat pids/frontend.pid)"
@@ -73,7 +73,13 @@ status() {
         echo "❌ Backend: Stopped"
     fi
     if [ -f pids/frontend.pid ] && kill -0 $(cat pids/frontend.pid) 2>/dev/null; then
-        echo "✅ Frontend: Running (PID: $(cat pids/frontend.pid)) - http://localhost:5173"
+        # Try to extract actual port from logs
+        frontend_port=$(grep -o "Local:.*http://localhost:[0-9]*" logs/frontend.log 2>/dev/null | grep -o "[0-9]*" | tail -1)
+        if [ -n "$frontend_port" ]; then
+            echo "✅ Frontend: Running (PID: $(cat pids/frontend.pid)) - http://localhost:$frontend_port"
+        else
+            echo "✅ Frontend: Running (PID: $(cat pids/frontend.pid)) - http://localhost:3000"
+        fi
     else
         echo "❌ Frontend: Stopped"
     fi
@@ -94,7 +100,7 @@ case "$1" in
             *) start_backend && start_frontend
                echo "Both servers started!"
                echo "Backend: http://localhost:8787"
-               echo "Frontend: http://localhost:5173"
+               echo "Frontend: http://localhost:3000"
                echo "Check logs: npm run logs"
                ;;
         esac

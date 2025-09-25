@@ -37,9 +37,9 @@ if [ -f .tunnel_pid ]; then
     fi
 fi
 
-# Default port for wrangler dev
-PORT=${1:-8787}
-echo "📡 Using port: $PORT"
+# Default port for frontend (which proxies to backend)
+PORT=${1:-3000}
+echo "📡 Using port: $PORT (frontend with backend proxy)"
 
 # Start cloudflared tunnel in background
 echo "🌐 Starting cloudflared tunnel..."
@@ -48,10 +48,14 @@ TUNNEL_PID=$!
 
 # Wait for tunnel to be ready
 echo "⏳ Waiting for tunnel to be ready..."
-sleep 5
-
-# Extract tunnel URL from log
-TUNNEL_URL=$(grep -o 'https://[^[:space:]]*\.trycloudflare\.com' tunnel.log | head -1)
+for i in {1..20}; do
+    sleep 1
+    TUNNEL_URL=$(grep -o 'https://[^[:space:]]*\.trycloudflare\.com' tunnel.log | head -1)
+    if [ ! -z "$TUNNEL_URL" ]; then
+        break
+    fi
+    echo "   Still waiting... (${i}s)"
+done
 
 if [ -z "$TUNNEL_URL" ]; then
     echo "❌ Failed to start tunnel. Check tunnel.log for details."
@@ -60,6 +64,10 @@ if [ -z "$TUNNEL_URL" ]; then
 fi
 
 echo "✅ Tunnel started: $TUNNEL_URL"
+
+# Wait a bit for tunnel to be fully propagated
+echo "⏳ Waiting for tunnel to be fully available..."
+sleep 5
 
 # Set webhook URL
 WEBHOOK_URL="$TUNNEL_URL/webhook"

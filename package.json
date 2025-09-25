@@ -4,7 +4,6 @@
   "description": "Telegram Web App + Bot Template for Cloudflare",
   "scripts": {
     "install": "./scripts/install-all.sh",
-    "install:all": "./scripts/install-all.sh",
     "dev:backend": "cd backend && npx wrangler dev --local --port 8787",
     "dev:frontend": "cd frontend && npm run dev",
     "start": "./scripts/server-control.sh start",

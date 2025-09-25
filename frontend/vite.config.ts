@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    strictPort: true, // Fail if port is busy instead of trying another
     proxy: {
       '/api': 'http://localhost:8787',
       '/health': 'http://localhost:8787',
