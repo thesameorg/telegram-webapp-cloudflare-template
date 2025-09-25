@@ -11,6 +11,7 @@ start_backend() {
     echo "Starting backend dev server in background on http://localhost:8787"
     setup_dirs
     cd backend && nohup npx wrangler dev --local --port 8787 > ../logs/backend.log 2>&1 & echo $! > ../pids/backend.pid
+    cd ..
     sleep 1
     if [ -f pids/backend.pid ]; then
         echo "Backend started with PID: $(cat pids/backend.pid)"
@@ -25,6 +26,7 @@ start_frontend() {
     echo "Starting frontend dev server in background"
     setup_dirs
     cd frontend && nohup npm run dev > ../logs/frontend.log 2>&1 & echo $! > ../pids/frontend.pid
+    cd ..
     sleep 1
     if [ -f pids/frontend.pid ]; then
         echo "Frontend started with PID: $(cat pids/frontend.pid)"

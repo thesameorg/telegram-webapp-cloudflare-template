@@ -7,8 +7,6 @@
     "dev": "wrangler dev --local",
     "deploy": "wrangler deploy",
     "deploy:local": "wrangler dev --local",
-    "deploy:preview": "wrangler deploy --env preview",
-    "deploy:prod": "wrangler deploy --env production",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "typecheck": "tsc --noEmit"

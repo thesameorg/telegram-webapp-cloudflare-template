@@ -133,7 +133,7 @@ This template supports three environments:
 ```bash
 # Deploy backend
 cd backend
-npm run deploy:prod
+npx wrangler deploy
 
 # Deploy frontend
 cd frontend

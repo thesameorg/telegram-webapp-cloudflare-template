@@ -1,7 +1,22 @@
 import { useTelegram } from '../utils/telegram'
+import { useState, useEffect } from 'react'
 
 export default function HelloWorld() {
   const { webApp, user, isWebAppReady } = useTelegram()
+  const [healthStatus, setHealthStatus] = useState('Checking...')
+  const [healthTimestamp, setHealthTimestamp] = useState('-')
+
+  useEffect(() => {
+    fetch('/health')
+      .then(r => r.json())
+      .then(data => {
+        setHealthStatus(data.status)
+        setHealthTimestamp(new Date(data.timestamp).toLocaleString())
+      })
+      .catch(() => {
+        setHealthStatus('Error')
+      })
+  }, [])
 
   return (
     <div
@@ -19,24 +34,10 @@ export default function HelloWorld() {
           </p>
 
           <div className="text-sm text-gray-600">
-            <p><strong>Backend Status:</strong> <span id="health-status">Checking...</span></p>
-            <p><strong>Last Check:</strong> <span id="health-timestamp">-</span></p>
+            <p><strong>Backend Status:</strong> <span>{healthStatus}</span></p>
+            <p><strong>Last Check:</strong> <span>{healthTimestamp}</span></p>
           </div>
         </div>
-
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            fetch('/health')
-              .then(r => r.json())
-              .then(data => {
-                document.getElementById('health-status').textContent = data.status;
-                document.getElementById('health-timestamp').textContent = new Date(data.timestamp).toLocaleString();
-              })
-              .catch(() => {
-                document.getElementById('health-status').textContent = 'Error';
-              });
-          `
-        }} />
 
         <div className="bg-blue-50 p-4 rounded-lg">
           <h2 className="text-lg font-semibold text-blue-800 mb-3">

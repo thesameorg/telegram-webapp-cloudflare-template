@@ -38,9 +38,7 @@
     "validate": "./scripts/validate-env.sh",
     "tunnel:start": "./scripts/start-tunnel.sh",
     "tunnel:stop": "./scripts/stop-tunnel.sh",
-    "tunnel:status": "./scripts/webhook-status.sh",
-    "deploy:preview": "cd backend && npm run deploy:preview",
-    "deploy:prod": "cd backend && npm run deploy:prod"
+    "tunnel:status": "./scripts/webhook-status.sh"
   },
   "repository": {
     "type": "git",

@@ -107,7 +107,7 @@ curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage" \
 # Deploy to preview (via GitHub Actions on PR)
 # Or manually:
 cd backend
-npm run deploy:preview
+npx wrangler deploy --env preview
 
 # Webhook is set automatically via GitHub Actions
 ```
@@ -117,7 +117,7 @@ npm run deploy:preview
 # Deploy to production (via GitHub Actions on merge to main)
 # Or manually:
 cd backend
-npm run deploy:prod
+npx wrangler deploy
 
 # Webhook is set automatically via GitHub Actions
 ```
