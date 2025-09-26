@@ -45,8 +45,16 @@ jobs:
         id: deploy-pages
         run: |
           cd frontend
-          # Capture deployment output to get actual URL
+
+          # Get the latest Worker deployment URL
+          echo "Fetching latest Worker deployment URL..."
+          WORKER_URL=$(npx wrangler deployments list --name twa-cf-tpl-prod --limit 1 --format json | jq -r '.[0].url')
+          echo "Found Worker URL: $WORKER_URL"
+
+          # Deploy to Pages with environment variable
           deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)
+        env:
+          WORKER_URL: $(npx wrangler deployments list --name twa-cf-tpl-prod --limit 1 --format json | jq -r '.[0].url')
           echo "Deployment output:"
           echo "$deployment_output"
 

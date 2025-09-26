@@ -2,6 +2,11 @@ name = "twa-cf-tpl"
 main = "backend/src/index.ts"
 compatibility_date = "2024-09-01"
 
+[observability.logs]
+enabled = true
+head_sampling_rate = 0.1
+
+
 [env.local]
 name = "twa-cf-tpl-local"
 
