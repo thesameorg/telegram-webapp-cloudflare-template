@@ -53,7 +53,7 @@ jobs:
 
           # Write the Worker URL directly into the function code
           echo "Writing Worker URL into function..."
-          sed -i "s|env\.WORKER_URL|\"$WORKER_URL\"|g" functions/api/\[...path\].ts
+          sed -i "s|env\.WORKER_URL|\"$WORKER_URL\"|g" "functions/api/[...path].ts"
 
           # Deploy to Pages
           deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)
