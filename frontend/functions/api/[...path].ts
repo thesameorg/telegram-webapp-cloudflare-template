@@ -5,8 +5,8 @@ export async function onRequest(context: {
   const { request, params } = context
 
   try {
-    // Import Worker URL from build-time config
-    const { WORKER_URL } = await import('../../src/config/constants')
+    // Import Worker URL from functions config
+    const { WORKER_URL } = await import('../config')
     const workerUrl = WORKER_URL
 
     // Reconstruct the full path from the catch-all parameter
@@ -37,7 +37,7 @@ export async function onRequest(context: {
     })
 
     // Enhanced CORS and security headers
-    const { CORS_ORIGINS } = await import('../../src/config/constants')
+    const { CORS_ORIGINS } = await import('../config')
     const allowedOrigins = CORS_ORIGINS
 
     const origin = request.headers.get('Origin')
@@ -64,7 +64,7 @@ export async function onRequest(context: {
 
   } catch (error) {
     console.error('Proxy error:', error)
-    const { CORS_ORIGINS } = await import('../../src/config/constants')
+    const { CORS_ORIGINS } = await import('../config')
     return new Response('Internal proxy error', {
       status: 500,
       headers: {
@@ -79,7 +79,7 @@ export async function onRequest(context: {
 export async function onRequestOptions(context: { request: Request }): Promise<Response> {
   const { request } = context
 
-  const { CORS_ORIGINS } = await import('../../src/config/constants')
+  const { CORS_ORIGINS } = await import('../config')
   const allowedOrigins = CORS_ORIGINS
 
   const origin = request.headers.get('Origin')

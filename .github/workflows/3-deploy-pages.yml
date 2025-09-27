@@ -40,9 +40,13 @@ jobs:
         run: |
           cd frontend
 
-          # URLs are injected during build via Vite environment variables
+          # Update function config with GitHub variables
           echo "Worker URL: ${{ vars.WORKER_URL }}"
           echo "Pages URL: ${{ vars.PAGES_URL }}"
+
+          # Replace URLs in functions config
+          sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g' functions/config.ts
+          sed -i 's|https://twa-cf-tpl.pages.dev|${{ vars.PAGES_URL }}|g' functions/config.ts
 
           # Deploy to Pages
           deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)
