@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: Telegram Authorization API
+  description: Authentication endpoints for Telegram Web App using initData validation
+  version: 1.0.0
+  contact:
+    name: TWA CF Template
+servers:
+  - url: /api/auth
+    description: Authentication API endpoints
+
+components:
+  securitySchemes:
+    TelegramInitData:
+      type: http
+      scheme: bearer
+      bearerFormat: initData
+      description: Telegram Web App initData passed as Bearer token
+
+    SessionToken:
+      type: http
+      scheme: bearer
+      bearerFormat: sessionId
+      description: Session ID as Bearer token for authenticated requests
+
+  schemas:
+    TelegramUser:
+      type: object
+      required:
+        - id
+        - first_name
+        - language_code
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique Telegram user ID
+          example: 123456789
+        first_name:
+          type: string
+          description: User's first name
+          example: "John"
+        last_name:
+          type: string
+          description: User's last name
+          example: "Doe"
+        username:
+          type: string
+          description: Telegram username without @
+          example: "johndoe"
+        language_code:
+          type: string
+          description: ISO 639-1 language code
+          example: "en"
+        is_premium:
+          type: boolean
+          description: Telegram Premium status
+        allows_write_to_pm:
+          type: boolean
+          description: Allows bot to write private messages
+        photo_url:
+          type: string
+          format: uri
+          description: Profile picture URL
+          example: "https://t.me/i/userpic/320/..."
+
+    Session:
+      type: object
+      required:
+        - sessionId
+        - userId
+        - displayName
+        - createdAt
+        - expiresAt
+        - isActive
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Unique session identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userId:
+          type: integer
+          format: int64
+          description: Associated Telegram user ID
+          example: 123456789
+        username:
+          type: string
+          description: Telegram username
+          example: "johndoe"
+        displayName:
+          type: string
+          description: User's display name (first + last name)
+          example: "John Doe"
+        profilePictureUrl:
+          type: string
+          format: uri
+          description: Profile picture URL
+        createdAt:
+          type: integer
+          format: int64
+          description: Session creation timestamp (Unix milliseconds)
+          example: 1727404800000
+        expiresAt:
+          type: integer
+          format: int64
+          description: Session expiration timestamp (Unix milliseconds)
+          example: 1727408400000
+        isActive:
+          type: boolean
+          description: Session validity flag
+          example: true
+
+    AuthResponse:
+      type: object
+      required:
+        - success
+        - sessionId
+        - user
+        - expiresAt
+      properties:
+        success:
+          type: boolean
+          example: true
+        sessionId:
+          type: string
+          format: uuid
+          description: Generated session ID for future requests
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        user:
+          $ref: '#/components/schemas/TelegramUser'
+        expiresAt:
+          type: integer
+          format: int64
+          description: Session expiration timestamp
+          example: 1727408400000
+
+    ValidationResponse:
+      type: object
+      required:
+        - valid
+        - user
+      properties:
+        valid:
+          type: boolean
+          example: true
+        user:
+          $ref: '#/components/schemas/TelegramUser'
+        session:
+          $ref: '#/components/schemas/Session'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          example: "INVALID_INIT_DATA"
+        message:
+          type: string
+          description: Human-readable error description
+          example: "Invalid or expired initData"
+        details:
+          type: object
+          description: Additional error context
+
+paths:
+  /authenticate:
+    post:
+      summary: Authenticate user with Telegram initData
+      description: |
+        Validates Telegram Web App initData and creates a new session.
+        Replaces any existing session for the user.
+      security:
+        - TelegramInitData: []
+      requestBody:
+        required: false
+        description: initData can be provided via Authorization header or request body
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                initData:
+                  type: string
+                  description: Telegram Web App initData string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          headers:
+            Set-Cookie:
+              description: HTTP-only session cookie
+              schema:
+                type: string
+                example: "session=550e8400-e29b-41d4-a716-446655440000; HttpOnly; Secure; SameSite=Strict; Max-Age=3600"
+        '400':
+          description: Bad request - missing initData
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "MISSING_INIT_DATA"
+                message: "initData is required"
+        '401':
+          description: Authentication failed - invalid initData
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "INVALID_INIT_DATA"
+                message: "Invalid or expired initData"
+
+  /validate:
+    get:
+      summary: Validate current session
+      description: |
+        Validates the provided session token and returns user information.
+        Used for checking if user is still authenticated.
+      security:
+        - SessionToken: []
+      responses:
+        '200':
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '401':
+          description: Session invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "INVALID_SESSION"
+                message: "Session expired or not found"
+
+  /logout:
+    post:
+      summary: Invalidate current session
+      description: |
+        Explicitly invalidates the current session and clears session cookie.
+        User will need to re-authenticate for future requests.
+      security:
+        - SessionToken: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Session invalidated"
+          headers:
+            Set-Cookie:
+              description: Clear session cookie
+              schema:
+                type: string
+                example: "session=; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
+        '401':
+          description: No valid session to logout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /profile:
+    get:
+      summary: Get current user profile
+      description: |
+        Returns the current authenticated user's profile information.
+        Requires valid session.
+      security:
+        - SessionToken: []
+      responses:
+        '200':
+          description: User profile data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/TelegramUser'
+                  session:
+                    type: object
+                    properties:
+                      sessionId:
+                        type: string
+                        format: uuid
+                      createdAt:
+                        type: integer
+                        format: int64
+                      expiresAt:
+                        type: integer
+                        format: int64
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
