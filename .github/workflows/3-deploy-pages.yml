@@ -31,6 +31,9 @@ jobs:
         run: |
           cd frontend
           npm run build
+        env:
+          VITE_WORKER_URL: ${{ vars.WORKER_URL }}
+          VITE_PAGES_URL: ${{ vars.PAGES_URL }}
 
       - name: Create Pages Project (if needed)
         run: |
@@ -46,14 +49,9 @@ jobs:
         run: |
           cd frontend
 
-          # Use static GitHub variable for Worker URL
-          echo "Using static Worker URL from GitHub variables..."
-          WORKER_URL="${{ vars.WORKER_URL }}"
-          echo "Worker URL: $WORKER_URL"
-
-          # Write the Worker URL directly into the function code
-          echo "Writing Worker URL into function..."
-          sed -i "s|env\.WORKER_URL|\"$WORKER_URL\"|g" "functions/api/[...path].ts"
+          # URLs are injected during build via Vite environment variables
+          echo "Worker URL: ${{ vars.WORKER_URL }}"
+          echo "Pages URL: ${{ vars.PAGES_URL }}"
 
           # Deploy to Pages
           deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)

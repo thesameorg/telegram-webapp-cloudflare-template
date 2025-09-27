@@ -5,8 +5,9 @@ export async function onRequest(context: {
   const { request, params } = context
 
   try {
-    // Worker URL is written during deployment
-    const workerUrl = env.WORKER_URL
+    // Import Worker URL from build-time config
+    const { WORKER_URL } = await import('../../src/config/constants')
+    const workerUrl = WORKER_URL
 
     // Reconstruct the full path from the catch-all parameter
     const fullPath = params.path.join('/')
@@ -36,13 +37,11 @@ export async function onRequest(context: {
     })
 
     // Enhanced CORS and security headers
-    const allowedOrigins = [
-      'https://twa-cf-tpl.pages.dev', // Static Pages URL
-      'https://t.me' // Telegram WebApp
-    ]
+    const { CORS_ORIGINS } = await import('../../src/config/constants')
+    const allowedOrigins = CORS_ORIGINS
 
     const origin = request.headers.get('Origin')
-    if (allowedOrigins.some(allowed => origin?.includes(allowed))) {
+    if (origin && allowedOrigins.some(allowed => origin.includes(allowed))) {
       clonedResponse.headers.set('Access-Control-Allow-Origin', origin)
     } else {
       clonedResponse.headers.set('Access-Control-Allow-Origin', allowedOrigins[0])
@@ -65,10 +64,11 @@ export async function onRequest(context: {
 
   } catch (error) {
     console.error('Proxy error:', error)
+    const { CORS_ORIGINS } = await import('../../src/config/constants')
     return new Response('Internal proxy error', {
       status: 500,
       headers: {
-        'Access-Control-Allow-Origin': 'https://twa-cf-tpl.pages.dev',
+        'Access-Control-Allow-Origin': CORS_ORIGINS[0],
         'Content-Type': 'text/plain'
       }
     })
@@ -79,13 +79,11 @@ export async function onRequest(context: {
 export async function onRequestOptions(context: { request: Request }): Promise<Response> {
   const { request } = context
 
-  const allowedOrigins = [
-    'https://twa-cf-tpl.pages.dev', // Static Pages URL
-    'https://t.me' // Telegram WebApp
-  ]
+  const { CORS_ORIGINS } = await import('../../src/config/constants')
+  const allowedOrigins = CORS_ORIGINS
 
   const origin = request.headers.get('Origin')
-  const allowOrigin = allowedOrigins.some(allowed => origin?.includes(allowed))
+  const allowOrigin = (origin && allowedOrigins.some(allowed => origin.includes(allowed)))
     ? origin
     : allowedOrigins[0]
 
