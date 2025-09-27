@@ -4,7 +4,7 @@
   "description": "Telegram Web App + Bot Template for Cloudflare",
   "scripts": {
     "install": "./scripts/install-all.sh",
-    "dev:backend": "cd backend && npx wrangler dev --local --port 8787",
+    "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "start": "./scripts/server-control.sh start",
     "start:backend": "./scripts/server-control.sh start backend",
@@ -26,7 +26,7 @@
     "typecheck:frontend": "cd frontend && npm run typecheck",
     "typecheck:all": "npm run typecheck",
     "build": "npm run build:backend && npm run build:frontend",
-    "build:backend": "cd backend && npx wrangler deploy --dry-run --env=\"\"",
+    "build:backend": "cd backend && npm run typecheck",
     "build:frontend": "cd frontend && npm run build",
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "cd backend && npm run lint || echo 'No lint script found'",
@@ -61,8 +61,5 @@
   },
   "devDependencies": {
     "wrangler": "^4.39.0"
-  },
-  "dependencies": {
-    "grammy": "^1.38.2"
   }
 }

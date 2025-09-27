@@ -4,9 +4,9 @@
   "description": "Telegram Web App + Bot Template Backend",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "wrangler dev --local",
-    "deploy": "wrangler deploy",
-    "deploy:local": "wrangler dev --local",
+    "dev": "../node_modules/.bin/wrangler dev --local",
+    "deploy": "../node_modules/.bin/wrangler deploy",
+    "deploy:local": "../node_modules/.bin/wrangler dev --local",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "typecheck": "tsc --noEmit"
@@ -21,7 +21,6 @@
     "@cloudflare/workers-types": "^4.20240909.0",
     "@types/node": "^20.16.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5",
-    "wrangler": "^4.39.0"
+    "vitest": "^2.0.5"
   }
 }
