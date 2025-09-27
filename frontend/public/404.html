@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 500px;
+            padding: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { font-size: 4rem; margin: 0; }
+        h2 { font-size: 1.5rem; margin: 1rem 0; }
+        p { font-size: 1.1rem; margin: 1rem 0; opacity: 0.9; }
+        a {
+            color: white;
+            text-decoration: none;
+            padding: 0.8rem 2rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 1rem;
+            transition: background 0.3s;
+        }
+        a:hover { background: rgba(255,255,255,0.3); }
+        .path {
+            background: rgba(0,0,0,0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>404</h1>
+        <h2>Page Not Found</h2>
+        <p>The page you're looking for doesn't exist.</p>
+        <p>You might be looking for the main app or our API endpoints.</p>
+        <a href="/">← Back to Home</a>
+    </div>
+</body>
+</html>
