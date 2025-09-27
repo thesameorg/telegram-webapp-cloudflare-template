@@ -48,18 +48,10 @@ jobs:
           sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g' functions/config.ts
           sed -i 's|https://twa-cf-tpl.pages.dev|${{ vars.PAGES_URL }}|g' functions/config.ts
 
-          # Deploy to Pages
-          deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)
-          echo "Deployment output:"
-          echo "$deployment_output"
-
-          # Extract deployment URL if available
-          if echo "$deployment_output" | grep -q "https://[^[:space:]]*\.pages\.dev"; then
-            deployment_url=$(echo "$deployment_output" | grep -o "https://[^[:space:]]*\.pages\.dev" | head -1)
-            echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
-          else
-            echo "deployment_url=https://twa-cf-tpl.pages.dev" >> $GITHUB_OUTPUT
-          fi
+          # Deploy to Pages (show real errors)
+          echo "Starting Pages deployment..."
+          npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true
+          echo "Deployment completed successfully"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
