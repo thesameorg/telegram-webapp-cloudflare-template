@@ -46,15 +46,17 @@ jobs:
         run: |
           cd frontend
 
-          # Get the latest Worker deployment URL
-          echo "Fetching latest Worker deployment URL..."
-          WORKER_URL=$(npx wrangler deployments list --name twa-cf-tpl-prod --limit 1 --format json | jq -r '.[0].url')
-          echo "Found Worker URL: $WORKER_URL"
+          # Use static GitHub variable for Worker URL
+          echo "Using static Worker URL from GitHub variables..."
+          WORKER_URL="${{ vars.WORKER_URL }}"
+          echo "Worker URL: $WORKER_URL"
 
-          # Deploy to Pages with environment variable
+          # Write the Worker URL directly into the function code
+          echo "Writing Worker URL into function..."
+          sed -i "s|env\.WORKER_URL|\"$WORKER_URL\"|g" functions/api/\[...path\].ts
+
+          # Deploy to Pages
           deployment_output=$(npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true 2>&1)
-        env:
-          WORKER_URL: $(npx wrangler deployments list --name twa-cf-tpl-prod --limit 1 --format json | jq -r '.[0].url')
           echo "Deployment output:"
           echo "$deployment_output"
 
@@ -72,8 +74,8 @@ jobs:
       - name: Get Pages URL
         id: pages-url
         run: |
-          # Use deployment URL or default
-          PAGES_URL="${{ steps.deploy-pages.outputs.deployment_url }}"
+          # Use static GitHub variable
+          PAGES_URL="${{ vars.PAGES_URL }}"
           echo "Pages URL: $PAGES_URL"
           echo "url=$PAGES_URL" >> $GITHUB_OUTPUT
 

@@ -22,16 +22,16 @@ jobs:
 
   deploy-pages:
     name: "Deploy Pages"
-    needs: [build-and-test, deploy-worker]
+    needs: build-and-test
     uses: ./.github/workflows/3-deploy-pages.yml
     secrets: inherit
 
   setup-webhook:
     name: "Setup Webhook"
-    needs: [build-and-test, deploy-worker, deploy-pages]
+    needs: [build-and-test, deploy-worker]
     uses: ./.github/workflows/4-setup-webhook.yml
     with:
-      worker_url: ${{ needs.deploy-worker.outputs.worker_url }}
+      worker_url: ${{ vars.WORKER_URL }}
     secrets: inherit
 
   pipeline-summary:
