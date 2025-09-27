@@ -7,7 +7,7 @@ export default function HelloWorld() {
   const [healthTimestamp, setHealthTimestamp] = useState('-')
 
   useEffect(() => {
-    fetch('/health')
+    fetch('/api/health')
       .then(r => r.json())
       .then(data => {
         setHealthStatus(data.status)
