@@ -1,0 +1,5 @@
+# API routes go to Functions
+/api/* /api/:splat 200
+
+# Everything else goes to React app (SPA)
+/* /index.html 200
