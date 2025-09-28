@@ -15,7 +15,3 @@ id = "214af53e9fd44c18ba913499a606dd70"
 # Non-secret environment variables
 [vars]
 ENVIRONMENT = "production"
-
-# Secret environment variables (set via wrangler secret put)
-# TELEGRAM_BOT_TOKEN - Telegram bot token for initData validation
-# TELEGRAM_ADMIN_ID - Admin user ID
