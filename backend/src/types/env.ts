@@ -17,27 +17,7 @@ export interface Env {
   WEBHOOK_SECRET?: string;
 }
 
-/**
- * Hono Context Variables for Telegram Authentication
- */
-export interface TelegramAuthVariables {
-  telegramUser: TelegramUser;
-  sessionId: string;
-}
 
-/**
- * Telegram User interface from initData
- */
-export interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code: string;
-  is_premium?: boolean;
-  allows_write_to_pm?: boolean;
-  photo_url?: string;
-}
 
 /**
  * Session data structure stored in KV
@@ -51,32 +31,4 @@ export interface SessionData {
   createdAt: number;
   expiresAt: number;
   isActive: boolean;
-}
-
-/**
- * Authentication response structure
- */
-export interface AuthResponse {
-  success: boolean;
-  sessionId: string;
-  user: TelegramUser;
-  expiresAt: number;
-}
-
-/**
- * Session validation response structure
- */
-export interface ValidationResponse {
-  valid: boolean;
-  user: TelegramUser;
-  session?: SessionData;
-}
-
-/**
- * Error response structure
- */
-export interface ErrorResponse {
-  error: string;
-  message: string;
-  details?: Record<string, unknown>;
 }

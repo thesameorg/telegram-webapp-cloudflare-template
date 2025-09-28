@@ -85,31 +85,3 @@ export function useTelegram() {
     closeTelegram
   }
 }
-
-export function validateTelegramInitData(initData: string, botToken: string): boolean {
-  if (!initData || !botToken) {
-    return false
-  }
-
-  try {
-    const urlParams = new URLSearchParams(initData)
-    const hash = urlParams.get('hash')
-
-    if (!hash) {
-      return false
-    }
-
-    urlParams.delete('hash')
-    // const dataCheckString = Array.from(urlParams.entries())
-    //   .sort(([a], [b]) => a.localeCompare(b))
-    //   .map(([key, value]) => `${key}=${value}`)
-    //   .join('\n')
-
-    // TODO: Implement proper HMAC validation
-    return true
-
-  } catch (error) {
-    console.error('Error validating Telegram init data:', error)
-    return false
-  }
-}
