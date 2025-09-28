@@ -33,6 +33,14 @@ jobs:
           cd backend
           npm install
 
+      - name: Create KV Namespace
+        run: |
+          cd backend
+          npx wrangler kv:namespace create sessions || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Set Cloudflare Secrets
         run: |
           cd backend
@@ -106,6 +114,14 @@ jobs:
           if [ "$hello_status" != "200" ]; then
             echo "❌ Hello API check failed with status $hello_status"
             exit 1
+          fi
+
+          # Test that KV is accessible by checking health endpoint for KV status
+          echo "Checking KV availability in health endpoint..."
+          if echo "$health_body" | grep -q '"kv"'; then
+            echo "✅ KV binding detected in health endpoint"
+          else
+            echo "⚠️ KV binding not found in health response, but continuing..."
           fi
 
           echo "✅ Worker deployment verified"

@@ -1,10 +1,17 @@
 name = "twa-cf-tpl"
 main = "backend/src/index.ts"
 compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
 
 [observability.logs]
 enabled = true
 head_sampling_rate = 0.1
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "sessions_dev"
+preview_id = "sessions_preview"
 
 
 [env.local]
@@ -19,6 +26,10 @@ name = "twa-cf-tpl-prod"
 # Non-secret environment variables
 [vars]
 ENVIRONMENT = "local"
+BOT_TOKEN = "$TELEGRAM_BOT_TOKEN"
+
+# Secret environment variables (set via wrangler secret put)
+# BOT_TOKEN - Telegram bot token for initData validation
 
 [env.preview.vars]
 ENVIRONMENT = "preview"

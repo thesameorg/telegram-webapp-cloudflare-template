@@ -42,18 +42,13 @@ describe('GET /api/hello', () => {
     expect(['local', 'preview', 'prod', 'test']).toContain(result.environment)
   })
 
-  it('should handle CORS preflight requests', async () => {
+  it('should handle basic requests without CORS middleware', async () => {
     const response = await app.request('/api/hello', {
-      method: 'OPTIONS',
-      headers: {
-        'Access-Control-Request-Method': 'GET',
-        'Access-Control-Request-Headers': 'Content-Type'
-      }
+      method: 'GET'
     }, mockEnv)
 
-    expect(response.status).toBe(204)
-    expect(response.headers.get('Access-Control-Allow-Origin')).toBeTruthy()
-    expect(response.headers.get('Access-Control-Allow-Methods')).toBeTruthy()
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('application/json')
   })
 
   it('should respond with proper cache headers for development', async () => {

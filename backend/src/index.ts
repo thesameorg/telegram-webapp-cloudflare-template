@@ -1,31 +1,26 @@
 import { Hono } from 'hono'
-import { cors } from 'hono/cors'
-import { logger } from 'hono/logger'
 import { prettyJSON } from 'hono/pretty-json'
 import { handleWebhook } from './webhook'
 import { helloHandler } from './api/hello'
 import { healthHandler } from './api/health'
+import { authHandler } from './api/auth'
+import type { Env } from './types/env'
 
-type Bindings = {
-  TELEGRAM_BOT_TOKEN: string
-  TELEGRAM_ADMIN_ID: string
-  WEBHOOK_SECRET?: string
-  ENVIRONMENT: string
-}
+const app = new Hono<{ Bindings: Env }>()
 
-const app = new Hono<{ Bindings: Bindings }>()
-
-app.use('*', logger())
+// Simple middleware
 app.use('*', prettyJSON())
-app.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Telegram-Bot-Api-Secret-Token']
-}))
 
-app.get('/health', healthHandler)
+// API endpoints
+app.get('/api/health', healthHandler)
 app.get('/api/hello', helloHandler)
 app.post('/webhook', handleWebhook)
+
+// Authentication endpoints
+app.get('/api/auth', authHandler)
+app.post('/api/auth', authHandler)
+
+
 
 // Test endpoint to send a message to admin
 app.post('/api/test-message', async (c) => {
@@ -59,16 +54,64 @@ app.post('/api/test-message', async (c) => {
   }
 })
 
-app.get('/', (c) => {
+app.get('/', async (c) => {
   const env = c.env.ENVIRONMENT || 'local'
+
+  // Check KV availability for main page with detailed status
+  let kvInfo = {
+    available: false,
+    error: null as string | null,
+    status: 'unknown' as 'healthy' | 'degraded' | 'unavailable' | 'unknown',
+    testResult: null as any,
+    namespace: 'SESSIONS'
+  }
+
+  try {
+    const kv = c.env.SESSIONS
+    if (!kv) {
+      kvInfo.status = 'unavailable'
+      kvInfo.error = 'KV namespace not bound'
+    } else {
+      // Perform a write/read test
+      const testKey = 'status-check'
+      const testValue = { timestamp: new Date().toISOString(), check: 'main-page' }
+      await kv.put(testKey, JSON.stringify(testValue))
+      const result = await kv.get(testKey)
+
+      if (result) {
+        kvInfo.available = true
+        kvInfo.status = 'healthy'
+        kvInfo.testResult = JSON.parse(result)
+      } else {
+        kvInfo.status = 'degraded'
+        kvInfo.error = 'Read test failed'
+      }
+    }
+  } catch (error) {
+    kvInfo.error = error instanceof Error ? error.message : 'Unknown error'
+    kvInfo.available = false
+    kvInfo.status = 'degraded'
+  }
+
   return c.json({
     message: 'Telegram Web App + Bot Template',
     environment: env,
     timestamp: new Date().toISOString(),
+    kvStatus: `KV status: ${kvInfo.status} (${kvInfo.namespace})${kvInfo.error ? ' - ' + kvInfo.error : ''}`,
+    services: {
+      kv: {
+        available: kvInfo.available,
+        status: kvInfo.status,
+        error: kvInfo.error,
+        namespace: kvInfo.namespace,
+        lastTest: kvInfo.testResult
+      }
+    },
     endpoints: {
-      health: '/health',
+      health: '/api/health',
       hello: '/api/hello',
-      webhook: '/webhook'
+      webhook: '/webhook',
+      auth: '/api/auth'
     }
   })
 })
@@ -81,14 +124,13 @@ app.notFound((c) => {
   }, 404)
 })
 
+// Simple error handler
 app.onError((err, c) => {
-  console.error('Server error:', err)
+  console.error('Error:', err);
   return c.json({
-    error: 'Internal Server Error',
-    message: 'An unexpected error occurred',
-    timestamp: new Date().toISOString(),
-    request_id: crypto.randomUUID()
-  }, 500)
+    error: 'INTERNAL_ERROR',
+    message: 'Something went wrong'
+  }, 500);
 })
 
 export default app

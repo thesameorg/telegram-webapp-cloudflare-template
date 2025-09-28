@@ -7,9 +7,9 @@ const mockEnv = {
   ENVIRONMENT: 'test'
 }
 
-describe('GET /health', () => {
+describe('GET /api/health', () => {
   it('should return service health status', async () => {
-    const response = await app.request('/health', {}, mockEnv)
+    const response = await app.request('/api/health', {}, mockEnv)
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('application/json')
@@ -24,7 +24,7 @@ describe('GET /health', () => {
   })
 
   it('should return valid timestamp format', async () => {
-    const response = await app.request('/health', {}, mockEnv)
+    const response = await app.request('/api/health', {}, mockEnv)
     const result = await response.json() as any
 
     expect(() => new Date(result.timestamp)).not.toThrow()
@@ -32,7 +32,7 @@ describe('GET /health', () => {
   })
 
   it('should return environment from configuration', async () => {
-    const response = await app.request('/health', {}, mockEnv)
+    const response = await app.request('/api/health', {}, mockEnv)
     const result = await response.json() as any
 
     expect(['local', 'preview', 'prod', 'test']).toContain(result.environment)
@@ -40,7 +40,7 @@ describe('GET /health', () => {
 
   it('should respond quickly (performance test)', async () => {
     const startTime = Date.now()
-    const response = await app.request('/health', {}, mockEnv)
+    const response = await app.request('/api/health', {}, mockEnv)
     const endTime = Date.now()
 
     expect(response.status).toBe(200)

@@ -1,10 +1,14 @@
 import { useTelegram } from '../utils/telegram'
+import { useAuth } from '../contexts/auth-context'
 import { useState, useEffect } from 'react'
 
 export default function HelloWorld() {
-  const { webApp, user, isWebAppReady } = useTelegram()
+  const { webApp, isWebAppReady } = useTelegram()
+  const { user, sessionId, expiresAt, authSource } = useAuth()
   const [healthStatus, setHealthStatus] = useState('Checking...')
   const [healthTimestamp, setHealthTimestamp] = useState('-')
+  const [kvStatus, setKvStatus] = useState('Checking...')
+  const [timeLeft, setTimeLeft] = useState('N/A')
 
   useEffect(() => {
     fetch('/api/health')
@@ -12,11 +16,47 @@ export default function HelloWorld() {
       .then(data => {
         setHealthStatus(data.status)
         setHealthTimestamp(new Date(data.timestamp).toLocaleString())
+
+        // Extract KV status
+        if (data.services?.kv) {
+          const kv = data.services.kv
+          const status = kv.available ? 'healthy' : 'unavailable'
+          setKvStatus(`${status} (SESSIONS)${kv.error ? ' - ' + kv.error : ''}`)
+        } else {
+          setKvStatus('Not available')
+        }
       })
       .catch(() => {
         setHealthStatus('Error')
+        setKvStatus('Error')
       })
   }, [])
+
+  // Update time left countdown
+  useEffect(() => {
+    if (!expiresAt) {
+      setTimeLeft('N/A')
+      return
+    }
+
+    const updateTimeLeft = () => {
+      const now = Date.now()
+      const timeLeftMs = expiresAt - now
+
+      if (timeLeftMs > 0) {
+        const minutes = Math.floor(timeLeftMs / 60000)
+        const seconds = Math.floor((timeLeftMs % 60000) / 1000)
+        setTimeLeft(`${minutes}m ${seconds}s`)
+      } else {
+        setTimeLeft('Expired')
+      }
+    }
+
+    updateTimeLeft()
+    const interval = setInterval(updateTimeLeft, 1000)
+
+    return () => clearInterval(interval)
+  }, [expiresAt])
 
   return (
     <div
@@ -35,6 +75,10 @@ export default function HelloWorld() {
 
           <div className="text-sm text-gray-600">
             <p><strong>Backend Status:</strong> <span>{healthStatus}</span></p>
+            <p><strong>KV Status:</strong> <span>{kvStatus}</span></p>
+            <p><strong>Session ID:</strong> <span>{sessionId ? sessionId.slice(0, 8) + '...' : 'None'}</span></p>
+            <p><strong>Auth Source:</strong> <span>{authSource || 'None'}</span></p>
+            <p><strong>Time Left:</strong> <span>{timeLeft}</span></p>
             <p><strong>Last Check:</strong> <span>{healthTimestamp}</span></p>
           </div>
         </div>

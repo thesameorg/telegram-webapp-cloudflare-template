@@ -1,9 +1,13 @@
 import { useEffect } from 'react'
 import HelloWorld from './components/HelloWorld'
 import { useTelegram } from './utils/telegram'
+import { AuthProvider, withAuth } from './contexts/auth-context'
 import './index.css'
 
-function App() {
+// Protected HelloWorld component
+const ProtectedHelloWorld = withAuth(HelloWorld)
+
+function AppContent() {
   const { webApp, isWebAppReady } = useTelegram()
 
   useEffect(() => {
@@ -21,8 +25,16 @@ function App() {
 
   return (
     <div className="App min-h-screen">
-      <HelloWorld />
+      <ProtectedHelloWorld />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
