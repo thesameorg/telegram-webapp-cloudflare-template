@@ -15,7 +15,7 @@ export async function healthHandler(c: Context) {
       status: kvStatus.available ? 'healthy' : 'degraded',
       timestamp,
       environment: c.env.ENVIRONMENT || 'local',
-      version: '1.0.0',
+      version: '0.0.1',
       services: { kv: kvStatus }
     }, 200, {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
