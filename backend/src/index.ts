@@ -8,6 +8,16 @@ import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
 
+// TEMPORARY: Catch-all logger to see if requests reach Hono
+app.all('*', async (c, next) => {
+  console.log('Hono Catch-all: Request received!', {
+    method: c.req.method,
+    url: c.req.url,
+    headers: Object.fromEntries(c.req.raw.headers.entries()),
+  });
+  await next(); // Continue to other routes
+});
+
 // Simple middleware
 app.use('*', prettyJSON())
 
