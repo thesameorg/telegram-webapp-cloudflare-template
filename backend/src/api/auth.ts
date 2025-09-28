@@ -8,34 +8,7 @@ import type { Env } from '../types/env';
  * POST /api/auth - validates initData and/or sessionId and returns user info
  * For security, only POST requests are supported for authentication
  */
-export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Response> {
-  try {
-    const method = c.req.method;
 
-    // Only allow POST requests for security
-    if (method !== 'POST') {
-      return c.json({
-        error: 'METHOD_NOT_ALLOWED',
-        message: 'Only POST method is supported for authentication'
-      }, 405);
-    }
-
-    return handleAuthentication(c);
-
-  } catch (error) {
-    console.error('Auth error:', error);
-    return c.json({
-      error: 'AUTH_FAILED',
-      message: 'Authentication failed'
-    }, 500);
-  }
-}
-
-/**
- * Handle authentication for entire app
- * Session-first authentication with initData fallback
- * Accepts both sessionId and initData in same POST request
- */
 export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Response> {
   try {
     const method = c.req.method;
@@ -87,7 +60,7 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
 
   const sessionManager = SessionManager.create(c.env);
   const botTokenForService = c.env.BOT_TOKEN || c.env.TELEGRAM_BOT_TOKEN;
-  console.log('handleAuthentication - botToken for service (masked):', botTokenForService?.substring(0, 5) + '...');
+  console.log('handleAuthentication - botToken for service (masked):', botTokenForService ? botTokenForService.substring(0, 5) + '...' : 'undefined');
   const telegramAuth = new TelegramAuthService(botTokenForService);
 
   // 1. Try session validation first (if sessionId provided)
