@@ -16,6 +16,9 @@ export class TelegramAuthService {
     }
     this.botToken = botToken;
     this.maxAge = maxAge; // 1 hour default
+
+    // Add this console.log for debugging
+    console.log('TelegramAuthService initialized with botToken (masked):', botToken.substring(0, 5) + '...');
   }
 
   /**
