@@ -1,44 +1,23 @@
-/**
- * Standard error response structure
- */
 export interface ErrorResponse {
-  error: string;      // Error type identifier
-  message: string;    // Human-readable error description
-  details?: Record<string, unknown>;      // Additional error context (optional)
+  error: string;
+  message: string;
+  details?: Record<string, unknown>;
 }
 
-/**
- * Creates a standardized error response
- */
-function createErrorResponse(
-  error: string,
-  message: string,
-  details?: Record<string, unknown>
-): ErrorResponse {
-  return {
-    error,
-    message,
-    details,
-  };
-}
-
-/**
- * Authentication-specific error responses
- */
 export const AuthErrors = {
-  missingInitData: () => createErrorResponse(
-    'MISSING_INIT_DATA',
-    'initData is required for authentication'
-  ),
+  missingInitData: (): ErrorResponse => ({
+    error: 'MISSING_INIT_DATA',
+    message: 'initData is required for authentication'
+  }),
 
-  invalidInitData: (reason?: string) => createErrorResponse(
-    'INVALID_INIT_DATA',
-    'Invalid or malformed initData',
-    reason ? { reason } : undefined
-  ),
+  invalidInitData: (reason?: string): ErrorResponse => ({
+    error: 'INVALID_INIT_DATA',
+    message: 'Invalid or malformed initData',
+    ...(reason && { details: { reason } })
+  }),
 
-  expiredInitData: () => createErrorResponse(
-    'EXPIRED_INIT_DATA',
-    'initData has expired (older than 1 hour)'
-  ),
+  expiredInitData: (): ErrorResponse => ({
+    error: 'EXPIRED_INIT_DATA',
+    message: 'initData has expired (older than 1 hour)'
+  }),
 };
