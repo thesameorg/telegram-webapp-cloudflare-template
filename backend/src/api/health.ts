@@ -2,38 +2,21 @@ import { Context } from 'hono'
 
 export async function healthHandler(c: Context) {
   try {
-    const environment = c.env.ENVIRONMENT || 'local'
     const timestamp = new Date().toISOString()
-    const version = '1.0.0'
-
-    // Test KV storage
     let kvStatus = { available: false, error: null as string | null }
+
     try {
-      const kv = c.env.SESSIONS
-      if (kv) {
-        const testKey = 'health-check'
-        const testValue = { timestamp, check: 'health' }
-        await kv.put(testKey, JSON.stringify(testValue))
-        const result = await kv.get(testKey)
-        kvStatus.available = !!result
-      }
+      kvStatus.available = !!c.env.SESSIONS
     } catch (error) {
       kvStatus.error = error instanceof Error ? error.message : 'Unknown KV error'
     }
 
-    const status = kvStatus.available ? 'healthy' : 'degraded'
-
     return c.json({
-      status,
+      status: kvStatus.available ? 'healthy' : 'degraded',
       timestamp,
-      environment,
-      version,
-      services: {
-        kv: {
-          available: kvStatus.available,
-          error: kvStatus.error
-        }
-      }
+      environment: c.env.ENVIRONMENT || 'local',
+      version: '1.0.0',
+      services: { kv: kvStatus }
     }, 200, {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
