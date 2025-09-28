@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react';
 import HelloWorld from '../../src/components/HelloWorld'
 
 // Type declaration for global
@@ -71,43 +71,55 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('HelloWorld Component', () => {
 
-  it('should render Hello World text', () => {
-    render(<HelloWorld />, { wrapper: TestWrapper })
+  it('should render Hello World text', async () => {
+    render(<HelloWorld />, { wrapper: TestWrapper });
 
-    expect(screen.getByText('Hello World')).toBeInTheDocument()
-  })
+    await waitFor(() => {
+      expect(screen.getByText('Hello World')).toBeInTheDocument();
+    });
+  });
 
-  it('should display welcome message', () => {
-    render(<HelloWorld />, { wrapper: TestWrapper })
+  it('should display welcome message', async () => {
+    render(<HelloWorld />, { wrapper: TestWrapper });
 
-    expect(screen.getByText('Welcome to Telegram Web App!')).toBeInTheDocument()
-  })
+    await waitFor(() => {
+      expect(screen.getByText('Welcome to Telegram Web App!')).toBeInTheDocument();
+    });
+  });
 
-  it('should have proper styling classes', () => {
-    render(<HelloWorld />, { wrapper: TestWrapper })
+  it('should have proper styling classes', async () => {
+    render(<HelloWorld />, { wrapper: TestWrapper });
 
-    const container = screen.getByTestId('hello-world-container')
-    expect(container).toHaveClass('flex', 'flex-col', 'items-center', 'justify-center', 'min-h-screen')
-  })
+    await waitFor(() => {
+      const container = screen.getByTestId('hello-world-container');
+      expect(container).toHaveClass('flex', 'flex-col', 'items-center', 'justify-center', 'min-h-screen');
+    });
+  });
 
-  it('should display Telegram Web App status', () => {
-    render(<HelloWorld />, { wrapper: TestWrapper })
+  it('should display Telegram Web App status', async () => {
+    render(<HelloWorld />, { wrapper: TestWrapper });
 
-    const statusText = screen.getByText(/Telegram Web App:/i)
-    expect(statusText).toBeInTheDocument()
-  })
+    await waitFor(() => {
+      const statusText = screen.getByText(/Telegram Web App:/i);
+      expect(statusText).toBeInTheDocument();
+    });
+  });
 
-  it('should be responsive on mobile devices', () => {
-    render(<HelloWorld />, { wrapper: TestWrapper })
+  it('should be responsive on mobile devices', async () => {
+    render(<HelloWorld />, { wrapper: TestWrapper });
 
-    const mainHeading = screen.getByRole('heading', { level: 1 })
-    expect(mainHeading).toHaveClass('text-4xl', 'md:text-6xl')
-  })
+    await waitFor(() => {
+      const mainHeading = screen.getByRole('heading', { level: 1 });
+      expect(mainHeading).toHaveClass('text-4xl', 'md:text-6xl');
+    });
+  });
 
-  it('should handle Telegram theme colors', () => {
-    render(<HelloWorld />, { wrapper: TestWrapper })
+  it('should handle Telegram theme colors', async () => {
+    render(<HelloWorld />, { wrapper: TestWrapper });
 
-    const container = screen.getByTestId('hello-world-container')
-    expect(container).toHaveClass('bg-gray-50', 'text-gray-900')
-  })
+    await waitFor(() => {
+      const container = screen.getByTestId('hello-world-container');
+      expect(container).toHaveClass('bg-gray-50', 'text-gray-900');
+    });
+  });
 })

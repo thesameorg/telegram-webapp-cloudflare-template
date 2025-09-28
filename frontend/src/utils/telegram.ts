@@ -1,47 +1,17 @@
-import { useState, useEffect } from 'react'
-import WebApp from '@twa-dev/sdk'
+import { useState, useEffect } from 'react';
+import { WebApp, WebAppUser } from '@twa-dev/types';
 
 declare global {
   interface Window {
     Telegram?: {
-      WebApp: typeof WebApp
-    }
+      WebApp: WebApp;
+    };
   }
 }
 
-export interface TelegramUser {
-  id: number
-  first_name: string
-  last_name?: string
-  username?: string
-  language_code?: string
-  is_premium?: boolean
-  photo_url?: string
-}
-
-export interface TelegramWebApp {
-  initData: string
-  initDataUnsafe: Record<string, unknown>
-  version: string
-  platform: string
-  colorScheme: 'light' | 'dark'
-  themeParams: Record<string, unknown>
-  isExpanded: boolean
-  viewportHeight: number
-  viewportStableHeight: number
-  headerColor: string
-  backgroundColor: string
-  ready: () => void
-  expand: () => void
-  close: () => void
-  sendData: (data: string) => void
-  onEvent: (eventType: string, eventHandler: () => void) => void
-  offEvent: (eventType: string, eventHandler: () => void) => void
-}
-
 export function useTelegram() {
-  const [webApp, setWebApp] = useState<TelegramWebApp | null>(null)
-  const [user, setUser] = useState<TelegramUser | null>(null)
+  const [webApp, setWebApp] = useState<WebApp | null>(null);
+  const [user, setUser] = useState<WebAppUser | null>(null);
   const [isWebAppReady, setIsWebAppReady] = useState(false)
 
   useEffect(() => {
@@ -49,7 +19,7 @@ export function useTelegram() {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp
 
-        setWebApp(tg as TelegramWebApp)
+        setWebApp(tg)
         setUser(tg.initDataUnsafe?.user || null)
 
         tg.ready()

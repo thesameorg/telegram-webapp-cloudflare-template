@@ -31,10 +31,10 @@ export const AuthErrors = {
     'initData is required for authentication'
   ),
 
-  invalidInitData: (details?: string) => createErrorResponse(
+  invalidInitData: (reason?: string) => createErrorResponse(
     'INVALID_INIT_DATA',
     'Invalid or malformed initData',
-    details
+    reason ? { reason } : undefined
   ),
 
   expiredInitData: () => createErrorResponse(
