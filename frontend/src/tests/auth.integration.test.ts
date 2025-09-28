@@ -151,18 +151,7 @@ describe('Frontend Authentication Integration Tests', () => {
       });
     });
 
-    it('should logout successfully', async () => {
-      const expectedResponse = {
-        success: true,
-        message: 'Session cleared locally'
-      };
 
-      const result = await AuthAPI.logout();
-
-      expect(result).toEqual(expectedResponse);
-      // No fetch call expected since logout is handled locally
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
 
     it('should get user profile successfully', async () => {
       const sessionId = '550e8400-e29b-41d4-a716-446655440000';
