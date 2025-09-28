@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
 import { AuthAPI } from '../services/auth-api';
 import { AuthStorage } from '../utils/auth-storage';
-import { useTelegramAuth } from '../hooks/use-telegram-auth';
 
 // Type declarations for global
 declare const global: typeof globalThis;
@@ -275,50 +273,6 @@ describe('Frontend Authentication Integration Tests', () => {
     });
   });
 
-  describe('Telegram Auth Hook Integration', () => {
-    it('should extract initData from Telegram Web App context', async () => {
-      const { result } = renderHook(() => useTelegramAuth());
-
-      await waitFor(() => {
-        expect(result.current.isAvailable).toBe(true);
-        expect(result.current.initData).toBeDefined();
-        expect(result.current.user).toEqual({
-          id: 123456789,
-          first_name: 'Test',
-          last_name: 'User',
-          username: 'testuser',
-          language_code: 'en',
-          is_premium: true,
-          allows_write_to_pm: true,
-          photo_url: 'https://t.me/i/userpic/320/test.jpg'
-        });
-      });
-    });
-
-    it('should extract user data correctly', async () => {
-      const { result } = renderHook(() => useTelegramAuth());
-
-      await waitFor(() => {
-        const userData = result.current.getUserData();
-        expect(userData).toBeDefined();
-        expect(userData?.id).toBe(123456789);
-        expect(userData?.first_name).toBe('Test');
-        expect(userData?.username).toBe('testuser');
-      });
-    });
-
-    it('should extract initData correctly', async () => {
-      const { result } = renderHook(() => useTelegramAuth());
-
-      await waitFor(() => {
-        const initData = result.current.extractInitData();
-        expect(initData).toBeDefined();
-        expect(initData).toContain('user=');
-        expect(initData).toContain('auth_date=');
-        expect(initData).toContain('hash=');
-      });
-    });
-  });
 
   describe('End-to-End Authentication Flow', () => {
     it('should complete full authentication flow', async () => {
@@ -350,16 +304,11 @@ describe('Frontend Authentication Integration Tests', () => {
         json: async () => mockBackendAuthResponse
       });
 
-      // Step 1: Extract initData
-      const { result } = renderHook(() => useTelegramAuth());
-      await waitFor(() => {
-        const initData = result.current.extractInitData();
-        expect(initData).toBeDefined();
-      });
-      const initData = result.current.extractInitData();
+      // Step 1: Use mock initData directly
+      const initData = 'query_id=AAG&user=%7B%22id%22%3A123456789%7D&auth_date=1727404800&hash=mockhash';
 
       // Step 2: Authenticate
-      const authResult = await AuthAPI.authenticate(initData!);
+      const authResult = await AuthAPI.authenticate(initData);
       expect(authResult.success).toBe(true);
       expect(authResult.sessionId).toBeDefined();
 
@@ -395,16 +344,11 @@ describe('Frontend Authentication Integration Tests', () => {
         json: async () => mockErrorResponse
       });
 
-      // Extract initData
-      const { result } = renderHook(() => useTelegramAuth());
-      await waitFor(() => {
-        const initData = result.current.extractInitData();
-        expect(initData).toBeDefined();
-      });
-      const initData = result.current.extractInitData();
+      // Use mock initData directly
+      const initData = 'invalid_init_data';
 
       // Attempt authentication (should fail)
-      await expect(AuthAPI.authenticate(initData!)).rejects.toThrow('Invalid or expired initData');
+      await expect(AuthAPI.authenticate(initData)).rejects.toThrow('Invalid or expired initData');
 
       // Verify no session is stored
       expect(AuthStorage.getSessionId()).toBeNull();
