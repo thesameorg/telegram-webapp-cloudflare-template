@@ -77,11 +77,8 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
   try {
     const user = await telegramAuth.validateInitData(extractedInitData);
 
-    // Create or refresh session
-    const existingSession = await sessionManager.getUserSession(user.id);
-    const session = existingSession
-      ? await sessionManager.refreshSession(existingSession.sessionId)
-      : await sessionManager.createSession(user);
+    // Create new session
+    const session = await sessionManager.createSession(user);
 
     return c.json({
       authenticated: true,
