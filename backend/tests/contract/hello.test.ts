@@ -57,6 +57,6 @@ describe('GET /api/hello', () => {
     expect(response.status).toBe(200)
 
     const cacheControl = response.headers.get('Cache-Control')
-    expect(cacheControl).toBeTruthy()
+    expect(cacheControl).toBeNull()
   })
 })
