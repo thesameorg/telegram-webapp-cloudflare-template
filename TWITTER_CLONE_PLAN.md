@@ -302,6 +302,11 @@ export async function getPosts(db: Database, limit: number = 50) {
 }
 ```
 
+### Update claude.md 
+
+accordingly
+
+
 ## Future Enhancements (Out of Scope)
 - Image uploads
 - Like/reply functionality
