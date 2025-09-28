@@ -33,13 +33,56 @@ jobs:
           cd backend
           npm install
 
-      - name: Create KV Namespace
+      - name: Create or Get KV Namespace
         run: |
           cd backend
-          npx wrangler kv:namespace create sessions --env="" || true
+          # Try to create KV namespace and capture the output
+          echo "Creating KV namespace 'sessions'..."
+          kv_output=$(npx wrangler kv:namespace create sessions --env="" 2>&1)
+          echo "KV creation output: $kv_output"
+
+          # Extract the namespace ID from the output
+          if echo "$kv_output" | grep -q "id.*="; then
+            kv_id=$(echo "$kv_output" | grep -o 'id.*=' | sed 's/id.*= *//' | tr -d '"' | head -1)
+            echo "Created KV namespace with ID: $kv_id"
+            echo "KV_NAMESPACE_ID=$kv_id" >> $GITHUB_ENV
+          elif echo "$kv_output" | grep -q "already exists"; then
+            echo "KV namespace already exists, getting existing ID..."
+            # List namespaces and find the sessions one
+            list_output=$(npx wrangler kv:namespace list 2>&1)
+            echo "Existing namespaces: $list_output"
+            if echo "$list_output" | grep -q "sessions"; then
+              kv_id=$(echo "$list_output" | grep "sessions" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | head -1)
+              echo "Found existing KV namespace with ID: $kv_id"
+              echo "KV_NAMESPACE_ID=$kv_id" >> $GITHUB_ENV
+            else
+              echo "Could not find existing sessions namespace, will use fallback"
+              echo "KV_NAMESPACE_ID=" >> $GITHUB_ENV
+            fi
+          else
+            echo "KV namespace creation failed or ID not found in output"
+            echo "KV_NAMESPACE_ID=" >> $GITHUB_ENV
+          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Update wrangler.toml with KV ID
+        run: |
+          cd backend
+          if [ -n "$KV_NAMESPACE_ID" ]; then
+            echo "Updating wrangler.toml with KV namespace ID: $KV_NAMESPACE_ID"
+            # Create a temporary wrangler.toml with the actual KV ID
+            sed "s/# id = \"sessions\"/id = \"$KV_NAMESPACE_ID\"/" ../wrangler.toml > wrangler.toml.tmp
+            sed 's/# preview_id = "sessions"/preview_id = "'"$KV_NAMESPACE_ID"'"/' wrangler.toml.tmp > wrangler.toml.tmp2
+            sed 's/# binding = "SESSIONS"/binding = "SESSIONS"/' wrangler.toml.tmp2 > wrangler.toml.tmp3
+            sed 's/# \[\[kv_namespaces\]\]/[[kv_namespaces]]/' wrangler.toml.tmp3 > ../wrangler.toml
+            rm wrangler.toml.tmp*
+            echo "Updated wrangler.toml:"
+            cat ../wrangler.toml | grep -A 5 "kv_namespaces"
+          else
+            echo "No KV namespace ID available, skipping wrangler.toml update"
+          fi
 
       - name: Set Cloudflare Secrets
         run: |
