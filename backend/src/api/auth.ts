@@ -50,13 +50,14 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
     console.error('handleAuthentication - Failed to parse JSON body:', e);
   }
 
-  const { sessionId, initData: initDataParam } = body;
+  const { sessionId, initData: initDataParamRaw } = body; // Renamed to avoid confusion
 
   // Also check headers as fallback
   const authHeader = c.req.header('Authorization');
   const sessionIdHeader = c.req.header('X-Session-ID');
 
-  const finalSessionId = sessionId || sessionIdHeader;
+  const finalSessionId = (sessionId || sessionIdHeader) as string | undefined; // Type assertion
+  const initDataParam = initDataParamRaw as string | undefined; // Type assertion
 
   console.log('handleAuthentication - incoming data (parsed):', {
     hasSessionId: !!finalSessionId,
