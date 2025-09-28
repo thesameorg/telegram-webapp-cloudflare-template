@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import HelloWorld from '../../src/components/HelloWorld'
-import { AuthProvider } from '../../src/contexts/auth-context'
 
 // Type declaration for global
 declare const global: typeof globalThis;
@@ -27,18 +26,46 @@ vi.mock('../../src/utils/telegram', () => ({
   })
 }))
 
-// Mock fetch to handle auth requests
+// Mock fetch to handle auth requests - return successful auth for tests
 global.fetch = vi.fn(() =>
   Promise.resolve({
-    ok: false,
-    status: 401,
-    json: () => Promise.resolve({ authenticated: false, message: 'Not authenticated' })
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({
+      authenticated: true,
+      sessionId: 'test-session-123',
+      user: {
+        id: 123456789,
+        first_name: 'Test',
+        last_name: 'User',
+        username: 'testuser',
+        language_code: 'en'
+      },
+      expiresAt: Date.now() + 3600000
+    })
   })
 ) as any
 
-// Test wrapper component
+// Mock the useSimpleAuth hook to return authenticated state for tests
+vi.mock('../../src/hooks/use-simple-auth', () => ({
+  useSimpleAuth: () => ({
+    isAuthenticated: true,
+    isLoading: false,
+    user: {
+      id: 123456789,
+      first_name: 'Test',
+      last_name: 'User',
+      username: 'testuser',
+      language_code: 'en'
+    },
+    sessionId: 'test-session-123',
+    expiresAt: Date.now() + 3600000
+  })
+}))
+
+// Test wrapper component - just render children since auth is mocked
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <AuthProvider>{children}</AuthProvider>
+  <>{children}</>
 )
 
 describe('HelloWorld Component', () => {

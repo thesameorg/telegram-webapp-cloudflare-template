@@ -1,10 +1,10 @@
 import { useTelegram } from '../utils/telegram'
-import { useAuth } from '../contexts/auth-context'
+import { useSimpleAuth } from '../hooks/use-simple-auth'
 import { useState, useEffect } from 'react'
 
 export default function HelloWorld() {
   const { webApp, isWebAppReady } = useTelegram()
-  const { user, sessionId, expiresAt, authSource } = useAuth()
+  const { user, sessionId, expiresAt } = useSimpleAuth()
   const [healthStatus, setHealthStatus] = useState('Checking...')
   const [healthTimestamp, setHealthTimestamp] = useState('-')
   const [kvStatus, setKvStatus] = useState('Checking...')
@@ -77,7 +77,6 @@ export default function HelloWorld() {
             <p><strong>Backend Status:</strong> <span>{healthStatus}</span></p>
             <p><strong>KV Status:</strong> <span>{kvStatus}</span></p>
             <p><strong>Session ID:</strong> <span>{sessionId ? sessionId.slice(0, 8) + '...' : 'None'}</span></p>
-            <p><strong>Auth Source:</strong> <span>{authSource || 'None'}</span></p>
             <p><strong>Time Left:</strong> <span>{timeLeft}</span></p>
             <p><strong>Last Check:</strong> <span>{healthTimestamp}</span></p>
           </div>
