@@ -10,8 +10,8 @@ head_sampling_rate = 0.1
 # KV Namespaces
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "sessions_dev"
-preview_id = "sessions_preview"
+id = "sessions"
+preview_id = "sessions"
 
 
 [env.local]

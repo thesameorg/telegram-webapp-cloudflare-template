@@ -36,7 +36,7 @@ jobs:
       - name: Create KV Namespace
         run: |
           cd backend
-          npx wrangler kv:namespace create sessions || true
+          npx wrangler kv:namespace create sessions --env="" || true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
