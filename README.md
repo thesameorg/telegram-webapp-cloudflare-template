@@ -30,9 +30,6 @@ A complete template for building Telegram Web Apps with integrated bot functiona
 ```bash
 git clone <your-repo-url>
 cd twa-cf-tpl
-
-# Validate environment
-./scripts/validate-env.sh
 ```
 
 ### 2. Environment Configuration
@@ -165,7 +162,6 @@ npm run test         # Run tests
 
 ### Root Level
 ```bash
-./scripts/validate-env.sh      # Validate environment setup
 ./scripts/webhook-local.sh     # Start local webhook tunnel
 ./scripts/webhook-status.sh    # Check webhook status
 ./scripts/stop-tunnel.sh       # Stop local tunnel
@@ -180,9 +176,6 @@ cd backend && npm test
 
 # Frontend component tests
 cd frontend && npm test
-
-# Environment validation
-./scripts/validate-env.sh
 ```
 
 ### Test Coverage
@@ -226,7 +219,6 @@ Add new environment variables to:
 - `.env.example` (with example values)
 - `wrangler.toml` (for Workers)
 - GitHub Secrets (for production)
-- `scripts/validate-env.sh` (for validation)
 
 ## 🛡️ Security
 
@@ -258,8 +250,6 @@ curl https://your-worker.your-subdomain.workers.dev/health
 # Check webhook status
 ./scripts/webhook-status.sh
 
-# Validate environment
-./scripts/validate-env.sh
 ```
 
 ### Logs
