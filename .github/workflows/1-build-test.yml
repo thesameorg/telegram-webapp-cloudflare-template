@@ -26,6 +26,11 @@ jobs:
           cd backend
           npm install
 
+      - name: Lint backend
+        run: |
+          cd backend
+          npm run lint
+
       - name: Type check backend
         run: |
           cd backend
@@ -54,6 +59,11 @@ jobs:
         run: |
           cd frontend
           npm install
+
+      - name: Lint frontend
+        run: |
+          cd frontend
+          npm run lint
 
       - name: Type check frontend
         run: |
