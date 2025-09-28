@@ -40,7 +40,16 @@ export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Respon
  */
 async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Response> {
   // Read from POST body
-  const body = await c.req.json().catch(() => ({}));
+  const rawBody = await c.req.text(); // Read raw body first
+  console.log('handleAuthentication - Raw request body:', rawBody);
+
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(rawBody);
+  } catch (e) {
+    console.error('handleAuthentication - Failed to parse JSON body:', e);
+  }
+
   const { sessionId, initData: initDataParam } = body;
 
   // Also check headers as fallback
@@ -49,9 +58,10 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
 
   const finalSessionId = sessionId || sessionIdHeader;
 
-  console.log('handleAuthentication - incoming data:', {
+  console.log('handleAuthentication - incoming data (parsed):', {
     hasSessionId: !!finalSessionId,
     hasInitDataParam: !!initDataParam,
+    initDataParamValue: initDataParam, // Log the actual value
     hasAuthHeader: !!authHeader,
     sessionIdLength: finalSessionId?.length,
     initDataParamLength: initDataParam?.length,
@@ -90,14 +100,9 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
   }
 
   // 2. Fall back to initData validation
+  console.log('handleAuthentication - Calling extractInitData with:', { authHeader, initDataParam });
   const initData = telegramAuth.extractInitData(authHeader, initDataParam);
-
-  console.log('InitData extraction result:', {
-    hasInitData: !!initData,
-    initDataLength: initData?.length,
-    isWellFormed: initData ? telegramAuth.isWellFormedInitData(initData) : false,
-    isExpired: initData ? telegramAuth.isInitDataExpired(initData) : null
-  });
+  console.log('handleAuthentication - Result of extractInitData:', { hasInitData: !!initData, initDataValue: initData });
 
   if (!initData) {
     console.log('No initData found - authentication required');
