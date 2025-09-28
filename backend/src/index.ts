@@ -41,7 +41,7 @@ app.post('/api/test-message', async (c) => {
       })
     })
 
-    const result = await response.json() as { ok: boolean; [key: string]: any }
+    const result = await response.json() as { ok: boolean; [key: string]: unknown }
 
     if (result.ok) {
       return c.json({ success: true, message: 'Test message sent!' })
@@ -62,7 +62,7 @@ app.get('/', async (c) => {
     available: false,
     error: null as string | null,
     status: 'unknown' as 'healthy' | 'degraded' | 'unavailable' | 'unknown',
-    testResult: null as any,
+    testResult: null as Record<string, unknown> | null,
     namespace: 'SESSIONS'
   }
 

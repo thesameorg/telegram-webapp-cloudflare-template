@@ -39,7 +39,7 @@ interface ValidationResponse {
 interface ErrorResponse {
   error: string;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 class AuthAPIClient {

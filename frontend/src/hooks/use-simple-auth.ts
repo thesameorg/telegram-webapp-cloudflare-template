@@ -56,7 +56,7 @@ export function useSimpleAuth(): AuthState {
         }
 
         // Need to authenticate with backend
-        const requestBody: any = {};
+        const requestBody: Record<string, unknown> = {};
 
         // Add sessionId if we have one (even if expired)
         if (stored.sessionId) {

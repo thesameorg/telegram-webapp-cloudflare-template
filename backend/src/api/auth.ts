@@ -153,13 +153,13 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
     return c.json({
       authenticated: false,
       message: typeof error === 'object' && error !== null && 'message' in error
-        ? (error as any).message
+        ? (error as Record<string, unknown>).message
         : 'Invalid Telegram authentication',
       error: typeof error === 'object' && error !== null && 'error' in error
-        ? (error as any).error
+        ? (error as Record<string, unknown>).error
         : 'INVALID_INIT_DATA',
       details: typeof error === 'object' && error !== null && 'details' in error
-        ? (error as any).details
+        ? (error as Record<string, unknown>).details
         : 'Failed to validate initData',
       reason: 'initdata_validation_failed'
     }, 401);

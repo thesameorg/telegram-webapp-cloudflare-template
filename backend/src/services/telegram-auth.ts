@@ -21,10 +21,10 @@ export class TelegramAuthService {
   /**
    * Manual parsing of initData to extract user and other data
    */
-   private parseInitData(initData: string): { user?: any; auth_date?: number; query_id?: string } {
+   private parseInitData(initData: string): { user?: Record<string, unknown>; auth_date?: number; query_id?: string } {
     try {
       const params = new URLSearchParams(initData);
-      const result: any = {};
+      const result: Record<string, unknown> = {};
 
       // Extract user data
       const userParam = params.get('user');

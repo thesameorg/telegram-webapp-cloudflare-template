@@ -4,7 +4,7 @@
 export interface ErrorResponse {
   error: string;      // Error type identifier
   message: string;    // Human-readable error description
-  details?: any;      // Additional error context (optional)
+  details?: Record<string, unknown>;      // Additional error context (optional)
 }
 
 /**
@@ -13,7 +13,7 @@ export interface ErrorResponse {
 function createErrorResponse(
   error: string,
   message: string,
-  details?: any
+  details?: Record<string, unknown>
 ): ErrorResponse {
   return {
     error,

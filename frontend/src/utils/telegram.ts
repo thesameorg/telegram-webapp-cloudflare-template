@@ -21,11 +21,11 @@ export interface TelegramUser {
 
 export interface TelegramWebApp {
   initData: string
-  initDataUnsafe: any
+  initDataUnsafe: Record<string, unknown>
   version: string
   platform: string
   colorScheme: 'light' | 'dark'
-  themeParams: any
+  themeParams: Record<string, unknown>
   isExpanded: boolean
   viewportHeight: number
   viewportStableHeight: number
@@ -49,7 +49,7 @@ export function useTelegram() {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp
 
-        setWebApp(tg as any)
+        setWebApp(tg as TelegramWebApp)
         setUser(tg.initDataUnsafe?.user || null)
 
         tg.ready()
@@ -93,7 +93,7 @@ export function useTelegram() {
     }
   }, [])
 
-  const sendData = (data: any) => {
+  const sendData = (data: unknown) => {
     if (webApp) {
       webApp.sendData(JSON.stringify(data))
     } else {

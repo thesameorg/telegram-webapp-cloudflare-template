@@ -78,5 +78,5 @@ export interface ValidationResponse {
 export interface ErrorResponse {
   error: string;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
