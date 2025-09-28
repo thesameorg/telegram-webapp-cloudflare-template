@@ -36,6 +36,35 @@ export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Respon
  * Session-first authentication with initData fallback
  * Accepts both sessionId and initData in same POST request
  */
+export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Response> {
+  try {
+    const method = c.req.method;
+    console.log('AuthHandler received request:', { method, url: c.req.url });
+
+    // Only allow POST requests for security
+    if (method !== 'POST') {
+      return c.json({
+        error: 'METHOD_NOT_ALLOWED',
+        message: 'Only POST method is supported for authentication'
+      }, 405);
+    }
+
+    return handleAuthentication(c);
+
+  } catch (error) {
+    console.error('Auth error (outer catch):', error);
+    return c.json({
+      error: 'AUTH_FAILED',
+      message: 'Authentication failed'
+    }, 500);
+  }
+}
+
+/**
+ * Handle authentication for entire app
+ * Session-first authentication with initData fallback
+ * Accepts both sessionId and initData in same POST request
+ */
 async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Response> {
   // Read from POST body
   const body = await c.req.json().catch(() => ({}));
@@ -47,16 +76,19 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
 
   const finalSessionId = sessionId || sessionIdHeader;
 
-  console.log('Authentication request:', {
+  console.log('handleAuthentication - incoming data:', {
     hasSessionId: !!finalSessionId,
-    hasInitData: !!initDataParam,
+    hasInitDataParam: !!initDataParam,
     hasAuthHeader: !!authHeader,
     sessionIdLength: finalSessionId?.length,
-    initDataLength: initDataParam?.length
+    initDataParamLength: initDataParam?.length,
+    authHeaderLength: authHeader?.length
   });
 
   const sessionManager = SessionManager.create(c.env);
-  const telegramAuth = new TelegramAuthService(c.env.BOT_TOKEN || c.env.TELEGRAM_BOT_TOKEN);
+  const botTokenForService = c.env.BOT_TOKEN || c.env.TELEGRAM_BOT_TOKEN;
+  console.log('handleAuthentication - botToken for service (masked):', botTokenForService?.substring(0, 5) + '...');
+  const telegramAuth = new TelegramAuthService(botTokenForService);
 
   // 1. Try session validation first (if sessionId provided)
   if (finalSessionId) {
