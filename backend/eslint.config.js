@@ -38,6 +38,20 @@ export default [
   },
   {
     files: ['**/*.test.{ts,js}', '**/tests/**/*.{ts,js}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.worker,
+        expect: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        vi: 'readonly',
+        RequestInit: 'readonly',
+        Response: 'readonly',
+      },
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
     },
