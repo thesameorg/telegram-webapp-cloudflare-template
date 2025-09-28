@@ -22,6 +22,25 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'frontend/package-lock.json'
 
+      - name: Validate environment variables
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "CLOUDFLARE_API_TOKEN is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "CLOUDFLARE_ACCOUNT_ID is not set"
+            exit 1
+          fi
+          if [ -z "${{ vars.WORKER_URL }}" ]; then
+            echo "WORKER_URL is not set"
+            exit 1
+          fi
+          if [ -z "${{ vars.PAGES_URL }}" ]; then
+            echo "PAGES_URL is not set"
+            exit 1
+          fi
+
       - name: Install frontend dependencies
         run: |
           cd frontend
@@ -47,6 +66,10 @@ jobs:
           # Replace URLs in functions config
           sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g' functions/config.ts
           sed -i 's|https://twa-cf-tpl.pages.dev|${{ vars.PAGES_URL }}|g' functions/config.ts
+
+          # Copy functions to the output directory
+          echo "Copying functions to dist..."
+          cp -r functions dist/
 
           # Deploy to Pages (show real errors)
           echo "Starting Pages deployment..."
