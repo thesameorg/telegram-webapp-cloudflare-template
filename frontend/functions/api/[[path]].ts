@@ -14,7 +14,7 @@ export async function onRequest(context: {
 
     // Get URL and query parameters from original request
     const url = new URL(request.url)
-    const targetUrl = new URL(`${workerUrl}/${fullPath}${url.search}`)
+    const targetUrl = new URL(`${workerUrl}/api/${fullPath}${url.search}`)
 
     // Clone the request to forward to worker
     const forwardedRequest = new Request(targetUrl.toString(), {
