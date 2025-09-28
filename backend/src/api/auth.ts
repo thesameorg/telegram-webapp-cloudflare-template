@@ -70,7 +70,7 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
   });
 
   const sessionManager = SessionManager.create(c.env);
-  const botTokenForService = c.env.BOT_TOKEN || c.env.TELEGRAM_BOT_TOKEN;
+  const botTokenForService = c.env.TELEGRAM_BOT_TOKEN;
   console.log('handleAuthentication - botToken for service (masked):', botTokenForService ? botTokenForService.substring(0, 5) + '...' : 'undefined');
   const telegramAuth = new TelegramAuthService(botTokenForService);
 

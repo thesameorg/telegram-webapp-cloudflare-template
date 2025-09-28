@@ -26,7 +26,6 @@ name = "twa-cf-tpl-prod"
 # Non-secret environment variables
 [vars]
 ENVIRONMENT = "local"
-BOT_TOKEN = "$TELEGRAM_BOT_TOKEN"
 
 # Secret environment variables (set via wrangler secret put)
 # BOT_TOKEN - Telegram bot token for initData validation
