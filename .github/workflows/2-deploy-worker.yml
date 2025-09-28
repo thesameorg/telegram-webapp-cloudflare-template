@@ -55,22 +55,7 @@ jobs:
         id: deploy
         run: |
           cd backend
-          # Capture deployment output to get the actual URL
-          deployment_output=$(npx wrangler deploy --env="" 2>&1)
-          echo "Deployment output:"
-          echo "$deployment_output"
-
-          # Extract worker URL from deployment output
-          if echo "$deployment_output" | grep -q "https://.*\.workers\.dev"; then
-            worker_url=$(echo "$deployment_output" | grep -o "https://[^[:space:]]*\.workers\.dev[^[:space:]]*" | head -1)
-            echo "worker_url=$worker_url" >> $GITHUB_OUTPUT
-          else
-            # Fallback to standard format
-            worker_url="https://twa-cf-tpl.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
-            echo "worker_url=$worker_url" >> $GITHUB_OUTPUT
-          fi
-
-          echo "Detected Worker URL: $worker_url"
+          npx wrangler deploy --env=""
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
