@@ -16,11 +16,14 @@ export async function onRequest(context: {
     const url = new URL(request.url)
     const targetUrl = new URL(`${workerUrl}/api/${fullPath}${url.search}`)
 
-    // Clone the request to forward to worker
+    // Clone the original request to ensure the body can be read multiple times if needed
+    const clonedRequest = request.clone();
+
+    // Create a new request to forward to the worker, using the cloned request's body
     const forwardedRequest = new Request(targetUrl.toString(), {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
+      method: clonedRequest.method,
+      headers: clonedRequest.headers,
+      body: clonedRequest.body,
       redirect: 'follow'
     })
 
