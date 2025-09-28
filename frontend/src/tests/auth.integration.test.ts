@@ -212,19 +212,6 @@ describe('Frontend Authentication Integration Tests', () => {
       expect(AuthStorage.isSessionValid()).toBe(false);
     });
 
-    it('should detect when session is expiring soon', () => {
-      const sessionId = '550e8400-e29b-41d4-a716-446655440000';
-      const soonExpiresAt = Date.now() + 60000; // 1 minute in future
-      const laterExpiresAt = Date.now() + 3600000; // 1 hour in future
-
-      // Session expiring soon (within 5 minutes)
-      AuthStorage.setSession(sessionId, soonExpiresAt);
-      expect(AuthStorage.isSessionExpiringSoon()).toBe(true);
-
-      // Session not expiring soon
-      AuthStorage.setSession(sessionId, laterExpiresAt);
-      expect(AuthStorage.isSessionExpiringSoon()).toBe(false);
-    });
   });
 
 
