@@ -1,62 +1,15 @@
 import { useTelegram } from '../utils/telegram'
 import { useSimpleAuth } from '../hooks/use-simple-auth'
-import { useState, useEffect } from 'react'
+import { useHealthCheck } from '../hooks/use-health-check'
+import { useCountdown } from '../hooks/use-countdown'
+import StatusDisplay from './StatusDisplay'
+import UserInfo from './UserInfo'
 
 export default function HelloWorld() {
   const { webApp, isWebAppReady } = useTelegram()
   const { user, sessionId, expiresAt } = useSimpleAuth()
-  const [healthStatus, setHealthStatus] = useState('Checking...')
-  const [healthTimestamp, setHealthTimestamp] = useState('-')
-  const [kvStatus, setKvStatus] = useState('Checking...')
-  const [timeLeft, setTimeLeft] = useState('N/A')
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then(r => r.json())
-      .then(data => {
-        setHealthStatus(data.status)
-        setHealthTimestamp(new Date(data.timestamp).toLocaleString())
-
-        // Extract KV status
-        if (data.services?.kv) {
-          const kv = data.services.kv
-          const status = kv.available ? 'healthy' : 'unavailable'
-          setKvStatus(`${status} (SESSIONS)${kv.error ? ' - ' + kv.error : ''}`)
-        } else {
-          setKvStatus('Not available')
-        }
-      })
-      .catch(() => {
-        setHealthStatus('Error')
-        setKvStatus('Error')
-      })
-  }, [])
-
-  // Update time left countdown
-  useEffect(() => {
-    if (!expiresAt) {
-      setTimeLeft('N/A')
-      return
-    }
-
-    const updateTimeLeft = () => {
-      const now = Date.now()
-      const timeLeftMs = expiresAt - now
-
-      if (timeLeftMs > 0) {
-        const minutes = Math.floor(timeLeftMs / 60000)
-        const seconds = Math.floor((timeLeftMs % 60000) / 1000)
-        setTimeLeft(`${minutes}m ${seconds}s`)
-      } else {
-        setTimeLeft('Expired')
-      }
-    }
-
-    updateTimeLeft()
-    const interval = setInterval(updateTimeLeft, 1000)
-
-    return () => clearInterval(interval)
-  }, [expiresAt])
+  const { healthStatus, healthTimestamp, kvStatus } = useHealthCheck()
+  const timeLeft = useCountdown(expiresAt)
 
   return (
     <div
@@ -68,19 +21,13 @@ export default function HelloWorld() {
           Hello World
         </h1>
 
-        <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-          <p className="text-lg font-semibold text-green-600">
-            Welcome to Telegram Web App!
-          </p>
-
-          <div className="text-sm text-gray-600">
-            <p><strong>Backend Status:</strong> <span>{healthStatus}</span></p>
-            <p><strong>KV Status:</strong> <span>{kvStatus}</span></p>
-            <p><strong>Session ID:</strong> <span>{sessionId ? sessionId.slice(0, 8) + '...' : 'None'}</span></p>
-            <p><strong>Time Left:</strong> <span>{timeLeft}</span></p>
-            <p><strong>Last Check:</strong> <span>{healthTimestamp}</span></p>
-          </div>
-        </div>
+        <StatusDisplay
+          healthStatus={healthStatus}
+          kvStatus={kvStatus}
+          sessionId={sessionId}
+          timeLeft={timeLeft}
+          healthTimestamp={healthTimestamp}
+        />
 
         <div className="bg-blue-50 p-4 rounded-lg">
           <h2 className="text-lg font-semibold text-blue-800 mb-3">
@@ -95,30 +42,7 @@ export default function HelloWorld() {
               </span>
             </p>
 
-            {user && (
-              <div className="text-left space-y-3">
-                <div className="flex items-center space-x-3">
-                  {user.photo_url ? (
-                    <img
-                      src={user.photo_url}
-                      alt={`${user.first_name}'s avatar`}
-                      className="w-12 h-12 rounded-full border-2 border-blue-200"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-blue-100 border-2 border-blue-200 flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-lg">
-                        {user.first_name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <p><strong>User:</strong> {user.first_name} {user.last_name || ''}</p>
-                    {user.username && <p><strong>Username:</strong> @{user.username}</p>}
-                  </div>
-                </div>
-                <p><strong>Language:</strong> {user.language_code || 'Unknown'}</p>
-              </div>
-            )}
+            {user && <UserInfo user={user} />}
 
             {webApp && (
               <div className="text-left">
