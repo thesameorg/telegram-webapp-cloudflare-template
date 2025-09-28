@@ -11,27 +11,11 @@ head_sampling_rate = 0.1
 [[kv_namespaces]]
 binding = "SESSIONS"
 id = "214af53e9fd44c18ba913499a606dd70"
-preview_id = "214af53e9fd44c18ba913499a606dd70"
-
-
-[env.local]
-name = "twa-cf-tpl-local"
-
-[env.preview]
-name = "twa-cf-tpl-preview"
-
-[env.production]
-name = "twa-cf-tpl-prod"
 
 # Non-secret environment variables
 [vars]
-ENVIRONMENT = "local"
+ENVIRONMENT = "production"
 
 # Secret environment variables (set via wrangler secret put)
-# BOT_TOKEN - Telegram bot token for initData validation
-
-[env.preview.vars]
-ENVIRONMENT = "preview"
-
-[env.production.vars]
-ENVIRONMENT = "production"
+# TELEGRAM_BOT_TOKEN - Telegram bot token for initData validation
+# TELEGRAM_ADMIN_ID - Admin user ID

@@ -14,7 +14,6 @@ export interface Env {
   // Legacy environment variables (for backward compatibility)
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_ADMIN_ID: string;
-  WEBHOOK_SECRET?: string;
 }
 
 
