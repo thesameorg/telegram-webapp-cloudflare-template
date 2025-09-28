@@ -66,8 +66,8 @@ jobs:
           echo "Testing Worker at: ${{ steps.worker-url.outputs.url }}"
 
           # Test health endpoint with detailed output
-          echo "Testing /health endpoint..."
-          health_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/health")
+          echo "Testing /api/health endpoint..."
+          health_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/health")
           health_status=$(echo "$health_response" | tail -c 4)
           health_body=$(echo "$health_response" | head -c -4)
 
