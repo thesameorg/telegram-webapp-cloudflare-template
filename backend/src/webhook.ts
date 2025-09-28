@@ -27,7 +27,7 @@ export async function handleWebhook(c: Context) {
     let webhookData
     try {
       webhookData = await c.req.json()
-    } catch (error) {
+    } catch {
       return c.json({
         error: 'Bad Request',
         message: 'Invalid JSON in request body',

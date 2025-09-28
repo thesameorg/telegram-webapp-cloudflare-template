@@ -31,7 +31,7 @@ export class TelegramAuthService {
       if (userParam) {
         try {
           result.user = JSON.parse(decodeURIComponent(userParam));
-        } catch (error) {
+        } catch {
           throw new Error('Invalid user data in initData');
         }
       }

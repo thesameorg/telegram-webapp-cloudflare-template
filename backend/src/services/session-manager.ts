@@ -1,6 +1,6 @@
 import type { SessionData, Env } from '../types/env';
 import type { TelegramUser } from '../models/telegram-user';
-import { getDisplayName, createMinimalUser } from '../models/telegram-user';
+import { getDisplayName } from '../models/telegram-user';
 
 /**
  * Session Management Service
@@ -70,7 +70,7 @@ export class SessionManager {
       }
 
       return session;
-    } catch (error) {
+    } catch {
       // Invalid session data, remove it
       await this.invalidateSession(sessionId);
       return null;

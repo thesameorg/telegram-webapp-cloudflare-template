@@ -76,7 +76,7 @@ export function parseUserFromInitData(userData: unknown): TelegramUser {
   if (typeof userData === 'string') {
     try {
       userData = JSON.parse(userData);
-    } catch (error) {
+    } catch {
       throw new Error('Invalid JSON format for user data in initData');
     }
   }

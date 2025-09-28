@@ -50,7 +50,7 @@ describe('Telegram Auth Service Unit Tests', () => {
         {} as any, // Object
       ];
 
-      invalidCases.forEach((invalidData, index) => {
+      invalidCases.forEach((invalidData, _index) => {
         expect(telegramAuth.isWellFormedInitData(invalidData)).toBe(false);
       });
     });

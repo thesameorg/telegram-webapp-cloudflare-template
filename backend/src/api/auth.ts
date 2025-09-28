@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { TelegramAuthService } from '../services/telegram-auth';
 import { SessionManager } from '../services/session-manager';
-import type { Env, AuthResponse } from '../types/env';
+import type { Env } from '../types/env';
 
 /**
  * Telegram authentication endpoint

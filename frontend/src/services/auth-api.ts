@@ -126,7 +126,7 @@ class AuthAPIClient {
    * Logout and invalidate session
    * Note: Backend doesn't have a logout endpoint, so we just clear local state
    */
-  async logout(_sessionId: string): Promise<{ success: boolean; message: string }> {
+  async logout(): Promise<{ success: boolean; message: string }> {
     // Since there's no backend logout endpoint, we just return success
     // The AuthStorage.clearSession() call in the auth context handles cleanup
     return {
