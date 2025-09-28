@@ -12,6 +12,14 @@ head_sampling_rate = 0.1
 binding = "SESSIONS"
 id = "214af53e9fd44c18ba913499a606dd70"
 
+# D1 Databases
+[[d1_databases]]
+binding = "DB"
+database_name = "twa-tpl-db"
+database_id = "c9fe2099-a700-4a59-8294-08e8e1049ca7"
+
+
+
 # Non-secret environment variables
 [vars]
 ENVIRONMENT = "production"
