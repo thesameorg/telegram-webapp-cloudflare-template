@@ -68,6 +68,8 @@ export function useSimpleAuth(): AuthState {
           requestBody.initData = webApp.initData;
         }
 
+        console.log('Frontend: Sending authentication request with body:', requestBody);
+
         const response = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
