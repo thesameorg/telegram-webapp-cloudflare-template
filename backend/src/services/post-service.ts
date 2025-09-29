@@ -4,7 +4,7 @@ import { posts, postImages } from '../db/schema';
 import type { CreatePostInput, GetPostsInput, GetUserPostsInput } from '../models/post';
 import type { ImageUrlData } from './image-service';
 
-const R2_BASE_URL = 'https://e023ec3576222c6a7b6cdf933de3d915.r2.cloudflarestorage.com/twa-tpl-images';
+const R2_BASE_URL = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
 
 export class PostService {
   constructor(private db: Database) {}
