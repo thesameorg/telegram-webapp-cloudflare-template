@@ -21,6 +21,11 @@ database_id = "c9fe2099-a700-4a59-8294-08e8e1049ca7"
 migrations_dir = "backend/drizzle/migrations"
 
 
+# R2 Buckets
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "twa-tpl-images"
+
 
 # Non-secret environment variables
 [vars]
