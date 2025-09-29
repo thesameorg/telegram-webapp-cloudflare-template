@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useTelegram } from './utils/telegram'
 import Router from './Router'
+import { ToastProvider } from './hooks/use-toast'
 import './index.css'
 
 function App() {
@@ -20,9 +21,11 @@ function App() {
   }, [webApp, isWebAppReady])
 
   return (
-    <div className="App min-h-screen">
-      <Router />
-    </div>
+    <ToastProvider>
+      <div className="App min-h-screen">
+        <Router />
+      </div>
+    </ToastProvider>
   )
 }
 

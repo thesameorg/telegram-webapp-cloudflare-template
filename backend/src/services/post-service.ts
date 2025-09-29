@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import type { Database } from '../db';
 import { posts } from '../db/schema';
 import type { CreatePostInput, GetPostsInput, GetUserPostsInput } from '../models/post';
@@ -70,5 +70,29 @@ export class PostService {
       .where(eq(posts.userId, userId));
 
     return result?.count || 0;
+  }
+
+  async updatePost(id: number, userId: number, content: string) {
+    const now = new Date().toISOString();
+
+    const [updatedPost] = await this.db
+      .update(posts)
+      .set({
+        content,
+        updatedAt: now
+      })
+      .where(and(eq(posts.id, id), eq(posts.userId, userId)))
+      .returning();
+
+    return updatedPost;
+  }
+
+  async deletePost(id: number, userId: number) {
+    const [deletedPost] = await this.db
+      .delete(posts)
+      .where(and(eq(posts.id, id), eq(posts.userId, userId)))
+      .returning();
+
+    return deletedPost;
   }
 }

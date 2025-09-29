@@ -3,11 +3,25 @@ import { useInfinitePosts } from '../hooks/use-infinite-posts';
 import { useInfiniteScroll } from '../hooks/use-infinite-scroll';
 import { PostListSkeleton } from './skeletons';
 
-interface PostListProps {
-  userId?: number; // If provided, only shows posts from this user
+interface Post {
+  id: number;
+  userId: number;
+  username: string;
+  displayName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export default function PostList({ userId }: PostListProps) {
+interface PostListProps {
+  userId?: number; // If provided, only shows posts from this user
+  currentUserId?: number; // Current user's ID for permission checks
+  showActions?: boolean; // Whether to show edit/delete actions
+  onEdit?: (post: Post) => void;
+  onDelete?: (postId: number) => void;
+}
+
+export default function PostList({ userId, currentUserId, showActions, onEdit, onDelete }: PostListProps) {
   const { posts, loading, loadingMore, error, hasMore, loadMore } = useInfinitePosts(userId);
 
   useInfiniteScroll({
@@ -58,7 +72,14 @@ export default function PostList({ userId }: PostListProps) {
   return (
     <div className="divide-y divide-gray-200 dark:divide-gray-700">
       {posts.map((post) => (
-        <PostItem key={post.id} post={post} />
+        <PostItem
+          key={post.id}
+          post={post}
+          currentUserId={currentUserId}
+          showActions={showActions}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
 
       {/* Loading more indicator */}

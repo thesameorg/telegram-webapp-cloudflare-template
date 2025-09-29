@@ -18,6 +18,13 @@ export const createPostSchema = z.object({
     .transform((content) => sanitizeContent(content))
 });
 
+export const updatePostSchema = z.object({
+  content: z.string()
+    .min(1, "Post cannot be empty")
+    .max(280, "Post cannot exceed 280 characters")
+    .transform((content) => sanitizeContent(content))
+});
+
 export const getPostsSchema = z.object({
   limit: z.string().optional().transform((val) => {
     if (!val) return 50;
@@ -50,5 +57,6 @@ export const getUserPostsSchema = z.object({
 });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;
+export type UpdatePostInput = z.infer<typeof updatePostSchema>;
 export type GetPostsInput = z.infer<typeof getPostsSchema>;
 export type GetUserPostsInput = z.infer<typeof getUserPostsSchema>;

@@ -2,15 +2,47 @@ import { useState } from 'react';
 import PostList from '../components/PostList';
 import CreatePostButton from '../components/CreatePostButton';
 import CreatePost from '../components/CreatePost';
+import EditPost from '../components/EditPost';
+import DeletePostConfirm from '../components/DeletePostConfirm';
 import { useTelegramAuth } from '../hooks/use-telegram-auth';
+
+interface Post {
+  id: number;
+  userId: number;
+  username: string;
+  displayName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function MyPosts() {
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const { user } = useTelegramAuth();
 
   const handlePostCreated = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handlePostUpdated = () => {
+    setRefreshKey(prev => prev + 1);
+    setEditingPost(null);
+  };
+
+  const handlePostDeleted = () => {
+    setRefreshKey(prev => prev + 1);
+    setDeletingPostId(null);
+  };
+
+  const handleEdit = (post: Post) => {
+    setEditingPost(post);
+  };
+
+  const handleDelete = (postId: number) => {
+    setDeletingPostId(postId);
   };
 
   return (
@@ -31,9 +63,34 @@ export default function MyPosts() {
         />
       )}
 
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <EditPost
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onPostUpdated={handlePostUpdated}
+        />
+      )}
+
+      {/* Delete Post Confirmation */}
+      {deletingPostId && (
+        <DeletePostConfirm
+          postId={deletingPostId}
+          onClose={() => setDeletingPostId(null)}
+          onPostDeleted={handlePostDeleted}
+        />
+      )}
+
       {/* User's Posts */}
       {user?.id ? (
-        <PostList key={refreshKey} userId={user.id} />
+        <PostList
+          key={refreshKey}
+          userId={user.id}
+          currentUserId={user.id}
+          showActions={true}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       ) : (
         <div className="text-center py-8">
           <div className="text-gray-400 mb-4">

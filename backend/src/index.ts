@@ -3,7 +3,7 @@ import { prettyJSON } from 'hono/pretty-json'
 import { handleWebhook } from './webhook'
 import { healthHandler } from './api/health'
 import { authHandler } from './api/auth'
-import { getAllPosts, getUserPosts, createPost } from './api/posts'
+import { getAllPosts, getUserPosts, createPost, updatePost, deletePost } from './api/posts'
 import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -24,6 +24,8 @@ app.post('/api/auth', authHandler)
 app.get('/api/posts', getAllPosts)
 app.get('/api/posts/user/:userId', getUserPosts)
 app.post('/api/posts', createPost)
+app.put('/api/posts/:postId', updatePost)
+app.delete('/api/posts/:postId', deletePost)
 
 
 app.get('/', async (c) => {
@@ -53,6 +55,8 @@ app.get('/', async (c) => {
       auth: '/api/auth',
       posts: '/api/posts',
       userPosts: '/api/posts/user/:userId',
+      updatePost: '/api/posts/:postId',
+      deletePost: '/api/posts/:postId',
     }
   })
 })
