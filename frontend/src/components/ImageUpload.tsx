@@ -296,7 +296,8 @@ export default function ImageUpload({
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Selected Images ({images.length}/{maxImages})
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {images.map((image, index) => (
               <div
                 key={image.id}
@@ -371,6 +372,7 @@ export default function ImageUpload({
                 </div>
               </div>
             ))}
+          </div>
           </div>
 
           {/* Summary */}

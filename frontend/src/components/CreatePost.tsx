@@ -96,18 +96,28 @@ export default function CreatePost({ onClose, onPostCreated }: CreatePostProps) 
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Create Post
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              type="submit"
+              form="create-post-form"
+              disabled={isLoading || isUploading || (!content.trim() && images.length === 0) || content.length > maxLength}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+            >
+              {isLoading ? 'Creating...' : isUploading ? 'Uploading...' : 'Post'}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-4">
+        <form id="create-post-form" onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
             <textarea
               value={content}
@@ -141,25 +151,6 @@ export default function CreatePost({ onClose, onPostCreated }: CreatePostProps) 
               <p className="text-sm text-red-600 dark:text-red-200">{error}</p>
             </div>
           )}
-
-          {/* Actions */}
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              disabled={isLoading || isUploading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || isUploading || (!content.trim() && images.length === 0) || content.length > maxLength}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >
-              {isLoading ? 'Creating...' : isUploading ? 'Uploading...' : 'Post'}
-            </button>
-          </div>
         </form>
       </div>
     </div>
