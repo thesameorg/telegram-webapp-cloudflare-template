@@ -90,6 +90,10 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
     }
   }, [userId]);
 
+  // Keep a ref to the latest fetchPosts
+  const fetchPostsRef = useRef(fetchPosts);
+  fetchPostsRef.current = fetchPosts;
+
   const loadMore = useCallback(() => {
     if (!hasMore || loading || loadingMore || isLoadingRef.current) return;
     fetchPosts(offset, true);
@@ -98,8 +102,8 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
   const refetch = useCallback(() => {
     setOffset(0);
     setHasMore(true);
-    fetchPosts(0, false);
-  }, [fetchPosts]);
+    fetchPostsRef.current(0, false);
+  }, []); // Stable refetch function
 
   useEffect(() => {
     refetch();
