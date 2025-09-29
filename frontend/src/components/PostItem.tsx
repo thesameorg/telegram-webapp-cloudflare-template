@@ -39,7 +39,7 @@ export default function PostItem({ post, currentUserId, showActions, onEdit, onD
   const canEditDelete = showActions && currentUserId === post.userId;
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       {/* User info header */}
       <div className="flex items-center space-x-3 mb-3">
         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
