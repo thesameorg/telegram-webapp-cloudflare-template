@@ -36,11 +36,7 @@ jobs:
           npm run install:backend
 
       - name: Run Database Migrations
-        run: |
-          cd backend
-          echo "Running database migrations..."
-          # For production, we need to run migrations against the remote database
-          npx wrangler d1 execute twa-tpl-db --remote --file=./drizzle/migrations/0000_gray_charles_xavier.sql || echo "Migration may have already been applied"
+        run: ./scripts/migrate.sh --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
