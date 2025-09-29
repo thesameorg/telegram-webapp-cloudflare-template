@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
+import heic2any from 'heic2any';
 import { useToast } from '../hooks/use-toast';
 
 interface ImageData {
@@ -76,7 +77,7 @@ export default function ImageUpload({
       return { compressed, thumbnail };
     } catch (error) {
       console.error('Image compression failed:', error);
-      throw new Error('Failed to compress image');
+      throw new Error('Failed to compress image. Please try a different file.');
     }
   };
 
@@ -102,22 +103,49 @@ export default function ImageUpload({
           continue;
         }
 
+        // Convert HEIC files to JPEG
+        let processedFile = file;
+        const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+
+        if (isHeicFile) {
+          try {
+            showToast('Converting HEIC image...', 'info');
+            const convertedBlob = await heic2any({
+              blob: file,
+              toType: 'image/jpeg',
+              quality: 0.9
+            });
+
+            // heic2any can return Blob or Blob[], handle both cases
+            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            processedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: file.lastModified
+            });
+            showToast('HEIC image converted successfully', 'success');
+          } catch (conversionError) {
+            console.error('HEIC conversion failed:', conversionError);
+            showToast('Failed to convert HEIC image. Please convert to JPG manually.', 'error');
+            continue;
+          }
+        }
+
         // Validate file size (10MB limit before compression)
-        if (file.size > 10 * 1024 * 1024) {
-          showToast(`${file.name} is too large (max 10MB)`, 'error');
+        if (processedFile.size > 10 * 1024 * 1024) {
+          showToast(`${processedFile.name} is too large (max 10MB)`, 'error');
           continue;
         }
 
         try {
           const [preview, dimensions, { compressed, thumbnail }] = await Promise.all([
-            createImagePreview(file),
-            getImageDimensions(file),
-            compressImage(file),
+            createImagePreview(processedFile),
+            getImageDimensions(processedFile),
+            compressImage(processedFile),
           ]);
 
           const imageData: ImageData = {
             id: `${Date.now()}-${i}`,
-            file,
+            file: processedFile,
             preview,
             compressedFile: compressed,
             thumbnailFile: thumbnail,
@@ -128,7 +156,7 @@ export default function ImageUpload({
 
           newImages.push(imageData);
         } catch (error) {
-          showToast(`Failed to process ${file.name}`, 'error');
+          showToast(`Failed to process ${processedFile.name}`, 'error');
           console.error('Error processing image:', error);
         }
       }
@@ -264,7 +292,7 @@ export default function ImageUpload({
               {isProcessing ? 'Processing images...' : 'Drop images here or click to browse'}
             </p>
             <p className="text-sm">
-              Support: JPG, PNG, WebP • Max {maxImages} images • Up to 10MB each
+              Support: JPG, PNG, WebP, HEIC • Max {maxImages} images • Up to 10MB each
             </p>
           </div>
           {images.length > 0 && (

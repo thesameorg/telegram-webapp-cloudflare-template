@@ -193,7 +193,7 @@ export class ImageService {
     }
 
     // Check MIME type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
     if (!allowedTypes.includes(mimeType)) {
       return false;
     }
