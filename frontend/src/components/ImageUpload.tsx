@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
-import heic2any from 'heic2any';
 import { useToast } from '../hooks/use-toast';
 
 interface ImageData {
@@ -97,55 +96,34 @@ export default function ImageUpload({
       for (let i = 0; i < fileArray.length; i++) {
         const file = fileArray[i];
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
+        // Validate file type - allow common image formats including HEIC
+        const isImageFile = file.type.startsWith('image/') ||
+          file.name.toLowerCase().endsWith('.heic') ||
+          file.name.toLowerCase().endsWith('.heif');
+
+        if (!isImageFile) {
           showToast(`${file.name} is not a valid image file`, 'error');
           continue;
         }
 
-        // Convert HEIC files to JPEG
-        let processedFile = file;
-        const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
-
-        if (isHeicFile) {
-          try {
-            showToast('Converting HEIC image...', 'info');
-            const convertedBlob = await heic2any({
-              blob: file,
-              toType: 'image/jpeg',
-              quality: 0.9
-            });
-
-            // heic2any can return Blob or Blob[], handle both cases
-            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            processedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
-              type: 'image/jpeg',
-              lastModified: file.lastModified
-            });
-            showToast('HEIC image converted successfully', 'success');
-          } catch (conversionError) {
-            console.error('HEIC conversion failed:', conversionError);
-            showToast('Failed to convert HEIC image. Please convert to JPG manually.', 'error');
-            continue;
-          }
-        }
+        // Note: All images will be converted to JPEG during compression regardless of input format
 
         // Validate file size (10MB limit before compression)
-        if (processedFile.size > 10 * 1024 * 1024) {
-          showToast(`${processedFile.name} is too large (max 10MB)`, 'error');
+        if (file.size > 10 * 1024 * 1024) {
+          showToast(`${file.name} is too large (max 10MB)`, 'error');
           continue;
         }
 
         try {
           const [preview, dimensions, { compressed, thumbnail }] = await Promise.all([
-            createImagePreview(processedFile),
-            getImageDimensions(processedFile),
-            compressImage(processedFile),
+            createImagePreview(file),
+            getImageDimensions(file),
+            compressImage(file),
           ]);
 
           const imageData: ImageData = {
             id: `${Date.now()}-${i}`,
-            file: processedFile,
+            file,
             preview,
             compressedFile: compressed,
             thumbnailFile: thumbnail,
@@ -156,8 +134,15 @@ export default function ImageUpload({
 
           newImages.push(imageData);
         } catch (error) {
-          showToast(`Failed to process ${processedFile.name}`, 'error');
           console.error('Error processing image:', error);
+
+          // Provide specific error message for HEIC files
+          const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+          if (isHeicFile) {
+            showToast(`HEIC format not supported by browser. Please convert ${file.name} to JPG/PNG first.`, 'error');
+          } else {
+            showToast(`Failed to process ${file.name}`, 'error');
+          }
         }
       }
 
