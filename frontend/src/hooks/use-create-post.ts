@@ -5,10 +5,20 @@ interface CreatePostData {
   content: string;
 }
 
+interface Post {
+  id: number;
+  userId: number;
+  username: string;
+  displayName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface CreatePostResult {
   isLoading: boolean;
   error: string | null;
-  createPost: (data: CreatePostData) => Promise<boolean>;
+  createPost: (data: CreatePostData) => Promise<{ post: Post } | null>;
 }
 
 export function useCreatePost(): CreatePostResult {
@@ -16,20 +26,21 @@ export function useCreatePost(): CreatePostResult {
   const [error, setError] = useState<string | null>(null);
   const { sessionId } = useTelegramAuth();
 
-  const createPost = async (data: CreatePostData): Promise<boolean> => {
+  const createPost = async (data: CreatePostData): Promise<{ post: Post } | null> => {
     if (!sessionId) {
       setError('Authentication required');
-      return false;
+      return null;
     }
 
-    if (!data.content.trim()) {
+    // Allow posts with just a space (for image-only posts)
+    if (!data.content.trim() && data.content !== ' ') {
       setError('Post content cannot be empty');
-      return false;
+      return null;
     }
 
     if (data.content.length > 280) {
       setError('Post cannot exceed 280 characters');
-      return false;
+      return null;
     }
 
     setIsLoading(true);
@@ -52,10 +63,11 @@ export function useCreatePost(): CreatePostResult {
         throw new Error(errorData.error || 'Failed to create post');
       }
 
-      return true;
+      const result = await response.json();
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }

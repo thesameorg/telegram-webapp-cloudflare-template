@@ -1,3 +1,5 @@
+import ImageGallery, { ImageUrlData } from './ImageGallery';
+
 interface Post {
   id: number;
   userId: number;
@@ -6,6 +8,7 @@ interface Post {
   content: string;
   createdAt: string;
   updatedAt: string;
+  images?: ImageUrlData[];
 }
 
 interface PostItemProps {
@@ -85,9 +88,20 @@ export default function PostItem({ post, currentUserId, showActions, onEdit, onD
 
       {/* Post content */}
       <div className="pl-13">
-        <p className="text-gray-900 dark:text-white whitespace-pre-wrap break-words">
+        <p className="text-gray-900 dark:text-white whitespace-pre-wrap break-words mb-3">
           {post.content}
         </p>
+
+        {/* Images */}
+        {post.images && post.images.length > 0 && (
+          <div className="mt-3">
+            <ImageGallery
+              images={post.images}
+              maxThumbnails={4}
+              showInfo={false}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

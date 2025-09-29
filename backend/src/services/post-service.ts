@@ -1,10 +1,17 @@
 import { eq, desc, and } from 'drizzle-orm';
 import type { Database } from '../db';
-import { posts } from '../db/schema';
+import { posts, postImages } from '../db/schema';
 import type { CreatePostInput, GetPostsInput, GetUserPostsInput } from '../models/post';
+import type { ImageUrlData } from './image-service';
+
+const R2_BASE_URL = 'https://e023ec3576222c6a7b6cdf933de3d915.r2.cloudflarestorage.com/twa-tpl-images';
 
 export class PostService {
   constructor(private db: Database) {}
+
+  private generateImageUrl(key: string): string {
+    return `${R2_BASE_URL}/${key}`;
+  }
 
   async createPost(
     userId: number,
@@ -94,5 +101,87 @@ export class PostService {
       .returning();
 
     return deletedPost;
+  }
+
+  async getPostsWithImages(input: GetPostsInput) {
+    const postList = await this.db
+      .select()
+      .from(posts)
+      .orderBy(desc(posts.createdAt))
+      .limit(input.limit)
+      .offset(input.offset);
+
+    // Get images for all posts
+    const postsWithImages = await Promise.all(
+      postList.map(async (post) => {
+        const images = await this.getPostImagesData(post.id);
+        return {
+          ...post,
+          images
+        };
+      })
+    );
+
+    return postsWithImages;
+  }
+
+  async getUserPostsWithImages(input: GetUserPostsInput) {
+    const userPosts = await this.db
+      .select()
+      .from(posts)
+      .where(eq(posts.userId, input.userId))
+      .orderBy(desc(posts.createdAt))
+      .limit(input.limit)
+      .offset(input.offset);
+
+    // Get images for all posts
+    const postsWithImages = await Promise.all(
+      userPosts.map(async (post) => {
+        const images = await this.getPostImagesData(post.id);
+        return {
+          ...post,
+          images
+        };
+      })
+    );
+
+    return postsWithImages;
+  }
+
+  async getPostByIdWithImages(id: number) {
+    const [post] = await this.db
+      .select()
+      .from(posts)
+      .where(eq(posts.id, id))
+      .limit(1);
+
+    if (!post) {
+      return null;
+    }
+
+    const images = await this.getPostImagesData(post.id);
+    return {
+      ...post,
+      images
+    };
+  }
+
+  private async getPostImagesData(postId: number): Promise<ImageUrlData[]> {
+    const images = await this.db
+      .select()
+      .from(postImages)
+      .where(eq(postImages.postId, postId))
+      .orderBy(postImages.uploadOrder);
+
+    return images.map(image => ({
+      id: image.id,
+      imageUrl: this.generateImageUrl(image.imageKey),
+      thumbnailUrl: this.generateImageUrl(image.thumbnailKey),
+      width: image.width,
+      height: image.height,
+      originalName: image.originalName,
+      fileSize: image.fileSize,
+      uploadOrder: image.uploadOrder,
+    }));
   }
 }

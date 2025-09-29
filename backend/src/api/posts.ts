@@ -1,9 +1,11 @@
 import { Context } from 'hono';
 import { createDatabase } from '../db';
 import { PostService } from '../services/post-service';
+import { ImageService } from '../services/image-service';
 import { createPostSchema, updatePostSchema } from '../models/post';
 import { SessionManager } from '../services/session-manager';
 import type { Env } from '../types/env';
+import type { ImageUploadData } from '../services/image-service';
 
 // Helper: Extract and validate session
 async function authenticateUser(c: Context<{ Bindings: Env }>) {
@@ -96,7 +98,7 @@ export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
     // Cache miss - fetch from database
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db);
-    const posts = await postService.getPosts({ limit, offset });
+    const posts = await postService.getPostsWithImages({ limit, offset });
 
     const responseData = createPaginationResponse(posts, limit, offset);
 
@@ -128,7 +130,7 @@ export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db);
-    const posts = await postService.getUserPosts({ userId, limit, offset });
+    const posts = await postService.getUserPostsWithImages({ userId, limit, offset });
 
     // No-cache headers for user posts
     c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -258,5 +260,157 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
   } catch (error) {
     console.error('Error deleting post:', error);
     return c.json({ error: 'Failed to delete post' }, 500);
+  }
+};
+
+export const uploadPostImages = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const authResult = await authenticateUser(c);
+    if (authResult.error) {
+      return c.json({ error: authResult.error.message }, authResult.error.status);
+    }
+
+    const postIdResult = parsePostId(c);
+    if (postIdResult.error) {
+      return c.json({ error: postIdResult.error.message }, postIdResult.error.status);
+    }
+
+    const db = createDatabase(c.env.DB);
+    const postService = new PostService(db);
+    const imageService = new ImageService(db, c.env.IMAGES);
+
+    // Check if post exists and user owns it
+    const existingPost = await postService.getPostById(postIdResult.postId);
+    if (!existingPost) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+    if (existingPost.userId !== authResult.session.userId) {
+      return c.json({ error: 'Not authorized to upload images to this post' }, 403);
+    }
+
+    // Parse multipart form data
+    const formData = await c.req.formData();
+    const images: ImageUploadData[] = [];
+
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith('image_') && value instanceof File) {
+        const arrayBuffer = await value.arrayBuffer();
+
+        // Validate image
+        if (!await imageService.validateImageFile(arrayBuffer, value.type)) {
+          return c.json({ error: `Invalid image file: ${value.name}` }, 400);
+        }
+
+        // Get thumbnail data from form
+        const thumbnailKey = key.replace('image_', 'thumbnail_');
+        const thumbnailFile = formData.get(thumbnailKey) as File;
+        if (!thumbnailFile) {
+          return c.json({ error: `Thumbnail missing for image: ${value.name}` }, 400);
+        }
+
+        const thumbnailBuffer = await thumbnailFile.arrayBuffer();
+        if (!await imageService.validateThumbnailFile(thumbnailBuffer)) {
+          return c.json({ error: `Invalid thumbnail file: ${value.name}` }, 400);
+        }
+
+        // Get metadata from form
+        const orderKey = key.replace('image_', 'order_');
+        const widthKey = key.replace('image_', 'width_');
+        const heightKey = key.replace('image_', 'height_');
+
+        const uploadOrder = parseInt(formData.get(orderKey) as string) || 1;
+        const width = parseInt(formData.get(widthKey) as string) || 0;
+        const height = parseInt(formData.get(heightKey) as string) || 0;
+
+        images.push({
+          originalName: value.name,
+          mimeType: value.type,
+          fileSize: arrayBuffer.byteLength,
+          width,
+          height,
+          uploadOrder,
+          imageBuffer: arrayBuffer,
+          thumbnailBuffer,
+        });
+      }
+    }
+
+    if (images.length === 0) {
+      return c.json({ error: 'No valid images provided' }, 400);
+    }
+
+    if (images.length > 10) {
+      return c.json({ error: 'Maximum 10 images allowed per post' }, 400);
+    }
+
+    // Check if adding these images would exceed the limit
+    const currentImageCount = await imageService.getImageCount(postIdResult.postId);
+    if (currentImageCount + images.length > 10) {
+      return c.json({ error: 'Maximum 10 images allowed per post' }, 400);
+    }
+
+    // Upload all images
+    const uploadedImages = await imageService.uploadImages(postIdResult.postId, images);
+
+    await invalidateFeedCache(c.env.SESSIONS);
+
+    return c.json({
+      message: 'Images uploaded successfully',
+      images: uploadedImages.map(img => ({
+        id: img.id,
+        originalName: img.originalName,
+        uploadOrder: img.uploadOrder,
+        width: img.width,
+        height: img.height,
+        fileSize: img.fileSize,
+      }))
+    }, 201);
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    return c.json({ error: 'Failed to upload images' }, 500);
+  }
+};
+
+export const deletePostImage = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const authResult = await authenticateUser(c);
+    if (authResult.error) {
+      return c.json({ error: authResult.error.message }, authResult.error.status);
+    }
+
+    const postIdResult = parsePostId(c);
+    if (postIdResult.error) {
+      return c.json({ error: postIdResult.error.message }, postIdResult.error.status);
+    }
+
+    const imageId = parseInt(c.req.param('imageId'), 10);
+    if (isNaN(imageId)) {
+      return c.json({ error: 'Invalid image ID' }, 400);
+    }
+
+    const db = createDatabase(c.env.DB);
+    const postService = new PostService(db);
+    const imageService = new ImageService(db, c.env.IMAGES);
+
+    // Check if post exists and user owns it
+    const existingPost = await postService.getPostById(postIdResult.postId);
+    if (!existingPost) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+    if (existingPost.userId !== authResult.session.userId) {
+      return c.json({ error: 'Not authorized to delete images from this post' }, 403);
+    }
+
+    const deleted = await imageService.deleteImage(imageId, postIdResult.postId);
+    if (!deleted) {
+      return c.json({ error: 'Image not found' }, 404);
+    }
+
+    await invalidateFeedCache(c.env.SESSIONS);
+
+    return c.json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    return c.json({ error: 'Failed to delete image' }, 500);
   }
 };

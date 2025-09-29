@@ -67,3 +67,51 @@ export function SkeletonCard({
     </div>
   );
 }
+
+export function SkeletonImage({
+  className = '',
+  aspectRatio = 'aspect-square'
+}: {
+  className?: string;
+  aspectRatio?: string;
+}) {
+  return (
+    <Skeleton className={`${aspectRatio} rounded-lg ${className}`} />
+  );
+}
+
+export function SkeletonImageGrid({
+  count = 1,
+  className = ''
+}: {
+  count?: number;
+  className?: string;
+}) {
+  const getGridClasses = () => {
+    if (count === 1) return 'grid-cols-1';
+    if (count === 2) return 'grid-cols-2';
+    if (count === 3) return 'grid-cols-3';
+    return 'grid-cols-2';
+  };
+
+  const getImageClasses = (index: number) => {
+    if (count === 1) return 'aspect-video';
+    if (count === 2) return 'aspect-square';
+    if (count === 3 && index === 0) return 'col-span-3 aspect-video';
+    if (count === 3) return 'aspect-square';
+    if (count === 4 && index === 0) return 'col-span-2 aspect-video';
+    return 'aspect-square';
+  };
+
+  return (
+    <div className={`grid gap-1 ${getGridClasses()} ${className}`}>
+      {Array.from({ length: Math.min(count, 4) }).map((_, i) => (
+        <SkeletonImage
+          key={i}
+          className={getImageClasses(i)}
+          aspectRatio=""
+        />
+      ))}
+    </div>
+  );
+}
