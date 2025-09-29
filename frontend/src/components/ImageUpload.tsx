@@ -102,13 +102,16 @@ export default function ImageUpload({
       for (let i = 0; i < fileArray.length; i++) {
         const file = fileArray[i];
 
-        // Validate file type - allow common image formats including HEIC
-        const isImageFile = file.type.startsWith('image/') ||
-          file.name.toLowerCase().endsWith('.heic') ||
-          file.name.toLowerCase().endsWith('.heif');
-
-        if (!isImageFile) {
+        // Validate file type - block HEIC files
+        if (!file.type.startsWith('image/')) {
           showToast(`${file.name} is not a valid image file`, 'error');
+          continue;
+        }
+
+        // Block HEIC files explicitly
+        const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+        if (isHeicFile) {
+          showToast(`HEIC format not supported. Please convert ${file.name} to JPG or PNG first.`, 'error');
           continue;
         }
 
@@ -140,15 +143,8 @@ export default function ImageUpload({
 
           newImages.push(imageData);
         } catch (error) {
+          showToast(`Failed to process ${file.name}`, 'error');
           console.error('Error processing image:', error);
-
-          // Provide specific error message for HEIC files
-          const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-          if (isHeicFile) {
-            showToast(`HEIC format not supported by browser. Please convert ${file.name} to JPG/PNG first.`, 'error');
-          } else {
-            showToast(`Failed to process ${file.name}`, 'error');
-          }
         }
       }
 
@@ -283,10 +279,7 @@ export default function ImageUpload({
               {isProcessing ? 'Processing images...' : 'Drop images here or click to browse'}
             </p>
             <p className="text-sm">
-              Support: JPG, PNG, WebP, HEIC* • Max {maxImages} images • Up to 10MB each
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500">
-              *HEIC files converted to JPG automatically
+              Support: JPG, PNG, WebP • Max {maxImages} images • Up to 10MB each
             </p>
           </div>
           {images.length > 0 && (
