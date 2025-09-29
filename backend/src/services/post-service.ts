@@ -12,7 +12,9 @@ export class PostService {
     // In local development, serve images through the worker's /r2 endpoint
     // In production, use the direct R2 public URL for better performance
     if (this.env.ENVIRONMENT === 'local' || this.env.ENVIRONMENT === 'development') {
-      this.r2BaseUrl = 'http://localhost:3000/r2';
+      // Use ngrok URL if available (for mobile access), otherwise localhost
+      const baseUrl = this.env.LOCAL_BASE_URL || 'http://localhost:3000';
+      this.r2BaseUrl = `${baseUrl}/r2`;
     } else {
       this.r2BaseUrl = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
     }
