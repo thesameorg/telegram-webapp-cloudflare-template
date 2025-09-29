@@ -103,7 +103,7 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
 
   useEffect(() => {
     refetch();
-  }, [userId, refetch]);
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     posts,
