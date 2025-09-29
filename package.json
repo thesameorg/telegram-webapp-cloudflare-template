@@ -52,5 +52,8 @@
   "devDependencies": {
     "ts-prune": "^0.10.3",
     "wrangler": "^4.39.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.128"
   }
 }

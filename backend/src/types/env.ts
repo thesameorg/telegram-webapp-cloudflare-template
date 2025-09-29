@@ -3,14 +3,20 @@
  * Defines the bindings and environment variables available in the Worker context
  */
 
+import type { D1Database } from '@cloudflare/workers-types';
+
 export interface Env {
   // KV Namespaces
   SESSIONS: KVNamespace;
+
+  // D1 Database
+  DB: D1Database;
 
   // Environment Variables
   ENVIRONMENT: string;
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_ADMIN_ID: string;
+  WEB_APP_URL: string;
 }
 
 

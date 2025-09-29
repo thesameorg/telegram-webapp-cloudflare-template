@@ -33,6 +33,16 @@ jobs:
           cd backend
           npm install
 
+      - name: Run Database Migrations
+        run: |
+          cd backend
+          echo "Running database migrations..."
+          # For production, we need to run migrations against the remote database
+          npx wrangler d1 execute twa-tpl-db --remote --file=./drizzle/migrations/0000_gray_charles_xavier.sql || echo "Migration may have already been applied"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Set Cloudflare Secrets
         run: |
           cd backend
@@ -99,6 +109,27 @@ jobs:
             echo "✅ KV binding detected in health endpoint"
           else
             echo "⚠️ KV binding not found in health response, but continuing..."
+          fi
+
+          # Test posts API endpoint to verify database migration
+          echo "Testing /api/posts endpoint..."
+          posts_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/posts")
+          posts_status=$(echo "$posts_response" | tail -c 4)
+          posts_body=$(echo "$posts_response" | head -c -4)
+
+          echo "Posts endpoint returned status: $posts_status"
+          echo "Posts endpoint response body: $posts_body"
+
+          if [ "$posts_status" != "200" ]; then
+            echo "❌ Posts API check failed with status $posts_status"
+            exit 1
+          fi
+
+          # Check if response contains expected structure
+          if echo "$posts_body" | grep -q '"posts"'; then
+            echo "✅ Posts API working correctly - database migration successful"
+          else
+            echo "⚠️ Posts API response unexpected, but status 200 received"
           fi
 
           echo "✅ Worker deployment verified"

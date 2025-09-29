@@ -4,6 +4,7 @@ import { handleWebhook } from './webhook'
 import { helloHandler } from './api/hello'
 import { healthHandler } from './api/health'
 import { authHandler } from './api/auth'
+import { getAllPosts, getUserPosts, createPost } from './api/posts'
 import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -20,6 +21,11 @@ app.post('/webhook', handleWebhook)
 // Authentication endpoints
 app.get('/api/auth', authHandler)
 app.post('/api/auth', authHandler)
+
+// Post endpoints
+app.get('/api/posts', getAllPosts)
+app.get('/api/posts/user/:userId', getUserPosts)
+app.post('/api/posts', createPost)
 
 
 app.get('/', async (c) => {
@@ -48,6 +54,8 @@ app.get('/', async (c) => {
       hello: '/api/hello',
       webhook: '/webhook',
       auth: '/api/auth',
+      posts: '/api/posts',
+      userPosts: '/api/posts/user/:userId',
     }
   })
 })
