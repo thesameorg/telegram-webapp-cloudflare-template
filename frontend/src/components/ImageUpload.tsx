@@ -33,18 +33,24 @@ export default function ImageUpload({
   const { showToast } = useToast();
 
   const createImagePreview = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
   };
 
   const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
+        URL.revokeObjectURL(img.src); // Clean up
         resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src); // Clean up
+        reject(new Error('Failed to load image dimensions'));
       };
       img.src = URL.createObjectURL(file);
     });
@@ -277,7 +283,10 @@ export default function ImageUpload({
               {isProcessing ? 'Processing images...' : 'Drop images here or click to browse'}
             </p>
             <p className="text-sm">
-              Support: JPG, PNG, WebP, HEIC • Max {maxImages} images • Up to 10MB each
+              Support: JPG, PNG, WebP, HEIC* • Max {maxImages} images • Up to 10MB each
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              *HEIC files converted to JPG automatically
             </p>
           </div>
           {images.length > 0 && (

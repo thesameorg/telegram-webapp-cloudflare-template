@@ -192,8 +192,8 @@ export class ImageService {
       return false;
     }
 
-    // Check MIME type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    // Check MIME type - only accept compressed formats (all files are converted to JPEG on frontend)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(mimeType)) {
       return false;
     }
