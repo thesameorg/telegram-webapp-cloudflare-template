@@ -26,12 +26,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'backend/package-lock.json'
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
-          cd backend
           npm ci --include=optional
+          npm run install:backend
 
       - name: Run Database Migrations
         run: |
