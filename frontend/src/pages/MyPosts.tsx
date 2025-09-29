@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import PostList from '../components/PostList';
 import CreatePostButton from '../components/CreatePostButton';
 import CreatePost from '../components/CreatePost';
@@ -20,20 +20,26 @@ export default function MyPosts() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const refetchRef = useRef<(() => void) | null>(null);
   const { user } = useTelegramAuth();
 
   const handlePostCreated = () => {
-    setRefreshKey(prev => prev + 1);
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
   };
 
   const handlePostUpdated = () => {
-    setRefreshKey(prev => prev + 1);
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
     setEditingPost(null);
   };
 
   const handlePostDeleted = () => {
-    setRefreshKey(prev => prev + 1);
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
     setDeletingPostId(null);
   };
 
@@ -84,12 +90,12 @@ export default function MyPosts() {
       {/* User's Posts */}
       {user?.id ? (
         <PostList
-          key={refreshKey}
           userId={user.id}
           currentUserId={user.id}
           showActions={true}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onRefetchReady={(refetch) => { refetchRef.current = refetch; }}
         />
       ) : (
         <div className="text-center py-8">

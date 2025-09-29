@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import PostItem from './PostItem';
 import { useInfinitePosts } from '../hooks/use-infinite-posts';
 import { useInfiniteScroll } from '../hooks/use-infinite-scroll';
@@ -19,10 +20,11 @@ interface PostListProps {
   showActions?: boolean; // Whether to show edit/delete actions
   onEdit?: (post: Post) => void;
   onDelete?: (postId: number) => void;
+  onRefetchReady?: (refetch: () => void) => void; // Callback to expose refetch function
 }
 
-export default function PostList({ userId, currentUserId, showActions, onEdit, onDelete }: PostListProps) {
-  const { posts, loading, loadingMore, error, hasMore, loadMore } = useInfinitePosts(userId);
+export default function PostList({ userId, currentUserId, showActions, onEdit, onDelete, onRefetchReady }: PostListProps) {
+  const { posts, loading, loadingMore, error, hasMore, loadMore, refetch } = useInfinitePosts(userId);
 
   useInfiniteScroll({
     hasMore,
@@ -30,6 +32,13 @@ export default function PostList({ userId, currentUserId, showActions, onEdit, o
     onLoadMore: loadMore,
     threshold: 100
   });
+
+  // Expose refetch function to parent
+  useEffect(() => {
+    if (onRefetchReady) {
+      onRefetchReady(refetch);
+    }
+  }, [refetch, onRefetchReady]);
 
   if (loading) {
     return <PostListSkeleton count={5} />;

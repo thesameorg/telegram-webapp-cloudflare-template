@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import PostList from '../components/PostList';
 import CreatePostButton from '../components/CreatePostButton';
 import CreatePost from '../components/CreatePost';
 
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const refetchRef = useRef<(() => void) | null>(null);
 
   const handlePostCreated = () => {
-    setRefreshKey(prev => prev + 1);
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
   };
 
   return (
@@ -30,7 +32,7 @@ export default function Feed() {
       )}
 
       {/* Posts Feed */}
-      <PostList key={refreshKey} />
+      <PostList onRefetchReady={(refetch) => { refetchRef.current = refetch; }} />
     </div>
   );
 }
