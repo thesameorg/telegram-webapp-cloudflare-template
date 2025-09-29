@@ -1,14 +1,19 @@
 import { useSimpleAuth } from '../hooks/use-simple-auth';
 import { useTelegram } from '../utils/telegram';
+import { AccountPageSkeleton } from '../components/skeletons';
 
 export default function Account() {
-  const { user, sessionId, expiresAt } = useSimpleAuth();
+  const { user, sessionId, expiresAt, isLoading } = useSimpleAuth();
   const { webApp } = useTelegram();
 
   const formatExpiryDate = (timestamp: number | null) => {
     if (!timestamp) return 'Unknown';
     return new Date(timestamp).toLocaleString();
   };
+
+  if (isLoading) {
+    return <AccountPageSkeleton />;
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
