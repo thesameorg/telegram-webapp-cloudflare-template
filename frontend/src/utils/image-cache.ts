@@ -53,7 +53,7 @@ class ImageCache {
 
     try {
       await loadingPromise;
-    } catch (error) {
+    } catch {
       // Swallow error, it's tracked in errorImages set
     }
   }
