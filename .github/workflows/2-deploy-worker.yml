@@ -89,20 +89,6 @@ jobs:
             exit 1
           fi
 
-          # Test hello endpoint with detailed output
-          echo "Testing /api/hello endpoint..."
-          hello_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/hello")
-          hello_status=$(echo "$hello_response" | tail -c 4)
-          hello_body=$(echo "$hello_response" | head -c -4)
-
-          echo "Hello endpoint returned status: $hello_status"
-          echo "Hello endpoint response body: $hello_body"
-
-          if [ "$hello_status" != "200" ]; then
-            echo "❌ Hello API check failed with status $hello_status"
-            exit 1
-          fi
-
           # Test that KV is accessible by checking health endpoint for KV status
           echo "Checking KV availability in health endpoint..."
           if echo "$health_body" | grep -q '"kv"'; then

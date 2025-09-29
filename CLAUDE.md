@@ -79,7 +79,7 @@ npm run tunnel:stop
 - **Key Files**:
   - `src/index.ts`: Main Hono app with route definitions
   - `src/webhook.ts`: Telegram webhook handler with Grammy bot
-  - `src/api/`: API endpoint handlers (health, hello, auth)
+  - `src/api/`: API endpoint handlers (health, auth)
   - `src/types/env.ts`: Environment variable type definitions
 
 ### Frontend (React + Vite)
@@ -91,7 +91,6 @@ npm run tunnel:stop
   - `src/App.tsx`: Main app component with Telegram theme integration
   - `src/utils/telegram.ts`: Telegram Web App SDK utilities
   - `src/components/SimpleAuthWrapper.tsx`: Authentication wrapper
-  - `src/components/HelloWorld.tsx`: Main app component
 
 ### Environment Configuration
 - **Local**: Uses ngrok/cloudflared tunnels for webhook development

@@ -132,7 +132,6 @@ export type NewPost = typeof posts.$inferInsert;
   - User's own posts only
   - Same PostList component with filtered data
 - **File**: `frontend/src/pages/Account.tsx`
-  - Simplified version of current HelloWorld
   - User info without debug data
 
 ### 6. Data Fetching & State

@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { prettyJSON } from 'hono/pretty-json'
 import { handleWebhook } from './webhook'
-import { helloHandler } from './api/hello'
 import { healthHandler } from './api/health'
 import { authHandler } from './api/auth'
 import { getAllPosts, getUserPosts, createPost } from './api/posts'
@@ -15,7 +14,6 @@ app.use('*', prettyJSON())
 
 // API endpoints
 app.get('/api/health', healthHandler)
-app.get('/api/hello', helloHandler)
 app.post('/webhook', handleWebhook)
 
 // Authentication endpoints
@@ -51,7 +49,6 @@ app.get('/', async (c) => {
     services: { kv: kvStatus },
     endpoints: {
       health: '/api/health',
-      hello: '/api/hello',
       webhook: '/webhook',
       auth: '/api/auth',
       posts: '/api/posts',

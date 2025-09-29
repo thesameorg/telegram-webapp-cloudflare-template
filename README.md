@@ -71,7 +71,6 @@ npm run dev
 ### 5. Test Your Setup
 - Send `/start` to your bot in Telegram
 - Click "Open Web App" button
-- Verify Hello World page loads
 
 ## 🏗️ Project Structure
 
