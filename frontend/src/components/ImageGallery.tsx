@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 
@@ -34,7 +34,6 @@ export default function ImageGallery({
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
   const [errorImages, setErrorImages] = useState<Set<number>>(new Set());
-  const [imageRefs, setImageRefs] = useState<Map<number, HTMLImageElement>>(new Map());
 
   const sortedImages = [...images].sort((a, b) => a.uploadOrder - b.uploadOrder);
   const displayImages = sortedImages.slice(0, maxThumbnails);
@@ -51,9 +50,8 @@ export default function ImageGallery({
     setLightboxOpen(true);
   };
 
-  const handleImageLoad = (imageId: number, imgElement: HTMLImageElement) => {
+  const handleImageLoad = (imageId: number) => {
     setLoadedImages(prev => new Set([...prev, imageId]));
-    setImageRefs(prev => new Map([...prev, [imageId, imgElement]]));
   };
 
   const handleImageError = (imageId: number) => {
@@ -65,14 +63,6 @@ export default function ImageGallery({
     });
   };
 
-  // Check if image is actually loaded in the DOM
-  const isImageActuallyLoaded = useCallback((imageId: number) => {
-    const imgRef = imageRefs.get(imageId);
-    if (!imgRef) return false;
-
-    // Check if image is still in DOM and has loaded content
-    return imgRef.complete && imgRef.naturalHeight !== 0;
-  }, [imageRefs]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -120,7 +110,6 @@ export default function ImageGallery({
             role="button"
             tabIndex={0}
             className={`relative group cursor-pointer overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 ${getImageClasses(index)}`}
-            data-image-id={image.id}
             onClick={() => handleImageClick(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -131,7 +120,7 @@ export default function ImageGallery({
             aria-label={`View image: ${image.originalName}`}
           >
             {/* Loading placeholder */}
-            {(!loadedImages.has(image.id) || !isImageActuallyLoaded(image.id)) && !errorImages.has(image.id) && (
+            {!loadedImages.has(image.id) && !errorImages.has(image.id) && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
@@ -154,9 +143,8 @@ export default function ImageGallery({
               src={image.thumbnailUrl}
               alt={image.originalName}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
-              onLoad={(e) => handleImageLoad(image.id, e.currentTarget)}
+              onLoad={() => handleImageLoad(image.id)}
               onError={() => handleImageError(image.id)}
-              loading="lazy"
             />
 
             {/* Overlay for remaining images count */}
