@@ -31,7 +31,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm install
+          npm ci --include=optional
 
       - name: Run Database Migrations
         run: |
