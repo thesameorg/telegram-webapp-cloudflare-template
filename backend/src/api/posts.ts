@@ -56,6 +56,11 @@ function parsePostId(c: Context) {
 
 // Helper: Invalidate feed cache
 async function invalidateFeedCache(sessions: KVNamespace) {
+  // Update cache version to invalidate all cached responses
+  const newCacheVersion = Date.now().toString();
+  await sessions.put('cache_version', newCacheVersion);
+
+  // Also delete existing cache keys as backup
   const cacheKeys = [];
   for (let limit = 1; limit <= 100; limit++) {
     for (let offset = 0; offset < 500; offset += limit) {
@@ -85,13 +90,17 @@ function createPaginationResponse(posts: unknown[], limit: number, offset: numbe
 export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
   try {
     const { limit, offset } = parsePagination(c);
-    const cacheKey = `feed:${limit}:${offset}`;
+
+    // Get current cache version
+    const cacheVersion = await c.env.SESSIONS.get('cache_version') || '0';
+    const cacheKey = `feed:${limit}:${offset}:v${cacheVersion}`;
 
     // Try cache first
     const cachedData = await c.env.SESSIONS.get(cacheKey);
     if (cachedData) {
-      c.header('Cache-Control', 'public, max-age=300');
+      c.header('Cache-Control', 'public, max-age=60'); // Reduced from 300 to 60 seconds
       c.header('X-Cache', 'HIT');
+      c.header('X-Cache-Version', cacheVersion);
       return c.json(JSON.parse(cachedData));
     }
 
@@ -102,11 +111,12 @@ export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
 
     const responseData = createPaginationResponse(posts, limit, offset);
 
-    // Cache the response
+    // Cache the response with version
     await c.env.SESSIONS.put(cacheKey, JSON.stringify(responseData), { expirationTtl: 300 });
 
-    c.header('Cache-Control', 'public, max-age=300');
+    c.header('Cache-Control', 'public, max-age=60'); // Reduced cache time
     c.header('X-Cache', 'MISS');
+    c.header('X-Cache-Version', cacheVersion);
     return c.json(responseData);
   } catch (error) {
     console.error('Error fetching posts:', error);
