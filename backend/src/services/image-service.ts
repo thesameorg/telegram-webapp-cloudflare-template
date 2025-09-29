@@ -4,8 +4,6 @@ import { postImages } from '../db/schema';
 import type { PostImage } from '../db/schema';
 import type { Env } from '../types/env';
 
-const R2_BASE_URL = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
-
 export interface ImageUploadData {
   originalName: string;
   mimeType: string;
@@ -29,10 +27,23 @@ export interface ImageUrlData {
 }
 
 export class ImageService {
+  private r2BaseUrl: string;
+
   constructor(
     private db: Database,
-    private r2: Env['IMAGES']
-  ) {}
+    private r2: Env['IMAGES'],
+    private env: Env
+  ) {
+    // In local development, serve images through the worker's /r2 endpoint
+    // In production, use the direct R2 public URL for better performance
+    if (this.env.ENVIRONMENT === 'local' || this.env.ENVIRONMENT === 'development') {
+      // Use the frontend URL which will proxy to backend via Vite
+      this.r2BaseUrl = 'http://localhost:3000/r2';
+    } else {
+      // Direct R2 public URL for production (most efficient)
+      this.r2BaseUrl = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
+    }
+  }
 
   private generateImageKey(postId: number, filename: string): string {
     const timestamp = Date.now();
@@ -47,7 +58,7 @@ export class ImageService {
   }
 
   private generateImageUrl(key: string): string {
-    return `${R2_BASE_URL}/${key}`;
+    return `${this.r2BaseUrl}/${key}`;
   }
 
   async uploadImage(postId: number, imageData: ImageUploadData): Promise<PostImage> {

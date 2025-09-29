@@ -31,6 +31,37 @@ app.delete('/api/posts/:postId', deletePost)
 app.post('/api/posts/:postId/images', uploadPostImages)
 app.delete('/api/posts/:postId/images/:imageId', deletePostImage)
 
+// R2 image serving for local development
+app.get('/r2/*', async (c) => {
+  const path = c.req.url.split('/r2/')[1];
+  if (!path) {
+    return c.json({ error: 'Invalid path' }, 400);
+  }
+
+  const r2 = c.env.IMAGES;
+  if (!r2) {
+    return c.json({ error: 'R2 bucket not available' }, 500);
+  }
+
+  try {
+    const object = await r2.get(path);
+    if (!object) {
+      return c.json({ error: 'Image not found' }, 404);
+    }
+
+    const headers = new Headers();
+    headers.set('Content-Type', object.httpMetadata?.contentType || 'application/octet-stream');
+    headers.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+
+    return new Response(object.body as ReadableStream, {
+      headers: headers
+    });
+  } catch (error) {
+    console.error('Error serving R2 image:', error);
+    return c.json({ error: 'Failed to serve image' }, 500);
+  }
+})
+
 
 app.get('/', async (c) => {
   const env = c.env.ENVIRONMENT || 'local'
@@ -63,6 +94,7 @@ app.get('/', async (c) => {
       deletePost: '/api/posts/:postId',
       uploadImages: '/api/posts/:postId/images',
       deleteImage: '/api/posts/:postId/images/:imageId',
+      r2Images: '/r2/{key}',
     }
   })
 })

@@ -106,7 +106,7 @@ export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
 
     // Cache miss - fetch from database
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
+    const postService = new PostService(db, c.env);
     const posts = await postService.getPostsWithImages({ limit, offset });
 
     const responseData = createPaginationResponse(posts, limit, offset);
@@ -139,7 +139,7 @@ export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
     const { limit, offset } = parsePagination(c);
 
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
+    const postService = new PostService(db, c.env);
     const posts = await postService.getUserPostsWithImages({ userId, limit, offset });
 
     // No-cache headers for user posts
@@ -168,7 +168,7 @@ export const createPost = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
+    const postService = new PostService(db, c.env);
 
     const newPost = await postService.createPost(
       authResult.session.userId,
@@ -205,7 +205,7 @@ export const updatePost = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
+    const postService = new PostService(db, c.env);
 
     // Check ownership
     const existingPost = await postService.getPostById(postIdResult.postId);
@@ -248,7 +248,7 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
+    const postService = new PostService(db, c.env);
 
     // Check ownership
     const existingPost = await postService.getPostById(postIdResult.postId);
@@ -286,8 +286,8 @@ export const uploadPostImages = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
-    const imageService = new ImageService(db, c.env.IMAGES);
+    const postService = new PostService(db, c.env);
+    const imageService = new ImageService(db, c.env.IMAGES, c.env);
 
     // Check if post exists and user owns it
     const existingPost = await postService.getPostById(postIdResult.postId);
@@ -399,8 +399,8 @@ export const deletePostImage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const db = createDatabase(c.env.DB);
-    const postService = new PostService(db);
-    const imageService = new ImageService(db, c.env.IMAGES);
+    const postService = new PostService(db, c.env);
+    const imageService = new ImageService(db, c.env.IMAGES, c.env);
 
     // Check if post exists and user owns it
     const existingPost = await postService.getPostById(postIdResult.postId);
