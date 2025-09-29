@@ -17,6 +17,7 @@ id = "214af53e9fd44c18ba913499a606dd70"
 binding = "DB"
 database_name = "twa-tpl-db"
 database_id = "c9fe2099-a700-4a59-8294-08e8e1049ca7"
+migrations_dir = "backend/drizzle/migrations"
 
 
 

@@ -36,7 +36,9 @@ jobs:
           npm run install:backend
 
       - name: Run Database Migrations
-        run: ./scripts/migrate.sh --remote
+        run: |
+          cd backend
+          npx wrangler d1 migrations apply twa-tpl-db --remote || exit 1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

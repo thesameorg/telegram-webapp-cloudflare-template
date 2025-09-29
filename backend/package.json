@@ -14,8 +14,6 @@
     "lint": "eslint . --ext ts,js --report-unused-disable-directives",
     "db:generate": "drizzle-kit generate:sqlite",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:migrate:local": "../scripts/migrate.sh --local",
-    "db:migrate:remote": "../scripts/migrate.sh --remote",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push:sqlite"
   },
