@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 
@@ -34,34 +34,16 @@ export default function ImageGallery({
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
   const [errorImages, setErrorImages] = useState<Set<number>>(new Set());
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const sortedImages = [...images].sort((a, b) => a.uploadOrder - b.uploadOrder);
   const displayImages = sortedImages.slice(0, maxThumbnails);
   const remainingCount = Math.max(0, sortedImages.length - maxThumbnails);
 
-  // Intersection Observer for lazy loading
+  // Reset loading states when images change
   useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const img = entry.target.querySelector('img') as HTMLImageElement;
-            if (img && img.dataset.src) {
-              img.src = img.dataset.src;
-              img.removeAttribute('data-src');
-              observerRef.current?.unobserve(entry.target);
-            }
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
-  }, []);
+    setLoadedImages(new Set());
+    setErrorImages(new Set());
+  }, [images]);
 
   const handleImageClick = (index: number) => {
     setLightboxIndex(index);
@@ -123,11 +105,6 @@ export default function ImageGallery({
             tabIndex={0}
             className={`relative group cursor-pointer overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 ${getImageClasses(index)}`}
             data-image-id={image.id}
-            ref={(el) => {
-              if (el && observerRef.current) {
-                observerRef.current.observe(el);
-              }
-            }}
             onClick={() => handleImageClick(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -158,11 +135,12 @@ export default function ImageGallery({
 
             {/* Image */}
             <img
-              data-src={image.thumbnailUrl}
+              src={image.thumbnailUrl}
               alt={image.originalName}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
               onLoad={() => handleImageLoad(image.id)}
               onError={() => handleImageError(image.id)}
+              loading="lazy"
             />
 
             {/* Overlay for remaining images count */}
