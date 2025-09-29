@@ -2,6 +2,7 @@ name = "twa-cf-tpl"
 main = "backend/src/index.ts"
 compatibility_date = "2024-09-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "e023ec3576222c6a7b6cdf933de3d915"
 
 [observability.logs]
 enabled = true
