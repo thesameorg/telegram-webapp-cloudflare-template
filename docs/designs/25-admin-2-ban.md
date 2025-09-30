@@ -1,7 +1,7 @@
 # Admin Ban Feature - Design Document
 
 ## Overview
-Enable administrators to ban and unban users from the platform, preventing banned users from posting and viewing content while providing appropriate UI/UX feedback.
+**MVP Simplified Approach**: Enable administrators to ban/unban users. Banned users cannot authenticate (auth fails). Banned profiles show "BANNED" badge. Posts are filtered from feed.
 
 ---
 
@@ -9,15 +9,13 @@ Enable administrators to ban and unban users from the platform, preventing banne
 
 ### ✅ Feasible
 All requirements are technically feasible with current stack:
-- **Database**: SQLite (D1) supports adding ban fields and indexes
+- **Database**: SQLite (D1) supports adding ban field and index
 - **Backend**: Hono.js can handle new ban/unban endpoints
 - **Frontend**: React can implement ban UI and conditional rendering
 - **Admin System**: Existing admin authentication system (`isAdmin`, `getAdminRole`) is fully functional
-- **Notification System**: Bot notification infrastructure exists (used in post deletion)
 
 ### Technical Constraints
-- **Caching**: Feed caching must be updated to exclude banned users' posts
-- **Session Data**: Sessions already contain `role` field; may need to add `isBanned` flag for quick checks
+- **No Caching**: Posts are not cached (confirmed by user)
 - **Database Migrations**: Requires new D1 migration for schema changes
 
 ---
@@ -48,202 +46,148 @@ All requirements are technically feasible with current stack:
 
 ❌ **Database Schema**
 - No `isBanned` field in `user_profiles` table
-- No `bannedAt` timestamp field
-- No `bannedBy` field to track which admin banned the user
 
 ❌ **Backend API**
 - No `POST /api/admin/ban/:telegramId` endpoint
 - No `POST /api/admin/unban/:telegramId` endpoint
-- No middleware/check to prevent banned users from creating posts
 - Feed endpoint doesn't filter out banned users' posts
-- Profile endpoint doesn't indicate ban status
+- Profile endpoint doesn't return ban status
+- Auth doesn't check ban status
 
 ❌ **Frontend UI**
-- No "BAN" button on profile page for admins
-- No confirmation dialog for ban action
-- No "User is banned" placeholder on profile page
-- No "You are banned" full-page message for banned users
-- No banned status indicator in feed
-
-❌ **Session/Auth**
-- Sessions don't include `isBanned` flag for quick checks
-- No ban check in post creation flow
+- No "BAN/UNBAN" button on profile page for admins
+- No confirmation dialog for ban/unban actions
+- No "BANNED" badge on profile
+- Auth error message doesn't mention ban possibility
 
 ---
 
-## 3. Clarification Questions
+## 3. Design Decisions (MVP Simplified)
 
-### 1. **Ban Scope - What can banned users do?**
-   - ❓ Can banned users view their own profile and posts?
-   - ❓ Can banned users view other profiles?
-   - ❓ Can banned users access the feed at all (even if empty)?
-   - ❓ Can banned users edit their existing posts?
-   - **Proposed**: Banned users see only "You are banned" page on app open, no access to any features
+### ✅ **Ban = Auth Fails**
+- Banned users cannot authenticate at all
+- Auth error shows: "Authentication failed or you were banned"
+- No special "You are banned" page needed
+- Simpler implementation: ban check added to auth flow
+- Banned user tries to open app → auth fails → sees Telegram auth error screen
 
-### 2. **Ban Visibility - Who sees what?**
-   - ❓ When viewing a banned user's profile, what information is visible to regular users vs admins?
-   - ❓ Do we show "User banned by [admin name]" or just "User was banned"?
-   - **Proposed**:
-     - Regular users: "User was banned" placeholder with no other info
-     - Admins: Full profile visible with "BANNED" badge and unban button
+### ✅ **Ban Visibility**
+- Everyone sees "BANNED" badge on banned user's profile
+- Profile shows minimal placeholder info (just display name like "John Doe")
+- Bio, avatar, contact info all hidden
+- Admin sees UNBAN button; regular users just see badge
 
-### 3. **Post Visibility - What happens to existing posts?**
-   - ❓ Should banned users' posts be permanently hidden or just filtered from feed?
-   - ❓ If user is unbanned, do posts reappear automatically?
-   - ❓ Can admins still see banned users' posts?
-   - **Proposed**:
-     - Posts remain in database but filtered from feed
-     - Posts reappear when user is unbanned
-     - Admins can see banned users' posts in profile view
+### ✅ **Post Visibility**
+- Posts remain in database but filtered from feed (`getAllPosts`)
+- Posts reappear automatically when user is unbanned
+- Admins can see banned users' posts in their profile view
+- Regular users see banned profile with BANNED badge but no posts
 
-### 4. **Notification Details**
-   - ❓ What exact message should banned users receive?
-   - ❓ Should notification include reason for ban?
-   - ❓ Should admins get notification when they ban someone?
-   - **Proposed**:
-     - User receives: "You have been banned from the platform. Your posts will not be visible to other users."
-     - No reason provided in MVP
-     - No admin notification (action is immediate)
+### ✅ **No Audit Trail (MVP)**
+- Just `isBanned` field (integer 0/1)
+- No `bannedAt`, `bannedBy`, or ban reason tracking
+- Pure MVP simplicity: just a toggle switch
+- Can add audit trail later if needed
 
-### 5. **Multiple Admins**
-   - ❓ Currently only one `TELEGRAM_ADMIN_ID` - will there be multiple admins?
-   - ❓ Should we track which admin performed the ban?
-   - **Proposed**: Track `bannedBy` admin ID for audit trail, prepare for multi-admin future
+### ✅ **Confirmation Pattern**
+- Ban action requires confirmation dialog
+- Unban action requires confirmation dialog
+- Same dialog pattern for consistency
 
-### 6. **Unban Confirmation**
-   - ❓ Should unban also require confirmation like ban?
-   - **Proposed**: Yes, same confirmation pattern for consistency
-
-### 7. **Ban Status Persistence**
-   - ❓ Should ban checks happen on every request or cache in session?
-   - **Proposed**:
-     - Add `isBanned` to session data on login
-     - Check on post creation/update
-     - Invalidate session on ban/unban
+### ✅ **Bot Notifications**
+- Send Telegram bot message when user is banned
+- User can still use bot (e.g., /start), just can't open web app
+- Use existing notification infrastructure (similar to `sendPostDeletedNotification`)
+- Message: "You have been banned. You cannot access the web app."
 
 ---
 
-## 4. Implementation Plan
+## 4. Implementation Plan (MVP Simplified)
 
 ### Phase 1: Database Changes
-**Files**: `backend/src/db/schema.ts`, new migration
+**Files**: `backend/src/db/schema.ts`, `backend/drizzle/migrations/0004_add_user_ban_field.sql`
 
-1. Add fields to `user_profiles`:
-   - `isBanned: integer (0/1)` - ban status
-   - `bannedAt: text` - ISO timestamp of ban
-   - `bannedBy: integer` - telegram ID of admin who banned
+1. Add field to `user_profiles`:
+   - `isBanned: integer (0/1)` - ban status (default 0)
 
-2. Create migration: `0004_add_user_ban_fields.sql`
+2. Create migration: `0004_add_user_ban_field.sql`
 
-3. Add index on `isBanned` for feed filtering
+3. Add index on `isBanned` for feed filtering performance
 
 ### Phase 2: Backend - Ban Management API
-**Files**: `backend/src/api/admin.ts` (new), `backend/src/index.ts`
+**Files**: `backend/src/api/admin.ts` (new), `backend/src/index.ts`, `backend/src/services/notification-service.ts`
 
 1. Create `admin.ts` with endpoints:
    - `POST /api/admin/ban/:telegramId` - Ban user (admin only)
    - `POST /api/admin/unban/:telegramId` - Unban user (admin only)
 
-2. Add admin authorization middleware
+2. Admin authorization using existing `isAdmin()` function
 
-3. Update `SessionData` type to include `isBanned: boolean`
+3. Add `sendBanNotification()` function to notification service
 
-4. Update `session-manager.ts` to include ban status in sessions
-
-5. Add ban notification function in `notification-service.ts`
+4. Send bot notification on ban action
 
 ### Phase 3: Backend - Ban Enforcement
-**Files**: `backend/src/api/posts.ts`, `backend/src/services/post-service.ts`, `backend/src/api/profile.ts`
+**Files**: `backend/src/api/auth.ts`, `backend/src/api/posts.ts`, `backend/src/services/post-service.ts`, `backend/src/api/profile.ts`, `backend/src/services/profile-service.ts`
 
-1. Update `getAllPosts()` to exclude banned users' posts:
-   - Add `WHERE user_profiles.isBanned = 0` to query
+1. Update auth (`/api/auth/telegram`) to check ban status:
+   - Query `is_banned` field after telegram validation
+   - Return 401 with message "Authentication failed or you were banned" if banned
 
-2. Update `getUserPostsWithImages()` to check ban status
+2. Update `getAllPosts()` to exclude banned users' posts:
+   - Add `WHERE user_profiles.is_banned = 0` to query
 
-3. Add ban check in `createPost()`:
-   - Return 403 if `session.isBanned === true`
+3. Update `getProfile()` to return minimal info for banned users:
+   - Return `is_banned: true` field
+   - Only return display_name, hide bio/avatar/contact_links for banned profiles
 
-4. Update `updatePost()` with same ban check
+4. Update `getUserPostsWithImages()` to check ban status:
+   - If viewer is not admin and user is banned, return empty array
 
-5. Update `getProfile()` to return ban status:
-   - Return minimal profile with `isBanned: true` flag
-
-6. Update profile service to handle banned profiles
-
-### Phase 4: Frontend - Admin Ban Controls
+### Phase 4: Frontend - Admin Ban Controls & Profile Display
 **Files**: `frontend/src/pages/UnifiedProfile.tsx`, `frontend/src/components/BanUserConfirm.tsx` (new)
 
 1. Create `BanUserConfirm.tsx` confirmation dialog component
 
 2. Update `UnifiedProfile.tsx`:
-   - Add "BAN" button next to profile actions (visible only to admins viewing others)
-   - Add "UNBAN" button for banned users
-   - Add handler for ban/unban actions
-   - Show ban status badge for admins
+   - Add "BAN/UNBAN" button for admins viewing other users
+   - Show "BANNED" badge on banned profiles (visible to everyone)
+   - Show minimal profile info for banned users (just display name)
+   - Hide bio, avatar, contact info for banned profiles
+   - Handle ban/unban API calls
 
-3. Create API client functions:
-   - `banUser(telegramId: number)`
-   - `unbanUser(telegramId: number)`
+### Phase 5: Frontend - Auth Error Message
+**Files**: `frontend/src/pages/Account.tsx` or auth component
 
-### Phase 5: Frontend - Banned User Experience
-**Files**: `frontend/src/pages/BannedUserPage.tsx` (new), `frontend/src/App.tsx`, `frontend/src/pages/UnifiedProfile.tsx`, `frontend/src/pages/Feed.tsx`
+1. Update auth error handling to show:
+   - "Authentication failed or you were banned"
 
-1. Create `BannedUserPage.tsx`:
-   - Full-page message: "You are banned"
-   - Subtext: "Your account has been banned. You cannot post or view content. Please contact support if you believe this is an error."
+### Phase 6: Testing
+**Files**: Test manually first, then add contract tests
 
-2. Update `App.tsx`:
-   - Check `user.isBanned` on app load
-   - Redirect to `BannedUserPage` if banned
-
-3. Update profile view:
-   - Show "User was banned" placeholder for banned users (non-admin viewers)
-   - Hide posts section for banned users (non-admin viewers)
-
-4. Update `Feed.tsx`:
-   - Banned users shouldn't reach feed, but add check anyway
-
-5. Update post creation:
-   - Disable post creation if user is banned (shouldn't happen, but defensive)
-
-### Phase 6: Testing & Validation
-**Files**: `backend/src/tests/contract/admin-ban.test.ts` (new), `frontend/src/components/__tests__/` (new tests)
-
-1. Backend tests:
+1. Manual testing:
    - Admin can ban user
    - Admin can unban user
    - Non-admin cannot ban
-   - Banned user cannot create post
+   - Banned user cannot authenticate
    - Feed excludes banned users' posts
-   - Profile shows ban status
-
-2. Frontend tests:
-   - Ban button visible only to admins
-   - Confirmation dialog works
-   - Banned user sees banned page
-   - Banned profile shows placeholder
-
-3. Integration testing:
-   - Full ban workflow
-   - Unban and post reappearance
-   - Session invalidation
+   - Profile shows ban badge
 
 ---
 
-## 5. API Specifications
+## 5. API Specifications (MVP)
 
 ### POST /api/admin/ban/:telegramId
 **Auth**: Admin only
-**Request**: Empty body or optional `{ reason?: string }`
+**Request**: Empty body
 **Response**:
 ```json
 {
   "success": true,
-  "message": "User banned successfully",
-  "bannedUserId": 123456789
+  "message": "User banned successfully"
 }
 ```
-**Errors**: 401 (not admin), 404 (user not found), 400 (already banned)
+**Errors**: 401 (not admin), 404 (profile not found), 400 (already banned)
 
 ### POST /api/admin/unban/:telegramId
 **Auth**: Admin only
@@ -252,42 +196,42 @@ All requirements are technically feasible with current stack:
 ```json
 {
   "success": true,
-  "message": "User unbanned successfully",
-  "unbannedUserId": 123456789
+  "message": "User unbanned successfully"
 }
 ```
-**Errors**: 401 (not admin), 404 (user not found), 400 (not banned)
+**Errors**: 401 (not admin), 404 (profile not found), 400 (not banned)
+
+### POST /api/auth/telegram (Updated)
+**Response** (when user is banned):
+```json
+{
+  "error": "Authentication failed or you were banned"
+}
+```
+**Status**: 401
 
 ### GET /api/profile/:telegramId (Updated)
-**Response** (when user is banned):
+**Response** (when user is banned - minimal info):
 ```json
 {
   "profile": {
     "telegram_id": 123456789,
-    "display_name": null,
-    "bio": null,
-    "isBanned": true,
-    "bannedAt": "2025-10-01T12:00:00Z"
+    "display_name": "John Doe",
+    "is_banned": true
   }
 }
 ```
+Note: bio, avatar, contact_links hidden for banned users
 
 ---
 
-## 6. Database Schema Changes
+## 6. Database Schema Changes (MVP)
 
-### Migration 0004: Add Ban Fields
+### Migration 0004: Add Ban Field
 ```sql
--- Add ban-related fields to user_profiles
-ALTER TABLE user_profiles ADD COLUMN is_banned INTEGER DEFAULT 0 NOT NULL;
-ALTER TABLE user_profiles ADD COLUMN banned_at TEXT;
-ALTER TABLE user_profiles ADD COLUMN banned_by INTEGER;
-
--- Create index for efficient ban filtering in queries
-CREATE INDEX idx_user_profiles_is_banned ON user_profiles(is_banned);
-
--- Create index for banned_by (useful for admin audit queries)
-CREATE INDEX idx_user_profiles_banned_by ON user_profiles(banned_by);
+-- Add ban field to user_profiles
+ALTER TABLE `user_profiles` ADD `is_banned` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+CREATE INDEX `idx_user_profiles_is_banned` ON `user_profiles` (`is_banned`);
 ```
 
 ### Schema Updates (TypeScript)
@@ -296,34 +240,27 @@ CREATE INDEX idx_user_profiles_banned_by ON user_profiles(banned_by);
 export const userProfiles = sqliteTable('user_profiles', {
   // ... existing fields ...
   isBanned: integer('is_banned').default(0).notNull(),
-  bannedAt: text('banned_at'),
-  bannedBy: integer('banned_by'),
 }, (table) => ({
   // ... existing indexes ...
   isBannedIdx: index('idx_user_profiles_is_banned').on(table.isBanned),
-  bannedByIdx: index('idx_user_profiles_banned_by').on(table.bannedBy),
 }));
 ```
 
 ---
 
-## 7. UI/UX Specifications
+## 7. UI/UX Specifications (MVP)
 
-### Admin View of User Profile
+### Admin View of Banned User Profile
 ```
 ┌─────────────────────────────────────┐
 │ Profile                             │
 ├─────────────────────────────────────┤
-│ [Profile Image]                     │
 │                                     │
-│ John Doe                            │
-│ @johndoe                            │
+│ John Doe [🔴 BANNED]               │  ← Badge visible to everyone
 │                                     │
-│ Bio text here...                    │
+│ [UNBAN BUTTON]                     │  ← Only visible to admins
 │                                     │
-│ [🔴 BANNED] [UNBAN BUTTON]         │  ← Only visible to admins
-│                                     │
-│ Posts (5)                           │
+│ Posts (5)                           │  ← Visible to admins only
 │ ┌─────────────────────────────┐    │
 │ │ Post 1...                   │    │
 │ └─────────────────────────────┘    │
@@ -336,26 +273,30 @@ export const userProfiles = sqliteTable('user_profiles', {
 │ Profile                             │
 ├─────────────────────────────────────┤
 │                                     │
-│   ⛔ User was banned                │
+│ John Doe [🔴 BANNED]               │  ← Badge visible to everyone
 │                                     │
-│   This user is no longer active    │
-│   on the platform.                 │
+│ Posts (0)                           │  ← No posts shown
+│                                     │
+│   No posts yet.                    │
 │                                     │
 └─────────────────────────────────────┘
 ```
 
-### Banned User View (App Root)
+### Admin View of Non-Banned User Profile
 ```
 ┌─────────────────────────────────────┐
+│ Profile                             │
+├─────────────────────────────────────┤
+│ [Profile Image]                     │
 │                                     │
-│   🚫 You are banned                 │
+│ John Doe                            │
+│ @johndoe                            │
 │                                     │
-│   Your account has been banned.    │
-│   You cannot post or view content. │
+│ Bio text here...                    │
 │                                     │
-│   If you believe this is an error, │
-│   please contact support.          │
+│ [BAN BUTTON]                       │  ← Only visible to admins
 │                                     │
+│ Posts (5)                           │
 └─────────────────────────────────────┘
 ```
 
@@ -369,9 +310,8 @@ export const userProfiles = sqliteTable('user_profiles', {
 │ @johndoe?                           │
 │                                     │
 │ This will:                          │
+│ • Prevent login/authentication     │
 │ • Hide all their posts from feed   │
-│ • Prevent them from posting        │
-│ • Show a banned message            │
 │                                     │
 │                                     │
 │     [Cancel]  [Ban User]            │
@@ -379,57 +319,62 @@ export const userProfiles = sqliteTable('user_profiles', {
 └─────────────────────────────────────┘
 ```
 
+### Unban Confirmation Dialog
+```
+┌─────────────────────────────────────┐
+│ Unban User?                     [X] │
+├─────────────────────────────────────┤
+│                                     │
+│ Are you sure you want to unban      │
+│ @johndoe?                           │
+│                                     │
+│ This will:                          │
+│ • Allow them to log in again       │
+│ • Show their posts in feed         │
+│                                     │
+│                                     │
+│     [Cancel]  [Unban User]          │
+│                                     │
+└─────────────────────────────────────┘
+```
+
 ---
 
-## 8. Security Considerations
+## 8. Security Considerations (MVP)
 
-1. **Admin-Only Access**: All ban/unban endpoints must validate admin role
-2. **Session Invalidation**: Ban/unban should invalidate user's active sessions
-3. **Audit Trail**: Track who banned whom and when
-4. **No Self-Ban**: Admins cannot ban themselves (add validation)
-5. **Rate Limiting**: Consider rate limiting ban actions to prevent abuse
+1. **Admin-Only Access**: All ban/unban endpoints validate admin role using `isAdmin()`
+2. **No Self-Ban**: Admins cannot ban themselves (add validation)
+3. **Auth Layer Ban Check**: Ban check happens at authentication, preventing all access
 
 ---
 
-## 9. Open Questions / Future Enhancements
+## 9. Future Enhancements (Out of MVP Scope)
 
-- [ ] Add ban reason field and display to user
-- [ ] Add appeal mechanism
-- [ ] Add temporary bans with auto-unban
+- [ ] Add `bannedAt` timestamp
+- [ ] Add `bannedBy` field to track which admin
+- [ ] Add ban reason field (and show in notification)
 - [ ] Add ban history log
-- [ ] Add bulk ban operations
-- [ ] Add ban statistics to admin dashboard
-- [ ] Email/external notification for bans (if email system added)
-- [ ] Multi-admin system with role-based permissions
+- [ ] Add temporary bans with auto-unban
+- [ ] Multi-admin system
 
 ---
 
-## 10. Rollout Plan
+## 10. Success Criteria (MVP)
 
-1. **Deploy database migration** (no downtime)
-2. **Deploy backend** with new endpoints
-3. **Deploy frontend** with ban UI
-4. **Test in preview environment** with test bot
-5. **Deploy to production**
-6. **Monitor error logs** for first 24 hours
-
----
-
-## Success Criteria
-
-✅ Admin can ban user from profile page
-✅ Admin can unban user from profile page
-✅ Both actions require confirmation
-✅ Banned user receives notification
-✅ Banned user's profile shows "User was banned" to regular users
+✅ Admin can ban user from profile page with confirmation
+✅ Admin can unban user from profile page with confirmation
+✅ Non-admin cannot access ban/unban endpoints
+✅ Banned user receives Telegram bot notification
+✅ Banned user cannot authenticate (gets error message)
+✅ Banned user's profile shows "BANNED" badge with minimal info
 ✅ Banned user's posts are hidden from feed
-✅ Banned user sees "You are banned" page on app open
-✅ Unbanned user's posts reappear in feed
-✅ All tests pass
+✅ Admins can see banned user's posts in profile view
+✅ Unbanned user's posts reappear in feed automatically
+✅ Unbanned user can authenticate normally
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 2.0 (MVP Simplified)
 **Created**: 2025-10-01
 **Last Updated**: 2025-10-01
-**Status**: Draft - Awaiting Clarifications
+**Status**: Approved - Ready for Implementation
