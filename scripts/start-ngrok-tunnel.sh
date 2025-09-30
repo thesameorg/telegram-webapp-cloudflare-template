@@ -7,6 +7,11 @@ source "$(dirname "$0")/load-env.sh"
 
 echo "🚀 Starting local development webhook tunnel (ngrok)..."
 
+# create logs dir 
+mkdir -p logs
+mkdor -p pids
+
+
 # Check if ngrok is installed
 if ! command -v ngrok &> /dev/null; then
     echo "❌ ngrok is not installed. Please install it first:"
