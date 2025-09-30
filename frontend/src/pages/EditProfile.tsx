@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileEditor } from '../components/profile/ProfileEditor';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
@@ -29,7 +29,7 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       if (!sessionId) {
         navigate('/account');
@@ -61,7 +61,7 @@ export default function EditProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId, navigate, showToast]);
 
   useEffect(() => {
     // Don't fetch if auth is still loading
@@ -70,7 +70,7 @@ export default function EditProfile() {
     }
 
     fetchProfile();
-  }, [navigate, showToast, sessionId, authLoading]);
+  }, [authLoading, fetchProfile]);
 
 
   const handleSave = async (updatedProfile: Partial<ProfileData>) => {
