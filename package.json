@@ -9,7 +9,7 @@
     "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "stop": "pkill -f 'wrangler dev.*8787' || true; pkill -f 'vite' || true; echo 'Dev servers stopped'",
+    "stop": "pkill -f 'wrangler dev.*8787' || true; pkill -f 'vite' || true; pkill -f 'workerd' || true; echo 'Dev servers stopped'",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend && npm test -- --run",
     "test:frontend": "cd frontend && npm test -- --run",
