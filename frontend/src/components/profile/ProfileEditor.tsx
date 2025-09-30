@@ -5,9 +5,6 @@ import { useToast } from '../../hooks/use-toast';
 
 interface ContactLinksData {
   website?: string;
-  twitter?: string;
-  instagram?: string;
-  linkedin?: string;
   telegram?: string;
 }
 
@@ -27,9 +24,10 @@ interface ProfileEditorProps {
   onSave: (updatedProfile: Partial<ProfileData>) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  sessionId?: string;
 }
 
-export function ProfileEditor({ profile, onSave, onCancel, loading = false }: ProfileEditorProps) {
+export function ProfileEditor({ profile, onSave, onCancel, loading = false, sessionId }: ProfileEditorProps) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
     display_name: profile.display_name || '',
@@ -60,11 +58,14 @@ export function ProfileEditor({ profile, onSave, onCancel, loading = false }: Pr
       const formData = new FormData();
       formData.append('image', file);
 
-      const sessionId = localStorage.getItem('sessionId');
+      if (!sessionId) {
+        throw new Error('No session found');
+      }
+
       const response = await fetch('/api/profile/me/avatar', {
         method: 'POST',
         headers: {
-          'x-session-id': sessionId || '',
+          'x-session-id': sessionId,
         },
         body: formData,
       });

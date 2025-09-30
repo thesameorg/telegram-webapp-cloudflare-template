@@ -114,6 +114,20 @@ export class PostService {
     return deletedPost;
   }
 
+  async updateUserDisplayNameInPosts(userId: number, newDisplayName: string) {
+    const now = new Date().toISOString();
+
+    await this.db
+      .update(posts)
+      .set({
+        displayName: newDisplayName,
+        updatedAt: now
+      })
+      .where(eq(posts.userId, userId));
+
+    return true;
+  }
+
   async getPostsWithImages(input: GetPostsInput) {
     const postList = await this.db
       .select()

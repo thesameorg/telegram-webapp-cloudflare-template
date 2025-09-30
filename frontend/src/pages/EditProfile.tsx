@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProfileEditor } from '../components/profile/ProfileEditor';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
 import { useToast } from '../hooks/use-toast';
+import { useSimpleAuth } from '../hooks/use-simple-auth';
 
 interface ProfileData {
   telegram_id: number;
@@ -11,9 +12,6 @@ interface ProfileData {
   phone_number?: string;
   contact_links?: {
     website?: string;
-    twitter?: string;
-    instagram?: string;
-    linkedin?: string;
     telegram?: string;
   };
   profile_image_key?: string;
@@ -24,6 +22,7 @@ interface ProfileData {
 export default function EditProfile() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { sessionId, isLoading: authLoading } = useSimpleAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,9 +30,13 @@ export default function EditProfile() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Don't fetch if auth is still loading
+    if (authLoading) {
+      return;
+    }
+
     const fetchProfile = async () => {
       try {
-        const sessionId = localStorage.getItem('sessionId');
         if (!sessionId) {
           navigate('/account');
           return;
@@ -65,12 +68,12 @@ export default function EditProfile() {
     };
 
     fetchProfile();
-  }, [navigate, showToast]);
+  }, [navigate, showToast, sessionId, authLoading]);
+
 
   const handleSave = async (updatedProfile: Partial<ProfileData>) => {
     setSaving(true);
     try {
-      const sessionId = localStorage.getItem('sessionId');
       if (!sessionId) {
         throw new Error('No session found');
       }
@@ -147,6 +150,7 @@ export default function EditProfile() {
         onSave={handleSave}
         onCancel={handleCancel}
         loading={saving}
+        sessionId={sessionId || undefined}
       />
     </div>
   );

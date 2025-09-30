@@ -1,5 +1,7 @@
 import { Context } from 'hono';
+import { createDatabase } from '../db';
 import { ProfileService } from '../services/profile-service';
+import { PostService } from '../services/post-service';
 import { updateProfileSchema, getProfileSchema } from '../models/profile';
 import { SessionManager } from '../services/session-manager';
 import { ImageService } from '../services/image-service';
@@ -103,9 +105,10 @@ export const updateMyProfile = async (c: Context<{ Bindings: Env }>) => {
 
     // Invalidate posts cache if display name changed
     if (updateData.display_name !== undefined) {
-      // In a production app, you might want to implement proper cache invalidation
-      // For now, we rely on the fact that posts queries join with profiles
-      console.log('Profile display name updated - posts will reflect new name on next query');
+      const db = createDatabase(c.env.DB);
+      const postService = new PostService(db, c.env);
+      await postService.updateUserDisplayNameInPosts(session.userId, updateData.display_name);
+      console.log(`Updated display name in all posts for user ${session.userId}`);
     }
 
     const formattedProfile = profileService.formatProfile(updatedProfile);

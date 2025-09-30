@@ -13,9 +13,6 @@ interface ProfileData {
   phone_number?: string;
   contact_links?: {
     website?: string;
-    twitter?: string;
-    instagram?: string;
-    linkedin?: string;
     telegram?: string;
   };
   profile_image_key?: string;
