@@ -1,13 +1,16 @@
 import type { SessionData, Env } from '../types/env';
 import type { TelegramUser } from '../models/telegram-user';
 import { getDisplayName } from '../models/telegram-user';
+import { getAdminRole } from './admin-auth';
 
 export class SessionManager {
   private readonly kv: KVNamespace;
   private readonly sessionTTL: number;
+  private readonly env: Env;
 
-  constructor(kv: KVNamespace, sessionTTL: number = 3600) {
+  constructor(kv: KVNamespace, env: Env, sessionTTL: number = 3600) {
     this.kv = kv;
+    this.env = env;
     this.sessionTTL = sessionTTL;
   }
 
@@ -23,7 +26,9 @@ export class SessionManager {
       profilePictureUrl: user.photo_url,
       createdAt: now,
       expiresAt: now + (this.sessionTTL * 1000),
-      isActive: true
+      isActive: true,
+      role: getAdminRole(user.id, this.env),
+      telegramId: user.id
     };
 
     await this.kv.put(
@@ -73,6 +78,6 @@ export class SessionManager {
   }
 
   static create(env: Env, sessionTTL?: number): SessionManager {
-    return new SessionManager(env.SESSIONS, sessionTTL);
+    return new SessionManager(env.SESSIONS, env, sessionTTL);
   }
 }

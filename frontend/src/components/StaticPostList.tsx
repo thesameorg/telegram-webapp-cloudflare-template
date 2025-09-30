@@ -23,6 +23,7 @@ interface StaticPostListProps {
   posts: Post[];
   currentUserId?: number;
   showActions?: boolean;
+  isAdmin?: boolean;
   onEdit?: (post: Post) => void;
   onDelete?: (postId: number) => void;
 }
@@ -31,6 +32,7 @@ export default function StaticPostList({
   posts,
   currentUserId,
   showActions,
+  isAdmin,
   onEdit,
   onDelete
 }: StaticPostListProps) {
@@ -46,6 +48,7 @@ export default function StaticPostList({
           post={post}
           currentUserId={currentUserId}
           showActions={showActions}
+          isAdmin={isAdmin}
           onEdit={onEdit}
           onDelete={onDelete}
         />

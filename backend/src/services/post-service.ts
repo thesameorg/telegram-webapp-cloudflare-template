@@ -114,6 +114,15 @@ export class PostService {
     return deletedPost;
   }
 
+  async deletePostByIdOnly(id: number) {
+    const [deletedPost] = await this.db
+      .delete(posts)
+      .where(eq(posts.id, id))
+      .returning();
+
+    return deletedPost;
+  }
+
   async updateUserDisplayNameInPosts(userId: number, newDisplayName: string) {
     const now = new Date().toISOString();
 

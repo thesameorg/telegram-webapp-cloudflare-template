@@ -21,7 +21,7 @@ interface ProfileData {
 }
 
 export default function Account() {
-  const { user, sessionId, expiresAt, isLoading } = useSimpleAuth();
+  const { user, sessionId, expiresAt, isLoading, isAdmin } = useSimpleAuth();
   const { webApp } = useTelegram();
   const navigate = useNavigate();
 
@@ -135,13 +135,18 @@ export default function Account() {
                 <p className="text-gray-900 dark:text-white">{user.language_code}</p>
               </div>
 
-              {user.is_premium && (
-                <div>
+              <div className="flex gap-2">
+                {user.is_premium && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                     ⭐ Premium User
                   </span>
-                </div>
-              )}
+                )}
+                {isAdmin && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                    🔴 ADMIN
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}

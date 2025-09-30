@@ -57,6 +57,8 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
           photo_url: session.profilePictureUrl
         },
         expiresAt: session.expiresAt,
+        role: session.role,
+        isAdmin: session.role === 'admin',
         source: 'session'
       });
     }
@@ -93,6 +95,8 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
         photo_url: user.photo_url
       },
       expiresAt: session!.expiresAt,
+      role: session!.role,
+      isAdmin: session!.role === 'admin',
       source: 'initdata'
     });
 
@@ -105,4 +109,3 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
     }, 401);
   }
 }
-

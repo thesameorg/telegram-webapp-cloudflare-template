@@ -6,6 +6,7 @@ import { createPostSchema, updatePostSchema } from '../models/post';
 import { SessionManager } from '../services/session-manager';
 import type { Env } from '../types/env';
 import type { ImageUploadData } from '../services/image-service';
+import { getBotInstance, sendPostDeletedNotification } from '../services/notification-service';
 
 // Helper: Extract and validate session
 async function authenticateUser(c: Context<{ Bindings: Env }>) {
@@ -208,40 +209,91 @@ export const updatePost = async (c: Context<{ Bindings: Env }>) => {
 
 export const deletePost = async (c: Context<{ Bindings: Env }>) => {
   try {
+    console.log('[DELETE POST] Starting delete post request');
+
     const authResult = await authenticateUser(c);
     if (authResult.error) {
+      console.log('[DELETE POST] Auth failed:', authResult.error);
       return c.json({ error: authResult.error.message }, authResult.error.status);
     }
+    console.log('[DELETE POST] Auth successful, userId:', authResult.session.userId);
 
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
+      console.log('[DELETE POST] Post ID parse failed:', postIdResult.error);
       return c.json({ error: postIdResult.error.message }, postIdResult.error.status);
     }
+    console.log('[DELETE POST] Post ID:', postIdResult.postId);
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
     const imageService = new ImageService(db, c.env.IMAGES, c.env);
 
-    // Check ownership
+    // Check ownership or admin status
+    console.log('[DELETE POST] Fetching post...');
     const existingPost = await postService.getPostById(postIdResult.postId);
     if (!existingPost) {
+      console.log('[DELETE POST] Post not found');
       return c.json({ error: 'Post not found' }, 404);
     }
-    if (existingPost.userId !== authResult.session.userId) {
+    console.log('[DELETE POST] Post found, userId:', existingPost.userId);
+
+    const isOwner = existingPost.userId === authResult.session.userId;
+    console.log('[DELETE POST] Session role:', authResult.session.role);
+    const isAdmin = authResult.session.role === 'admin';
+    console.log('[DELETE POST] isOwner:', isOwner, 'isAdmin:', isAdmin);
+
+    if (!isOwner && !isAdmin) {
+      console.log('[DELETE POST] Not authorized');
       return c.json({ error: 'Not authorized to delete this post' }, 403);
     }
 
-    // Clean up R2 images before deleting post
-    await imageService.cleanupPostImages(postIdResult.postId);
+    // If admin is deleting someone else's post, notify the owner
+    const shouldNotify = isAdmin && !isOwner;
+    console.log('[DELETE POST] shouldNotify:', shouldNotify);
+    let postOwnerTelegramId: number | null = null;
 
-    const deletedPost = await postService.deletePost(postIdResult.postId, authResult.session.userId);
-    if (!deletedPost) {
-      return c.json({ error: 'Failed to delete post' }, 500);
+    if (shouldNotify) {
+      console.log('[DELETE POST] Fetching profile for notification...');
+      // Get post owner's telegram ID for notification (userId in posts == telegramId in profiles)
+      const { ProfileService } = await import('../services/profile-service');
+      const profileService = new ProfileService(c.env.DB);
+      const profile = await profileService.getProfile(existingPost.userId);
+      postOwnerTelegramId = profile?.telegramId ?? null;
+      console.log('[DELETE POST] Profile telegramId:', postOwnerTelegramId);
     }
 
+    // Clean up R2 images before deleting post
+    console.log('[DELETE POST] Cleaning up images...');
+    await imageService.cleanupPostImages(postIdResult.postId);
+    console.log('[DELETE POST] Images cleaned up');
+
+    console.log('[DELETE POST] Deleting post from database...');
+    // Use different method based on whether it's an admin override or owner deletion
+    const deletedPost = isAdmin && !isOwner
+      ? await postService.deletePostByIdOnly(postIdResult.postId)
+      : await postService.deletePost(postIdResult.postId, authResult.session.userId);
+
+    if (!deletedPost) {
+      console.log('[DELETE POST] Post deletion failed');
+      return c.json({ error: 'Failed to delete post' }, 500);
+    }
+    console.log('[DELETE POST] Post deleted from database');
+
+    // Send notification if admin deleted another user's post
+    if (shouldNotify && postOwnerTelegramId) {
+      console.log('[DELETE POST] Sending bot notification...');
+      const bot = getBotInstance(c.env);
+      await sendPostDeletedNotification(postOwnerTelegramId, postIdResult.postId, bot);
+      console.log('[DELETE POST] Notification sent');
+    }
+
+    console.log('[DELETE POST] Success!');
     return c.json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return c.json({ error: 'Failed to delete post' }, 500);
   }
 };

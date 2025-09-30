@@ -18,12 +18,13 @@ interface PostListProps {
   userId?: number; // If provided, only shows posts from this user
   currentUserId?: number; // Current user's ID for permission checks
   showActions?: boolean; // Whether to show edit/delete actions
+  isAdmin?: boolean; // Whether current user is admin
   onEdit?: (post: Post) => void;
   onDelete?: (postId: number) => void;
   onRefetchReady?: (refetch: () => void) => void; // Callback to expose refetch function
 }
 
-export default function PostList({ userId, currentUserId, showActions, onEdit, onDelete, onRefetchReady }: PostListProps) {
+export default function PostList({ userId, currentUserId, showActions, isAdmin, onEdit, onDelete, onRefetchReady }: PostListProps) {
   const { posts, loading, loadingMore, error, hasMore, loadMore, refetch } = useInfinitePosts(userId);
 
   useInfiniteScroll({
@@ -86,6 +87,7 @@ export default function PostList({ userId, currentUserId, showActions, onEdit, o
           post={post}
           currentUserId={currentUserId}
           showActions={showActions}
+          isAdmin={isAdmin}
           onEdit={onEdit}
           onDelete={onDelete}
         />

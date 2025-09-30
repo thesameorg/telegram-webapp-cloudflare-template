@@ -2,15 +2,30 @@ import { useState, useRef } from 'react';
 import PostList from '../components/PostList';
 import CreatePostButton from '../components/CreatePostButton';
 import CreatePost from '../components/CreatePost';
+import DeletePostConfirm from '../components/DeletePostConfirm';
+import { useSimpleAuth } from '../hooks/use-simple-auth';
 
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const refetchRef = useRef<(() => void) | null>(null);
+  const { user, isAdmin } = useSimpleAuth();
 
   const handlePostCreated = () => {
     if (refetchRef.current) {
       refetchRef.current();
     }
+  };
+
+  const handleDelete = (postId: number) => {
+    setDeletingPostId(postId);
+  };
+
+  const handlePostDeleted = () => {
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
+    setDeletingPostId(null);
   };
 
   return (
@@ -31,8 +46,23 @@ export default function Feed() {
         />
       )}
 
+      {/* Delete Post Confirmation */}
+      {deletingPostId && (
+        <DeletePostConfirm
+          postId={deletingPostId}
+          onClose={() => setDeletingPostId(null)}
+          onPostDeleted={handlePostDeleted}
+        />
+      )}
+
       {/* Posts Feed */}
-      <PostList onRefetchReady={(refetch) => { refetchRef.current = refetch; }} />
+      <PostList
+        currentUserId={user?.id}
+        showActions={true}
+        isAdmin={isAdmin}
+        onDelete={handleDelete}
+        onRefetchReady={(refetch) => { refetchRef.current = refetch; }}
+      />
     </div>
   );
 }

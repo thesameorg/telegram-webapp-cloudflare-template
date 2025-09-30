@@ -18,6 +18,7 @@ interface AuthState {
   user: TelegramUser | null;
   sessionId: string | null;
   expiresAt: number | null;
+  isAdmin: boolean;
 }
 
 /**
@@ -30,7 +31,8 @@ export function useSimpleAuth(): AuthState {
     isLoading: true,
     user: null,
     sessionId: null,
-    expiresAt: null
+    expiresAt: null,
+    isAdmin: false
   });
 
   const { webApp, isWebAppReady } = useTelegram();
@@ -43,16 +45,8 @@ export function useSimpleAuth(): AuthState {
         // Check if we already have valid stored auth
         const stored = AuthStorage.getAuthState();
         if (stored.isValid && stored.sessionId && stored.userData) {
-          if (mounted) {
-            setAuthState({
-              isAuthenticated: true,
-              isLoading: false,
-              user: stored.userData,
-              sessionId: stored.sessionId,
-              expiresAt: stored.expiresAt
-            });
-          }
-          return;
+          // Need to re-authenticate to get fresh role data
+          // (stored auth doesn't include role, so we'll fall through to full auth)
         }
 
         // Need to authenticate with backend
@@ -90,7 +84,8 @@ export function useSimpleAuth(): AuthState {
                 isLoading: false,
                 user: authData.user,
                 sessionId: authData.sessionId,
-                expiresAt: authData.expiresAt
+                expiresAt: authData.expiresAt,
+                isAdmin: authData.isAdmin || false
               });
             }
             return;
@@ -105,7 +100,8 @@ export function useSimpleAuth(): AuthState {
             isLoading: false,
             user: null,
             sessionId: null,
-            expiresAt: null
+            expiresAt: null,
+            isAdmin: false
           });
         }
 
@@ -118,7 +114,8 @@ export function useSimpleAuth(): AuthState {
             isLoading: false,
             user: null,
             sessionId: null,
-            expiresAt: null
+            expiresAt: null,
+            isAdmin: false
           });
         }
       }

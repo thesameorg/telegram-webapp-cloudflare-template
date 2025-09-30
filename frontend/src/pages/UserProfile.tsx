@@ -4,6 +4,7 @@ import { ProfileView } from '../components/profile/ProfileView';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
 import StaticPostList from '../components/StaticPostList';
 import { ImageUrlData } from '../components/ImageGallery';
+import { useSimpleAuth } from '../hooks/use-simple-auth';
 
 interface ProfileData {
   telegram_id: number;
@@ -37,6 +38,7 @@ interface PostData {
 
 export default function UserProfile() {
   const { telegramId } = useParams<{ telegramId: string }>();
+  const { isAdmin } = useSimpleAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -176,7 +178,8 @@ export default function UserProfile() {
           <StaticPostList
             posts={posts}
             currentUserId={currentUserId || undefined}
-            showActions={isOwnProfile}
+            showActions={isOwnProfile || isAdmin}
+            isAdmin={isAdmin}
           />
         ) : (
           <div className="p-8 text-center">

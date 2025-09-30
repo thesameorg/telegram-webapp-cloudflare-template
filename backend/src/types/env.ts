@@ -37,4 +37,6 @@ export interface SessionData {
   createdAt: number;
   expiresAt: number;
   isActive: boolean;
+  role: 'admin' | 'user';
+  telegramId: number;
 }
