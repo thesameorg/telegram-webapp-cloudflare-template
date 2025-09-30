@@ -62,15 +62,15 @@ export default function ImageUpload({
       maxWidthOrHeight: 1280,
       useWebWorker: true,
       fileType: 'image/jpeg',
-      quality: 0.9,
+      quality: 0.95,
     };
 
     const thumbnailOptions = {
       maxSizeMB: 0.1,
-      maxWidthOrHeight: 300,
+      maxWidthOrHeight: 500,
       useWebWorker: true,
       fileType: 'image/jpeg',
-      quality: 0.8,
+      quality: 0.95,
     };
 
     try {
@@ -377,7 +377,7 @@ export default function ImageUpload({
 
           {/* Summary */}
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Images will be compressed to ≤1MB each with 300px thumbnails
+            Images will be compressed to ≤1280px at 95% quality with 500px thumbnails
           </div>
         </div>
       )}

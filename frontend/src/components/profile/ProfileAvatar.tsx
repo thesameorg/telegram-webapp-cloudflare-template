@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import imageCompression from 'browser-image-compression';
 
 interface ProfileAvatarProps {
   profileImageKey?: string | null;
@@ -67,9 +68,25 @@ export function ProfileAvatar({
     setImageError(true);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && onImageUpload) {
+    if (!file || !onImageUpload) return;
+
+    try {
+      // Compress avatar to 96px 95% JPEG with EXIF removal
+      const options = {
+        maxWidthOrHeight: 96,
+        useWebWorker: true,
+        fileType: 'image/jpeg' as const,
+        quality: 0.95,
+        initialQuality: 0.95,
+      };
+
+      const compressedFile = await imageCompression(file, options);
+      onImageUpload(compressedFile);
+    } catch (error) {
+      console.error('Avatar compression failed:', error);
+      // Fallback to original file if compression fails
       onImageUpload(file);
     }
   };
