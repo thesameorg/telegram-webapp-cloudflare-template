@@ -29,43 +29,45 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchProfile = async () => {
+    try {
+      if (!sessionId) {
+        navigate('/account');
+        return;
+      }
+
+      setLoading(true);
+      const response = await fetch('/api/profile/me', {
+        headers: {
+          'x-session-id': sessionId,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigate('/account');
+          return;
+        }
+        throw new Error('Failed to load profile');
+      }
+
+      const data = await response.json();
+      setProfile(data.profile);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setError('Failed to load profile');
+      showToast('Failed to load profile', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Don't fetch if auth is still loading
     if (authLoading) {
       return;
     }
-
-    const fetchProfile = async () => {
-      try {
-        if (!sessionId) {
-          navigate('/account');
-          return;
-        }
-
-        const response = await fetch('/api/profile/me', {
-          headers: {
-            'x-session-id': sessionId,
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            navigate('/account');
-            return;
-          }
-          throw new Error('Failed to load profile');
-        }
-
-        const data = await response.json();
-        setProfile(data.profile);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        setError('Failed to load profile');
-        showToast('Failed to load profile', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
 
     fetchProfile();
   }, [navigate, showToast, sessionId, authLoading]);
@@ -149,6 +151,7 @@ export default function EditProfile() {
         profile={profile}
         onSave={handleSave}
         onCancel={handleCancel}
+        onAvatarUpdate={fetchProfile}
         loading={saving}
         sessionId={sessionId || undefined}
       />

@@ -23,11 +23,12 @@ interface ProfileEditorProps {
   profile: ProfileData;
   onSave: (updatedProfile: Partial<ProfileData>) => Promise<void>;
   onCancel: () => void;
+  onAvatarUpdate?: () => Promise<void>;
   loading?: boolean;
   sessionId?: string;
 }
 
-export function ProfileEditor({ profile, onSave, onCancel, loading = false, sessionId }: ProfileEditorProps) {
+export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loading = false, sessionId }: ProfileEditorProps) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
     display_name: profile.display_name || '',
@@ -77,8 +78,10 @@ export function ProfileEditor({ profile, onSave, onCancel, loading = false, sess
       await response.json();
       showToast('Avatar updated successfully!', 'success');
 
-      // Reload the page to show the new avatar
-      window.location.reload();
+      // Refresh profile data to show the new avatar
+      if (onAvatarUpdate) {
+        await onAvatarUpdate();
+      }
     } catch (error) {
       console.error('Avatar upload failed:', error);
       showToast('Failed to upload avatar', 'error');
