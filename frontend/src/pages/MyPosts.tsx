@@ -5,7 +5,6 @@ import CreatePost from '../components/CreatePost';
 import EditPost from '../components/EditPost';
 import DeletePostConfirm from '../components/DeletePostConfirm';
 import { useTelegramAuth } from '../hooks/use-telegram-auth';
-import { useSimpleAuth } from '../hooks/use-simple-auth';
 
 interface Post {
   id: number;
@@ -23,7 +22,6 @@ export default function MyPosts() {
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const refetchRef = useRef<(() => void) | null>(null);
   const { user } = useTelegramAuth();
-  const { isAdmin } = useSimpleAuth();
 
   const handlePostCreated = () => {
     if (refetchRef.current) {
