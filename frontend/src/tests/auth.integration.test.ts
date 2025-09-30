@@ -281,7 +281,7 @@ describe('Frontend Authentication Integration Tests', () => {
       const validationResult = await validateResponse.json();
       expect(validationResult.authenticated).toBe(true);
 
-      // Step 5: Clear session (logout simulation)
+      // Step 5: Clear local session storage
       AuthStorage.clearSession();
       expect(AuthStorage.isSessionValid()).toBe(false);
     });

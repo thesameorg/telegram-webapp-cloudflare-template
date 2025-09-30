@@ -54,11 +54,6 @@ export class SessionManager {
     }
   }
 
-  async invalidateSession(sessionId: string): Promise<void> {
-    if (!sessionId) return;
-    await this.kv.delete(`session:${sessionId}`);
-  }
-
   async refreshSession(sessionId: string): Promise<SessionData | null> {
     const session = await this.validateSession(sessionId);
     if (!session) return null;
