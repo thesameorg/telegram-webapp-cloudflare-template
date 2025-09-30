@@ -59,7 +59,11 @@ export const getMyProfile = async (c: Context<{ Bindings: Env }>) => {
 
     // Create profile if it doesn't exist
     if (!profile) {
-      profile = await profileService.createProfile(session.userId);
+      profile = await profileService.createProfile(
+        session.userId,
+        session.username,
+        session.displayName
+      );
     }
 
     const formattedProfile = profileService.formatProfile(profile);
@@ -67,6 +71,7 @@ export const getMyProfile = async (c: Context<{ Bindings: Env }>) => {
     return c.json({
       profile: {
         telegram_id: formattedProfile.telegramId,
+        username: formattedProfile.username,
         display_name: formattedProfile.displayName,
         bio: formattedProfile.bio,
         phone_number: formattedProfile.phoneNumber,

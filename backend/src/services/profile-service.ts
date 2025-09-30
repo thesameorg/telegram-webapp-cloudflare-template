@@ -22,9 +22,18 @@ export class ProfileService {
     return result[0] || null;
   }
 
-  async createProfile(telegramId: number): Promise<UserProfile> {
+  async createProfile(telegramId: number, username?: string, displayName?: string): Promise<UserProfile> {
+    // Prepare contact links with telegram username if provided
+    const contactLinks: { telegram?: string } = {};
+    if (username) {
+      contactLinks.telegram = username;
+    }
+
     const newProfile: NewUserProfile = {
       telegramId,
+      username: username ?? null,
+      displayName: displayName ?? null,
+      contactLinks: Object.keys(contactLinks).length > 0 ? JSON.stringify(contactLinks) : null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

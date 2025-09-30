@@ -17,6 +17,7 @@ export const posts = sqliteTable('posts', {
 export const userProfiles = sqliteTable('user_profiles', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   telegramId: integer('telegram_id').notNull().unique(),
+  username: text('username'),
   displayName: text('display_name'),
   bio: text('bio'),
   phoneNumber: text('phone_number'),
@@ -26,6 +27,7 @@ export const userProfiles = sqliteTable('user_profiles', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 }, (table) => ({
   telegramIdIdx: index('idx_user_profiles_telegram_id').on(table.telegramId),
+  usernameIdx: index('idx_user_profiles_username').on(table.username),
 }));
 
 export const postImages = sqliteTable('post_images', {
