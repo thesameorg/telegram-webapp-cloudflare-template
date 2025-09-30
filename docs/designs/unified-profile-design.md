@@ -1,3 +1,19 @@
+
+# Initial task
+**unify account and "my posts"**
+i want to combine together the "my posts" and "my profile" (/me) pages. they are already similar and have lots of common functions, methods, etc. in view mode /me it already exists as user-profile thing. edit mode is only in "my profile" page. 
+- if it is "my" page
+    - we should see a collapsed "session-info" part
+    - we should see a collapsed "app info" part
+    - we should see "telegram info" part
+    - we should have "edit" button
+    - i should keep possibility to edit & delete my posts
+- if it is other user's page - we should see it as we see now the /profile/ page
+- in both my and other's page i should see post list
+- we remove "post" button and leave it only for "feed" page
+
+
+
 # Unified Profile Design: Account + MyPosts Consolidation
 
 **Date**: 2025-09-30
@@ -71,15 +87,10 @@ This design consolidates the `/account` and `/my-posts` pages into a unified pro
 
 **After**:
 ```
-/profile/me    → UnifiedProfile.tsx (own profile)
-/profile/:id   → UnifiedProfile.tsx (other user profile)
+/profile/:id   → UnifiedProfile.tsx (detects own vs other profile)
 ```
 
-**Alternative** (if /me is preferred):
-```
-/me            → Redirect to /profile/{current_user_id}
-/profile/:id   → UnifiedProfile.tsx
-```
+**Note**: No special `/me` route. UnifiedProfile intelligently detects if viewing own profile by comparing route param with current user ID.
 
 ### 3.2 Component Structure
 
@@ -101,6 +112,7 @@ UnifiedProfile.tsx
    - Reusable accordion component
    - Props: `title`, `children`, `defaultExpanded`
    - State: local expansion toggle
+   - **Default**: All sections collapsed (`defaultExpanded={false}`)
 
 2. **TelegramInfoSection.tsx**
    - Extract from Account.tsx lines 107-152
@@ -110,14 +122,15 @@ UnifiedProfile.tsx
 ### 3.4 Modified Components
 
 1. **BottomNavigation.tsx**
-   - Replace `/my-posts` with `/profile/me` or `/me`
-   - Change icon/label to "Profile" instead of "My Posts"
-   - Remove `/account` tab OR keep as legacy redirect
+   - Replace `/my-posts` with `/profile/{currentUserId}`
+   - Shorten labels: "Feed" → keep, "My Posts" → "Profile", "Account" → remove
+   - Remove `/account` tab entirely
 
 2. **UnifiedProfile.tsx** (new, combines Account + MyPosts + UserProfile)
-   - Intelligent detection: if `telegramId === "me"` or matches current user
+   - Intelligent detection: if `telegramId` matches current user ID
    - Conditional rendering based on `isOwnProfile`
    - Manages modals: EditPost, DeletePostConfirm
+   - **Admin rule**: Admins do NOT see session/app info for other users
 
 3. **Feed.tsx**
    - No changes (keeps CreatePostButton)
@@ -132,19 +145,17 @@ UnifiedProfile.tsx
 3. Create `UnifiedProfile.tsx` combining logic from Account, MyPosts, UserProfile
 
 ### Phase 2: Update Routing
-1. Add `/profile/me` route → UnifiedProfile with special handling
-2. Update `/profile/:telegramId` → UnifiedProfile
-3. Add redirects: `/account` → `/profile/me`, `/my-posts` → `/profile/me`
+1. Update `/profile/:telegramId` → UnifiedProfile
+2. Remove `/account` and `/my-posts` routes entirely (no redirects needed)
 
 ### Phase 3: Update Navigation
-1. Modify BottomNavigation to point to `/profile/me`
-2. Change label from "My Posts" to "Profile"
-3. Remove or redirect "Account" tab
+1. Modify BottomNavigation to point to `/profile/{currentUserId}`
+2. Shorten labels appropriately
+3. Remove "Account" tab entirely
 
 ### Phase 4: Clean Up
-1. Mark Account.tsx as deprecated (don't delete yet for safety)
-2. Mark MyPosts.tsx as deprecated
-3. Update any internal links pointing to old routes
+1. **Delete** Account.tsx, MyPosts.tsx, UserProfile.tsx
+2. Remove any unused imports or references
 
 ### Phase 5: Testing & Refinement
 1. Test own profile view with all sections
@@ -163,10 +174,8 @@ UnifiedProfile.tsx
 const { telegramId } = useParams();
 const { user } = useSimpleAuth();
 
-// Resolve actual user ID
-const actualUserId = telegramId === 'me'
-  ? user?.id
-  : parseInt(telegramId);
+// Parse telegram ID from route
+const actualUserId = parseInt(telegramId);
 
 const isOwnProfile = user?.id === actualUserId;
 
@@ -238,48 +247,35 @@ const posts = await fetch(`/api/posts/user/${actualUserId}`);
 **With**:
 ```typescript
 {
-  path: '/profile/me',
+  path: `/profile/${user?.id}`, // Dynamic based on current user
   name: 'Profile',
   icon: <UserIcon />
 }
 ```
 
-**Remove** (optional):
-```typescript
-{
-  path: '/account',
-  name: 'Account',
-  // ...
-}
-```
+**Remove**:
+- `/account` tab entirely
 
 ### 5.4 Router Changes (Router.tsx)
-
-**Add**:
-```typescript
-{
-  path: 'profile/me',
-  element: <UnifiedProfile />,
-},
-```
 
 **Update**:
 ```typescript
 {
   path: 'profile/:telegramId',
-  element: <UnifiedProfile />, // instead of UserProfile
+  element: <UnifiedProfile />, // Replaces UserProfile
 },
 ```
 
-**Add Redirects** (optional):
+**Remove**:
 ```typescript
+// Delete these routes
 {
   path: 'account',
-  element: <Navigate to="/profile/me" replace />,
+  element: <Account />,
 },
 {
   path: 'my-posts',
-  element: <Navigate to="/profile/me" replace />,
+  element: <MyPosts />,
 },
 ```
 
@@ -287,10 +283,10 @@ const posts = await fetch(`/api/posts/user/${actualUserId}`);
 
 ## 6. User Experience Flow
 
-### Own Profile Flow (`/profile/me`)
+### Own Profile Flow (`/profile/{currentUserId}`)
 1. User clicks "Profile" in bottom nav
 2. Sees their ProfileView with Edit button
-3. Sees Telegram info section (expanded)
+3. Sees Telegram info section
 4. Sees Session info (collapsed by default)
 5. Sees App info (collapsed by default)
 6. Sees their posts with edit/delete actions
@@ -332,22 +328,16 @@ Hard Cutover
 ## 9. Open Questions
 
 1. **Session/App Info for Admin?**
-   - Should admins see this info for other users?
-   - **Recommendation**: No, keep it personal only
+   - ✅ **DECISION**: Admins do NOT see session/app info for other users (personal only)
 
 2. **Default Collapsed State?**
-   - Session info: collapsed by default ✅
-   - App info: collapsed by default ✅
-   - User preference persistence?
-   - **Recommendation**: Start with collapsed, no persistence in v1
+   - ✅ **DECISION**: All collapsible sections collapsed by default
 
-3. **Remove Account Tab Entirely?**
-   - Keep as redirect or remove from nav?
-   - **Recommendation**: Remove from nav, add redirect
+3. **Remove Account Tab?**
+   - ✅ **DECISION**: Remove from nav entirely, no redirects
 
-4. **Post Count Display?**
-   - Show on own profile?
-   - **Recommendation**: Yes, shows on all profiles (already in UserProfile)
+4. **Route for own profile?**
+   - ✅ **DECISION**: No `/me` route, use `/profile/{userId}` for all profiles
 
 ---
 
@@ -389,7 +379,7 @@ Hard Cutover
 - `frontend/src/Router.tsx`
 - `frontend/src/components/BottomNavigation.tsx`
 
-### Files to Deprecate (but keep for reference)
+### Files to Delete
 - `frontend/src/pages/Account.tsx`
 - `frontend/src/pages/MyPosts.tsx`
 - `frontend/src/pages/UserProfile.tsx`
