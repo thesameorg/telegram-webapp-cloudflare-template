@@ -15,6 +15,13 @@
       "when": 1759129173575,
       "tag": "0001_loose_rick_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1759209720134,
+      "tag": "0002_windy_dark_beast",
+      "breakpoints": true
     }
   ]
 }

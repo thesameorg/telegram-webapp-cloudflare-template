@@ -3,6 +3,8 @@ import Layout from './components/Layout';
 import Feed from './pages/Feed';
 import MyPosts from './pages/MyPosts';
 import Account from './pages/Account';
+import UserProfile from './pages/UserProfile';
+import EditProfile from './pages/EditProfile';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +22,14 @@ const router = createBrowserRouter([
       {
         path: 'account',
         element: <Account />,
+      },
+      {
+        path: 'profile/edit',
+        element: <EditProfile />,
+      },
+      {
+        path: 'profile/:telegramId',
+        element: <UserProfile />,
       },
     ],
   },

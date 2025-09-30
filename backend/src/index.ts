@@ -4,6 +4,7 @@ import { handleWebhook } from './webhook'
 import { healthHandler } from './api/health'
 import { authHandler } from './api/auth'
 import { getAllPosts, getUserPosts, createPost, updatePost, deletePost, uploadPostImages, deletePostImage } from './api/posts'
+import { getProfile, getMyProfile, updateMyProfile, uploadProfileAvatar } from './api/profile'
 import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -30,6 +31,12 @@ app.delete('/api/posts/:postId', deletePost)
 // Image endpoints
 app.post('/api/posts/:postId/images', uploadPostImages)
 app.delete('/api/posts/:postId/images/:imageId', deletePostImage)
+
+// Profile endpoints
+app.get('/api/profile/me', getMyProfile)
+app.put('/api/profile/me', updateMyProfile)
+app.post('/api/profile/me/avatar', uploadProfileAvatar)
+app.get('/api/profile/:telegramId', getProfile)
 
 // R2 image serving for local development
 app.get('/r2/*', async (c) => {
@@ -94,6 +101,10 @@ app.get('/', async (c) => {
       deletePost: '/api/posts/:postId',
       uploadImages: '/api/posts/:postId/images',
       deleteImage: '/api/posts/:postId/images/:imageId',
+      profile: '/api/profile/:telegramId',
+      myProfile: '/api/profile/me',
+      updateProfile: '/api/profile/me',
+      uploadAvatar: '/api/profile/me/avatar',
       r2Images: '/r2/{key}',
     }
   })

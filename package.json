@@ -25,6 +25,7 @@
     "clean": "./scripts/clean.sh",
     "clean-check": "npm run clean && npm run install && npm run build && npm run typecheck && npm run lint && npm run test",
     "check": "npm run typecheck && npm run lint && npm run test",
+    "db:migrate:local": "npx wrangler d1 migrations apply twa-tpl-db --local",
     "tunnel:start": "./scripts/start-ngrok-tunnel.sh",
     "tunnel:stop": "./scripts/stop-ngrok-tunnel.sh",
     "tunnel:start:cloudflared": "./scripts/start-cloudflared-tunnel.sh",

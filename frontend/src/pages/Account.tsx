@@ -1,14 +1,71 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '../hooks/use-simple-auth';
 import { useTelegram } from '../utils/telegram';
 import { AccountPageSkeleton } from '../components/skeletons';
+import { ProfileView } from '../components/profile/ProfileView';
+import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
+
+interface ProfileData {
+  telegram_id: number;
+  display_name?: string;
+  bio?: string;
+  phone_number?: string;
+  contact_links?: {
+    website?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+    telegram?: string;
+  };
+  profile_image_key?: string;
+  created_at: string;
+  updated_at?: string;
+}
 
 export default function Account() {
   const { user, sessionId, expiresAt, isLoading } = useSimpleAuth();
   const { webApp } = useTelegram();
+  const navigate = useNavigate();
+
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const formatExpiryDate = (timestamp: number | null) => {
     if (!timestamp) return 'Unknown';
     return new Date(timestamp).toLocaleString();
+  };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!sessionId) {
+        setProfileLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/profile/me', {
+          headers: {
+            'x-session-id': sessionId,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data.profile);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [sessionId]);
+
+  const handleEditProfile = () => {
+    navigate('/profile/edit');
   };
 
   if (isLoading) {
@@ -24,10 +81,36 @@ export default function Account() {
 
       {/* Account Info */}
       <div className="p-4 space-y-6">
+        {/* Profile Section */}
+        {profileLoading ? (
+          <ProfileSkeleton />
+        ) : profile ? (
+          <ProfileView
+            profile={profile}
+            isOwnProfile={true}
+            onEditClick={handleEditProfile}
+          />
+        ) : (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              My Profile
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Create your profile to share more about yourself.
+            </p>
+            <button
+              onClick={handleEditProfile}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Create Profile
+            </button>
+          </div>
+        )}
+
         {user && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              User Information
+              Telegram Information
             </h2>
 
             <div className="space-y-3">

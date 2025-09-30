@@ -28,17 +28,25 @@ export interface ImageUrlData {
 
 export class ImageService {
   private r2BaseUrl: string;
+  private r2: Env['IMAGES'];
 
   constructor(
     private db: Database,
-    private r2: Env['IMAGES'],
-    private env: Env
+    r2: Env['IMAGES'],
+    private env?: Env
   ) {
+    this.r2 = r2;
+
+    // Simplified constructor for profile-only usage
+    if (!env) {
+      this.r2BaseUrl = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
+      return;
+    }
     // In local development, serve images through the worker's /r2 endpoint
     // In production, use the direct R2 public URL for better performance
-    if (this.env.ENVIRONMENT === 'local' || this.env.ENVIRONMENT === 'development') {
+    if (env.ENVIRONMENT === 'local' || env.ENVIRONMENT === 'development') {
       // Use ngrok URL if available (for mobile access), otherwise localhost
-      const baseUrl = this.env.LOCAL_BASE_URL || 'http://localhost:3000';
+      const baseUrl = env.LOCAL_BASE_URL || 'http://localhost:3000';
       this.r2BaseUrl = `${baseUrl}/r2`;
     } else {
       // Direct R2 public URL for production (most efficient)
@@ -225,5 +233,28 @@ export class ImageService {
       .where(eq(postImages.postId, postId));
 
     return result?.count || 0;
+  }
+
+  async uploadProfileImage(file: File, profileImageKey: string): Promise<void> {
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+
+    // Simple resize logic - for now, just upload as-is
+    // In a real implementation, you might want to resize to exactly 512x512
+    await this.r2.put(profileImageKey, arrayBuffer, {
+      httpMetadata: {
+        contentType: file.type,
+      },
+      customMetadata: {
+        originalName: file.name,
+        type: 'profile_avatar',
+        uploadedAt: new Date().toISOString(),
+      }
+    });
+  }
+
+  getProfileImageUrl(key: string | null): string | null {
+    if (!key) return null;
+    return `${this.r2BaseUrl}/${key}`;
   }
 }

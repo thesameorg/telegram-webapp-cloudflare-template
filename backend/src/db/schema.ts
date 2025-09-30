@@ -14,6 +14,20 @@ export const posts = sqliteTable('posts', {
   userIdIdx: index('idx_posts_user_id').on(table.userId),
 }));
 
+export const userProfiles = sqliteTable('user_profiles', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  telegramId: integer('telegram_id').notNull().unique(),
+  displayName: text('display_name'),
+  bio: text('bio'),
+  phoneNumber: text('phone_number'),
+  contactLinks: text('contact_links'), // JSON string
+  profileImageKey: text('profile_image_key'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => ({
+  telegramIdIdx: index('idx_user_profiles_telegram_id').on(table.telegramId),
+}));
+
 export const postImages = sqliteTable('post_images', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   postId: integer('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
@@ -35,3 +49,5 @@ export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type PostImage = typeof postImages.$inferSelect;
 export type NewPostImage = typeof postImages.$inferInsert;
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type NewUserProfile = typeof userProfiles.$inferInsert;

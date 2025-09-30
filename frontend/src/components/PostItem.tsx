@@ -1,4 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import ImageGallery, { ImageUrlData } from './ImageGallery';
+import { ProfileAvatar } from './profile/ProfileAvatar';
+
+interface PostProfile {
+  displayName?: string;
+  bio?: string;
+  profileImageKey?: string;
+}
 
 interface Post {
   id: number;
@@ -9,6 +17,7 @@ interface Post {
   createdAt: string;
   updatedAt: string;
   images?: ImageUrlData[];
+  profile?: PostProfile | null;
 }
 
 interface PostItemProps {
@@ -20,6 +29,8 @@ interface PostItemProps {
 }
 
 export default function PostItem({ post, currentUserId, showActions, onEdit, onDelete }: PostItemProps) {
+  const navigate = useNavigate();
+
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -36,24 +47,37 @@ export default function PostItem({ post, currentUserId, showActions, onEdit, onD
     }
   };
 
+  const handleUserClick = () => {
+    navigate(`/profile/${post.userId}`);
+  };
+
   const canEditDelete = showActions && currentUserId === post.userId;
 
   return (
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       {/* User info header */}
       <div className="flex items-center space-x-3 mb-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-          {post.displayName.charAt(0).toUpperCase()}
-        </div>
+        <ProfileAvatar
+          profileImageKey={post.profile?.profileImageKey}
+          displayName={post.displayName}
+          size="md"
+          onClick={handleUserClick}
+        />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+            <button
+              onClick={handleUserClick}
+              className="text-sm font-semibold text-gray-900 dark:text-white truncate hover:underline"
+            >
               {post.displayName}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+            </button>
+            <button
+              onClick={handleUserClick}
+              className="text-sm text-gray-500 dark:text-gray-400 truncate hover:underline"
+            >
               @{post.username}
-            </p>
+            </button>
             <span className="text-gray-500 dark:text-gray-400">·</span>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {formatTimeAgo(post.createdAt)}

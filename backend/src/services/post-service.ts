@@ -1,6 +1,6 @@
 import { eq, desc, and } from 'drizzle-orm';
 import type { Database } from '../db';
-import { posts, postImages } from '../db/schema';
+import { posts, postImages, userProfiles } from '../db/schema';
 import type { CreatePostInput, GetPostsInput, GetUserPostsInput } from '../models/post';
 import type { ImageUrlData } from './image-service';
 import type { Env } from '../types/env';
@@ -122,12 +122,31 @@ export class PostService {
       .limit(input.limit)
       .offset(input.offset);
 
-    // Get images for all posts
+    // Get images and profile data for all posts
     const postsWithImages = await Promise.all(
       postList.map(async (post) => {
         const images = await this.getPostImagesData(post.id);
+
+        // Get profile data for this user
+        const profileResult = await this.db
+          .select()
+          .from(userProfiles)
+          .where(eq(userProfiles.telegramId, post.userId))
+          .limit(1);
+
+        const profile = profileResult[0] || null;
+
+        // Use profile display name if available, otherwise use post's display name
+        const effectiveDisplayName = profile?.displayName || post.displayName;
+
         return {
           ...post,
+          displayName: effectiveDisplayName,
+          profile: profile ? {
+            displayName: profile.displayName,
+            bio: profile.bio,
+            profileImageKey: profile.profileImageKey,
+          } : null,
           images
         };
       })
@@ -145,12 +164,31 @@ export class PostService {
       .limit(input.limit)
       .offset(input.offset);
 
-    // Get images for all posts
+    // Get images and profile data for all posts
     const postsWithImages = await Promise.all(
       userPosts.map(async (post) => {
         const images = await this.getPostImagesData(post.id);
+
+        // Get profile data for this user
+        const profileResult = await this.db
+          .select()
+          .from(userProfiles)
+          .where(eq(userProfiles.telegramId, post.userId))
+          .limit(1);
+
+        const profile = profileResult[0] || null;
+
+        // Use profile display name if available, otherwise use post's display name
+        const effectiveDisplayName = profile?.displayName || post.displayName;
+
         return {
           ...post,
+          displayName: effectiveDisplayName,
+          profile: profile ? {
+            displayName: profile.displayName,
+            bio: profile.bio,
+            profileImageKey: profile.profileImageKey,
+          } : null,
           images
         };
       })
@@ -171,8 +209,27 @@ export class PostService {
     }
 
     const images = await this.getPostImagesData(post.id);
+
+    // Get profile data for this user
+    const profileResult = await this.db
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.telegramId, post.userId))
+      .limit(1);
+
+    const profile = profileResult[0] || null;
+
+    // Use profile display name if available, otherwise use post's display name
+    const effectiveDisplayName = profile?.displayName || post.displayName;
+
     return {
       ...post,
+      displayName: effectiveDisplayName,
+      profile: profile ? {
+        displayName: profile.displayName,
+        bio: profile.bio,
+        profileImageKey: profile.profileImageKey,
+      } : null,
       images
     };
   }
