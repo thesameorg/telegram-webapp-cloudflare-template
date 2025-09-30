@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import imageCompression from 'browser-image-compression';
+import { getImageUrl } from '../../utils/image-url';
 
 interface ProfileAvatarProps {
   profileImageKey?: string | null;
@@ -55,14 +56,6 @@ export function ProfileAvatar({
     return colors[hash % colors.length];
   };
 
-  const getImageUrl = (key: string) => {
-    // Use the same R2 base URL logic as backend
-    const isDev = import.meta.env.DEV;
-    if (isDev) {
-      return `http://localhost:8787/r2/${key}`;
-    }
-    return `https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev/${key}`;
-  };
 
   const handleImageError = () => {
     setImageError(true);

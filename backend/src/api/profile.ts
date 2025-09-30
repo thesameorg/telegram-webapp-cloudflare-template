@@ -168,7 +168,8 @@ export const uploadProfileAvatar = async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: 'Image must be smaller than 5MB' }, 400);
     }
 
-    const imageService = new ImageService(null as never, c.env.IMAGES);
+    const db = createDatabase(c.env.DB);
+    const imageService = new ImageService(db, c.env.IMAGES);
     const profileService = new ProfileService(c.env.DB);
 
     // Get current profile to check for existing avatar

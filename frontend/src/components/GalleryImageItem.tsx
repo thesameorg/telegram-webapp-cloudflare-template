@@ -1,10 +1,11 @@
 import { useImageCache } from '../hooks/use-image-cache';
 import { formatFileSize } from '../utils/format';
+import { getImageUrl } from '../utils/image-url';
 
 interface ImageUrlData {
   id: number;
-  imageUrl: string;
-  thumbnailUrl: string;
+  imageKey: string;
+  thumbnailKey: string;
   width: number;
   height: number;
   originalName: string;
@@ -33,7 +34,8 @@ export default function GalleryImageItem({
   onClick,
   onDelete,
 }: GalleryImageItemProps) {
-  const { isLoaded, hasError, onLoad, onError } = useImageCache({ src: image.thumbnailUrl });
+  const thumbnailUrl = getImageUrl(image.thumbnailKey);
+  const { isLoaded, hasError, onLoad, onError } = useImageCache({ src: thumbnailUrl });
 
   return (
     <div
@@ -71,7 +73,7 @@ export default function GalleryImageItem({
 
       {/* Image - displays the thumbnail URL from backend */}
       <img
-        src={image.thumbnailUrl}
+        src={thumbnailUrl}
         alt={image.originalName}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
         onLoad={onLoad}

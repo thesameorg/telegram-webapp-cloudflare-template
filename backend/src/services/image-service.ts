@@ -17,8 +17,8 @@ export interface ImageUploadData {
 
 export interface ImageUrlData {
   id: number;
-  imageUrl: string;
-  thumbnailUrl: string;
+  imageKey: string;
+  thumbnailKey: string;
   width: number;
   height: number;
   originalName: string;
@@ -27,31 +27,13 @@ export interface ImageUrlData {
 }
 
 export class ImageService {
-  private r2BaseUrl: string;
   private r2: Env['IMAGES'];
 
   constructor(
     private db: Database,
-    r2: Env['IMAGES'],
-    private env?: Env
+    r2: Env['IMAGES']
   ) {
     this.r2 = r2;
-
-    // Simplified constructor for profile-only usage
-    if (!env) {
-      this.r2BaseUrl = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
-      return;
-    }
-    // In local development, serve images through the worker's /r2 endpoint
-    // In production, use the direct R2 public URL for better performance
-    if (env.ENVIRONMENT === 'local' || env.ENVIRONMENT === 'development') {
-      // Use ngrok URL if available (for mobile access), otherwise localhost
-      const baseUrl = env.LOCAL_BASE_URL || 'http://localhost:3000';
-      this.r2BaseUrl = `${baseUrl}/r2`;
-    } else {
-      // Direct R2 public URL for production (most efficient)
-      this.r2BaseUrl = 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev';
-    }
   }
 
   private generateImageKey(postId: number, filename: string): string {
@@ -64,10 +46,6 @@ export class ImageService {
     const timestamp = Date.now();
     const uuid = crypto.randomUUID();
     return `images/${postId}/thumbs/${timestamp}_${uuid}_thumb_${filename}`;
-  }
-
-  private generateImageUrl(key: string): string {
-    return `${this.r2BaseUrl}/${key}`;
   }
 
   async uploadImage(postId: number, imageData: ImageUploadData): Promise<PostImage> {
@@ -143,8 +121,8 @@ export class ImageService {
 
     return images.map(image => ({
       id: image.id,
-      imageUrl: this.generateImageUrl(image.imageKey),
-      thumbnailUrl: this.generateImageUrl(image.thumbnailKey),
+      imageKey: image.imageKey,
+      thumbnailKey: image.thumbnailKey,
       width: image.width,
       height: image.height,
       originalName: image.originalName,
@@ -253,9 +231,8 @@ export class ImageService {
     });
   }
 
-  getProfileImageUrl(key: string | null): string | null {
-    if (!key) return null;
-    return `${this.r2BaseUrl}/${key}`;
+  getProfileImageKey(key: string | null): string | null {
+    return key;
   }
 
   async deleteProfileImage(profileImageKey: string): Promise<void> {

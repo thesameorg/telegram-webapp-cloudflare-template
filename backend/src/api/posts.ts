@@ -227,7 +227,7 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
-    const imageService = new ImageService(db, c.env.IMAGES, c.env);
+    const imageService = new ImageService(db, c.env.IMAGES);
 
     // Check ownership or admin status
     console.log('[DELETE POST] Fetching post...');
@@ -312,7 +312,7 @@ export const uploadPostImages = async (c: Context<{ Bindings: Env }>) => {
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
-    const imageService = new ImageService(db, c.env.IMAGES, c.env);
+    const imageService = new ImageService(db, c.env.IMAGES);
 
     // Check if post exists and user owns it
     const existingPost = await postService.getPostById(postIdResult.postId);
@@ -423,7 +423,7 @@ export const deletePostImage = async (c: Context<{ Bindings: Env }>) => {
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
-    const imageService = new ImageService(db, c.env.IMAGES, c.env);
+    const imageService = new ImageService(db, c.env.IMAGES);
 
     // Check if post exists and user owns it
     const existingPost = await postService.getPostById(postIdResult.postId);

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import GalleryImageItem, { type ImageUrlData } from './GalleryImageItem';
+import { getImageUrl } from '../utils/image-url';
 
 interface ImageGalleryProps {
   images: ImageUrlData[];
@@ -33,7 +34,7 @@ export default function ImageGallery({
   };
 
   const lightboxSlides = sortedImages.map(image => ({
-    src: image.imageUrl,
+    src: getImageUrl(image.imageKey),
     alt: image.originalName,
     width: image.width,
     height: image.height,
