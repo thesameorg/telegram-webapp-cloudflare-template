@@ -220,6 +220,7 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
+    const imageService = new ImageService(db, c.env.IMAGES, c.env);
 
     // Check ownership
     const existingPost = await postService.getPostById(postIdResult.postId);
@@ -229,6 +230,9 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
     if (existingPost.userId !== authResult.session.userId) {
       return c.json({ error: 'Not authorized to delete this post' }, 403);
     }
+
+    // Clean up R2 images before deleting post
+    await imageService.cleanupPostImages(postIdResult.postId);
 
     const deletedPost = await postService.deletePost(postIdResult.postId, authResult.session.userId);
     if (!deletedPost) {

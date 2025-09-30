@@ -164,13 +164,20 @@ export const uploadProfileAvatar = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const imageService = new ImageService(null as never, c.env.IMAGES);
+    const profileService = new ProfileService(c.env.DB);
+
+    // Get current profile to check for existing avatar
+    const currentProfile = await profileService.getProfile(session.userId);
+    if (currentProfile?.profileImageKey) {
+      // Delete old avatar from R2 before uploading new one
+      await imageService.deleteProfileImage(currentProfile.profileImageKey);
+    }
 
     // Upload profile image (resized to 512px)
     const profileImageKey = `profiles/${session.userId}/${Date.now()}-avatar.jpg`;
     await imageService.uploadProfileImage(file, profileImageKey);
 
     // Update profile with new image key
-    const profileService = new ProfileService(c.env.DB);
     const updatedProfile = await profileService.uploadAvatar(session.userId, profileImageKey);
 
     return c.json({

@@ -257,4 +257,13 @@ export class ImageService {
     if (!key) return null;
     return `${this.r2BaseUrl}/${key}`;
   }
+
+  async deleteProfileImage(profileImageKey: string): Promise<void> {
+    try {
+      await this.r2.delete(profileImageKey);
+    } catch (error) {
+      console.error(`Failed to delete profile image ${profileImageKey} from R2:`, error);
+      // Don't throw - allow profile update to continue even if R2 deletion fails
+    }
+  }
 }
