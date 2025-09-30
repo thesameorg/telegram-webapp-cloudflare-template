@@ -90,9 +90,12 @@ export function ProfileAvatar({
       // Compress avatar to 96px minimum side JPEG with EXIF removal
       const compressedFile = await imageCompression(file, {
         maxWidthOrHeight: maxTarget,
+        maxSizeMB: 0.2,
         useWebWorker: true,
         fileType: 'image/jpeg',
       });
+
+
 
       onImageUpload(compressedFile);
     } catch (error) {
