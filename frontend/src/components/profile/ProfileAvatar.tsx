@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import imageCompression from 'browser-image-compression';
 import { getImageUrl } from '../../utils/image-url';
+import ImageCropModal from '../ImageCropModal';
 
 interface ProfileAvatarProps {
   profileImageKey?: string | null;
@@ -27,6 +28,8 @@ export function ProfileAvatar({
   onImageUpload
 }: ProfileAvatarProps) {
   const [imageError, setImageError] = useState(false);
+  const [fileToCrop, setFileToCrop] = useState<File | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
 
   const getInitials = (name?: string) => {
     if (!name) return '?';
@@ -61,13 +64,33 @@ export function ProfileAvatar({
     setImageError(true);
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !onImageUpload) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      console.error('Invalid file type');
+      return;
+    }
+
+    // Show crop modal
+    setFileToCrop(file);
+    setShowCropModal(true);
+
+    // Reset input value to allow selecting the same file again
+    event.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedFile: File) => {
+    setShowCropModal(false);
+    setFileToCrop(null);
+
+    if (!onImageUpload) return;
+
     try {
-      // Get original dimensions
-      const img = await createImageBitmap(file);
+      // Get dimensions of cropped image
+      const img = await createImageBitmap(croppedFile);
       const { width, height } = img;
       img.close();
 
@@ -81,21 +104,24 @@ export function ProfileAvatar({
       const maxTarget = Math.max(targetWidth, targetHeight);
 
       // Compress avatar to 96px minimum side JPEG with EXIF removal
-      const compressedFile = await imageCompression(file, {
+      const compressedFile = await imageCompression(croppedFile, {
         maxWidthOrHeight: maxTarget,
         maxSizeMB: 0.2,
         useWebWorker: true,
         fileType: 'image/jpeg',
       });
 
-
-
       onImageUpload(compressedFile);
     } catch (error) {
       console.error('Avatar compression failed:', error);
-      // Fallback to original file if compression fails
-      onImageUpload(file);
+      // Fallback to cropped file if compression fails
+      onImageUpload(croppedFile);
     }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setFileToCrop(null);
   };
 
   const avatarContent = profileImageKey && !imageError ? (
@@ -139,5 +165,18 @@ export function ProfileAvatar({
     </div>
   );
 
-  return avatar;
+  return (
+    <>
+      {avatar}
+      {showCropModal && fileToCrop && (
+        <ImageCropModal
+          image={fileToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+          showSkip={false}
+        />
+      )}
+    </>
+  );
 }

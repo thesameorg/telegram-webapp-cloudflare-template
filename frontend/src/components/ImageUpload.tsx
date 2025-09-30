@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
 import { useToast } from '../hooks/use-toast';
+import ImageCropQueue from './ImageCropQueue';
 
 interface ImageData {
   id: string;
@@ -29,6 +30,8 @@ export default function ImageUpload({
   const [images, setImages] = useState<ImageData[]>(existingImages);
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [filesToCrop, setFilesToCrop] = useState<File[]>([]);
+  const [showCropQueue, setShowCropQueue] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
 
@@ -102,42 +105,50 @@ export default function ImageUpload({
     }
   };
 
-  const processImages = useCallback(async (files: FileList | File[]) => {
+  const validateAndPrepareFiles = (files: FileList | File[]): File[] => {
     const fileArray = Array.from(files);
+    const validFiles: File[] = [];
 
     if (images.length + fileArray.length > maxImages) {
       showToast(`Maximum ${maxImages} images allowed`, 'error');
-      return;
+      return [];
     }
 
+    for (const file of fileArray) {
+      // Validate file type - block HEIC files
+      if (!file.type.startsWith('image/')) {
+        showToast(`${file.name} is not a valid image file`, 'error');
+        continue;
+      }
+
+      // Block HEIC files explicitly
+      const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      if (isHeicFile) {
+        showToast(`HEIC format not supported. Please convert ${file.name} to JPG or PNG first.`, 'error');
+        continue;
+      }
+
+      // Validate file size (10MB limit before cropping/compression)
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(`${file.name} is too large (max 10MB)`, 'error');
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    return validFiles;
+  };
+
+  const handleCroppedFiles = useCallback(async (croppedFiles: File[]) => {
+    setShowCropQueue(false);
     setIsProcessing(true);
 
     try {
       const newImages: ImageData[] = [];
 
-      for (let i = 0; i < fileArray.length; i++) {
-        const file = fileArray[i];
-
-        // Validate file type - block HEIC files
-        if (!file.type.startsWith('image/')) {
-          showToast(`${file.name} is not a valid image file`, 'error');
-          continue;
-        }
-
-        // Block HEIC files explicitly
-        const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-        if (isHeicFile) {
-          showToast(`HEIC format not supported. Please convert ${file.name} to JPG or PNG first.`, 'error');
-          continue;
-        }
-
-        // Note: All images will be converted to JPEG during compression regardless of input format
-
-        // Validate file size (10MB limit before compression)
-        if (file.size > 10 * 1024 * 1024) {
-          showToast(`${file.name} is too large (max 10MB)`, 'error');
-          continue;
-        }
+      for (let i = 0; i < croppedFiles.length; i++) {
+        const file = croppedFiles[i];
 
         try {
           const [preview, dimensions, { compressed, thumbnail }] = await Promise.all([
@@ -174,7 +185,21 @@ export default function ImageUpload({
     } finally {
       setIsProcessing(false);
     }
-  }, [images, maxImages, showToast, onImagesChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images, showToast, onImagesChange]);
+
+  const processImages = useCallback((files: FileList | File[]) => {
+    const validFiles = validateAndPrepareFiles(files);
+
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    // Show crop queue for valid files
+    setFilesToCrop(validFiles);
+    setShowCropQueue(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeImage = (id: string) => {
     const updatedImages = images.filter(img => img.id !== id)
@@ -236,8 +261,23 @@ export default function ImageUpload({
     }
   };
 
+  const handleCropCancel = () => {
+    setShowCropQueue(false);
+    setFilesToCrop([]);
+  };
+
   return (
     <div className="w-full">
+      {/* Crop Queue Modal */}
+      {showCropQueue && filesToCrop.length > 0 && (
+        <ImageCropQueue
+          images={filesToCrop}
+          onAllCropped={handleCroppedFiles}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+        />
+      )}
+
       {/* File Input */}
       <input
         ref={fileInputRef}
