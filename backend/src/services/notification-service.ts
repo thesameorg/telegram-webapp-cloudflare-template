@@ -31,6 +31,31 @@ export async function sendPostDeletedNotification(
 }
 
 /**
+ * Send notification to a user when they are banned or unbanned
+ *
+ * @param env - Environment variables containing bot token
+ * @param telegramId - The telegram ID of the user
+ * @param isBanned - true if user is being banned, false if unbanned
+ */
+export async function sendBanNotification(
+  env: Env,
+  telegramId: number,
+  isBanned: boolean
+): Promise<void> {
+  try {
+    const bot = getBotInstance(env);
+    const message = isBanned
+      ? 'You have been banned. You cannot access the web app.'
+      : 'You have been unbanned. You can now access the web app again.';
+
+    await bot.api.sendMessage(telegramId, message);
+  } catch (error) {
+    // Log error but don't throw - notification failure shouldn't break ban/unban action
+    console.error(`Failed to send ban notification to user ${telegramId}:`, error);
+  }
+}
+
+/**
  * Get a bot instance from environment
  *
  * @param env - Environment variables containing bot token

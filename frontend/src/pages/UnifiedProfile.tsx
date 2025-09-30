@@ -10,6 +10,7 @@ import PostList from '../components/PostList';
 import StaticPostList from '../components/StaticPostList';
 import EditPost from '../components/EditPost';
 import DeletePostConfirm from '../components/DeletePostConfirm';
+import BanUserConfirm from '../components/BanUserConfirm';
 import { ImageUrlData } from '../components/ImageGallery';
 
 interface ProfileData {
@@ -22,8 +23,9 @@ interface ProfileData {
     telegram?: string;
   };
   profile_image_key?: string;
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
+  is_banned?: boolean;
 }
 
 interface PostProfile {
@@ -58,6 +60,7 @@ export default function UnifiedProfile() {
 
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [showBanConfirm, setShowBanConfirm] = useState(false);
   const refetchRef = useRef<(() => void) | null>(null);
 
   // Parse telegram ID and determine if own profile
@@ -161,6 +164,32 @@ export default function UnifiedProfile() {
     navigate('/edit-profile');
   };
 
+  const handleBanClick = () => {
+    setShowBanConfirm(true);
+  };
+
+  const handleBanActionCompleted = () => {
+    // Refetch profile to get updated ban status
+    setProfileLoading(true);
+    const fetchProfile = async () => {
+      if (!actualUserId) return;
+
+      try {
+        const response = await fetch(`/api/profile/${actualUserId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data.profile);
+        }
+      } catch (error) {
+        console.error('Error refetching profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    fetchProfile();
+    setShowBanConfirm(false);
+  };
+
   if (isLoading || profileLoading) {
     return (
       <div className="max-w-2xl mx-auto p-4">
@@ -211,13 +240,26 @@ export default function UnifiedProfile() {
         />
       )}
 
+      {/* Ban User Confirmation */}
+      {showBanConfirm && profile && (
+        <BanUserConfirm
+          telegramId={profile.telegram_id}
+          username={profile.contact_links?.telegram}
+          isBanned={profile.is_banned === true}
+          onClose={() => setShowBanConfirm(false)}
+          onActionCompleted={handleBanActionCompleted}
+        />
+      )}
+
       <div className="p-4 space-y-6">
         {/* Profile Section - Always visible */}
         <ProfileView
           profile={profile}
           isOwnProfile={isOwnProfile}
           onEditClick={isOwnProfile ? handleEditProfile : undefined}
+          onBanClick={!isOwnProfile && isAdmin ? handleBanClick : undefined}
           postCount={posts.length}
+          isAdmin={isAdmin}
         />
 
         {/* Telegram Info - Only for own profile */}

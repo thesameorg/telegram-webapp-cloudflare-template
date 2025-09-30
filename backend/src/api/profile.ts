@@ -23,6 +23,17 @@ export const getProfile = async (c: Context<{ Bindings: Env }>) => {
 
     const formattedProfile = profileService.formatProfile(profile);
 
+    // If user is banned, return minimal info
+    if (profile.isBanned === 1) {
+      return c.json({
+        profile: {
+          telegram_id: formattedProfile.telegramId,
+          display_name: formattedProfile.displayName,
+          is_banned: true,
+        }
+      });
+    }
+
     return c.json({
       profile: {
         telegram_id: formattedProfile.telegramId,
@@ -31,6 +42,7 @@ export const getProfile = async (c: Context<{ Bindings: Env }>) => {
         contact_links: formattedProfile.parsedContactLinks,
         profile_image_key: formattedProfile.profileImageKey,
         created_at: formattedProfile.createdAt,
+        is_banned: false,
       }
     });
   } catch (error: unknown) {

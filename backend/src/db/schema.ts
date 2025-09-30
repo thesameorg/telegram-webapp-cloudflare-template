@@ -23,11 +23,13 @@ export const userProfiles = sqliteTable('user_profiles', {
   phoneNumber: text('phone_number'),
   contactLinks: text('contact_links'), // JSON string
   profileImageKey: text('profile_image_key'),
+  isBanned: integer('is_banned').default(0).notNull(),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 }, (table) => ({
   telegramIdIdx: index('idx_user_profiles_telegram_id').on(table.telegramId),
   usernameIdx: index('idx_user_profiles_username').on(table.username),
+  isBannedIdx: index('idx_user_profiles_is_banned').on(table.isBanned),
 }));
 
 export const postImages = sqliteTable('post_images', {

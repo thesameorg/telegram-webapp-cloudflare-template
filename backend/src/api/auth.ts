@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import { TelegramAuthService } from '../services/telegram-auth';
 import { SessionManager } from '../services/session-manager';
+import { ProfileService } from '../services/profile-service';
 import type { Env } from '../types/env';
 
 export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Response> {
@@ -79,6 +80,19 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
 
   try {
     const user = await telegramAuth.validateInitData(extractedInitData);
+
+    // Check if user is banned
+    const profileService = new ProfileService(c.env.DB);
+    const profile = await profileService.getProfile(user.id);
+
+    if (profile && profile.isBanned === 1) {
+      return c.json({
+        authenticated: false,
+        message: 'Authentication failed or you were banned',
+        error: 'BANNED',
+        reason: 'user_banned'
+      }, 401);
+    }
 
     // Create new session
     const session = await sessionManager.createSession(user);

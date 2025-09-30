@@ -11,35 +11,48 @@ interface ProfileData {
     telegram?: string;
   };
   profile_image_key?: string;
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
+  is_banned?: boolean;
 }
 
 interface ProfileViewProps {
   profile: ProfileData;
   isOwnProfile?: boolean;
   onEditClick?: () => void;
+  onBanClick?: () => void;
   postCount?: number;
+  isAdmin?: boolean;
 }
 
-export function ProfileView({ profile, isOwnProfile = false, onEditClick, postCount }: ProfileViewProps) {
+export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanClick, postCount, isAdmin = false }: ProfileViewProps) {
   const displayName = profile.display_name || `User ${profile.telegram_id}`;
+  const isBanned = profile.is_banned === true;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
       {/* Header with avatar and basic info */}
       <div className="flex items-start space-x-4">
-        <ProfileAvatar
-          profileImageKey={profile.profile_image_key}
-          displayName={displayName}
-          size="xl"
-        />
+        {!isBanned && (
+          <ProfileAvatar
+            profileImageKey={profile.profile_image_key}
+            displayName={displayName}
+            size="xl"
+          />
+        )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-              {displayName}
-            </h1>
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                {displayName}
+              </h1>
+              {isBanned && (
+                <span className="px-2 py-1 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900 rounded flex-shrink-0">
+                  BANNED
+                </span>
+              )}
+            </div>
             {isOwnProfile && onEditClick && (
               <button
                 onClick={onEditClick}
@@ -50,7 +63,7 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, postCo
             )}
           </div>
 
-          {profile.bio && (
+          {!isBanned && profile.bio && (
             <p className="mt-2 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
               {profile.bio}
             </p>
@@ -60,13 +73,29 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, postCo
             {postCount !== undefined && (
               <span>{postCount} {postCount === 1 ? 'post' : 'posts'}</span>
             )}
-            <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
+            {!isBanned && profile.created_at && (
+              <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
+            )}
           </div>
+
+          {/* Admin Ban/Unban Button - Placed below stats for compact layout */}
+          {!isOwnProfile && isAdmin && onBanClick && (
+            <button
+              onClick={onBanClick}
+              className={`mt-3 px-3 py-1.5 text-xs font-medium text-white rounded-lg ${
+                isBanned
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              {isBanned ? 'Unban User' : 'Ban User'}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Contact information */}
-      {(profile.phone_number || profile.contact_links) && (
+      {/* Contact information - hide for banned users */}
+      {!isBanned && (profile.phone_number || profile.contact_links) && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Contact Information

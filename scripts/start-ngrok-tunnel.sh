@@ -9,7 +9,7 @@ echo "🚀 Starting local development webhook tunnel (ngrok)..."
 
 # create logs dir 
 mkdir -p logs
-mkdor -p pids
+mkdir -p pids
 
 
 # Check if ngrok is installed

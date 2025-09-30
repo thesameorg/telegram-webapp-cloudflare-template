@@ -122,9 +122,20 @@ export class PostService {
   }
 
   async getPostsWithImages(input: GetPostsInput) {
+    // Filter out posts from banned users
     const postList = await this.db
-      .select()
+      .select({
+        id: posts.id,
+        userId: posts.userId,
+        username: posts.username,
+        displayName: posts.displayName,
+        content: posts.content,
+        createdAt: posts.createdAt,
+        updatedAt: posts.updatedAt,
+      })
       .from(posts)
+      .leftJoin(userProfiles, eq(posts.userId, userProfiles.telegramId))
+      .where(eq(userProfiles.isBanned, 0))
       .orderBy(desc(posts.createdAt))
       .limit(input.limit)
       .offset(input.offset);

@@ -5,6 +5,7 @@ import { healthHandler } from './api/health'
 import { authHandler } from './api/auth'
 import { getAllPosts, getUserPosts, createPost, updatePost, deletePost, uploadPostImages, deletePostImage } from './api/posts'
 import { getProfile, getMyProfile, updateMyProfile, uploadProfileAvatar } from './api/profile'
+import { banUser, unbanUser } from './api/admin'
 import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -37,6 +38,10 @@ app.get('/api/profile/me', getMyProfile)
 app.put('/api/profile/me', updateMyProfile)
 app.post('/api/profile/me/avatar', uploadProfileAvatar)
 app.get('/api/profile/:telegramId', getProfile)
+
+// Admin endpoints
+app.post('/api/admin/ban/:telegramId', banUser)
+app.post('/api/admin/unban/:telegramId', unbanUser)
 
 // R2 image serving for local development
 app.get('/r2/*', async (c) => {
@@ -105,6 +110,8 @@ app.get('/', async (c) => {
       myProfile: '/api/profile/me',
       updateProfile: '/api/profile/me',
       uploadAvatar: '/api/profile/me/avatar',
+      banUser: '/api/admin/ban/:telegramId',
+      unbanUser: '/api/admin/unban/:telegramId',
       r2Images: '/r2/{key}',
     }
   })

@@ -100,6 +100,23 @@ export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
+
+    // Check if target user is banned
+    const { ProfileService } = await import('../services/profile-service');
+    const profileService = new ProfileService(c.env.DB);
+    const targetProfile = await profileService.getProfile(userId);
+
+    if (targetProfile && targetProfile.isBanned === 1) {
+      // Check if viewer is admin
+      const auth = await authenticateUser(c);
+      const isViewerAdmin = 'session' in auth && auth.session && auth.session.role === 'admin';
+
+      // If user is banned and viewer is not admin, return empty array
+      if (!isViewerAdmin) {
+        return c.json(createPaginationResponse([], limit, offset));
+      }
+    }
+
     const posts = await postService.getUserPostsWithImages({ userId, limit, offset });
 
     return c.json(createPaginationResponse(posts, limit, offset));
