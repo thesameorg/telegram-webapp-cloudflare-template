@@ -73,16 +73,27 @@ export function ProfileAvatar({
     if (!file || !onImageUpload) return;
 
     try {
-      // Compress avatar to 96px 95% JPEG with EXIF removal
-      const options = {
-        maxWidthOrHeight: 96,
-        useWebWorker: true,
-        fileType: 'image/jpeg' as const,
-        quality: 0.95,
-        initialQuality: 0.95,
-      };
+      // Get original dimensions
+      const img = await createImageBitmap(file);
+      const { width, height } = img;
+      img.close();
 
-      const compressedFile = await imageCompression(file, options);
+      // Calculate dimensions so minimum side becomes 96px
+      const minSide = Math.min(width, height);
+      const scale = 96 / minSide;
+      const targetWidth = Math.round(width * scale);
+      const targetHeight = Math.round(height * scale);
+
+      // Use max dimension as target since maxWidthOrHeight shrinks by largest side
+      const maxTarget = Math.max(targetWidth, targetHeight);
+
+      // Compress avatar to 96px minimum side JPEG with EXIF removal
+      const compressedFile = await imageCompression(file, {
+        maxWidthOrHeight: maxTarget,
+        useWebWorker: true,
+        fileType: 'image/jpeg',
+      });
+
       onImageUpload(compressedFile);
     } catch (error) {
       console.error('Avatar compression failed:', error);

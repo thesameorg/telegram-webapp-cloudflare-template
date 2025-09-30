@@ -57,20 +57,36 @@ export default function ImageUpload({
   };
 
   const compressImage = async (file: File): Promise<{ compressed: File; thumbnail: File }> => {
+    // Get original dimensions
+    const dimensions = await getImageDimensions(file);
+
+    // Calculate target so minimum side becomes target size
+    // For full size: min side = 1280px
+    const fullSizeScale = 1280 / Math.min(dimensions.width, dimensions.height);
+    const fullSizeMax = Math.max(
+      Math.round(dimensions.width * fullSizeScale),
+      Math.round(dimensions.height * fullSizeScale)
+    );
+
+    // For thumbnail: min side = 500px
+    const thumbScale = 500 / Math.min(dimensions.width, dimensions.height);
+    const thumbMax = Math.max(
+      Math.round(dimensions.width * thumbScale),
+      Math.round(dimensions.height * thumbScale)
+    );
+
     const options = {
       maxSizeMB: 1,
-      maxWidthOrHeight: 1280,
+      maxWidthOrHeight: fullSizeMax,
       useWebWorker: true,
       fileType: 'image/jpeg',
-      quality: 0.95,
     };
 
     const thumbnailOptions = {
       maxSizeMB: 0.1,
-      maxWidthOrHeight: 500,
+      maxWidthOrHeight: thumbMax,
       useWebWorker: true,
       fileType: 'image/jpeg',
-      quality: 0.95,
     };
 
     try {
@@ -377,7 +393,7 @@ export default function ImageUpload({
 
           {/* Summary */}
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Images will be compressed to ≤1280px at 95% quality with 500px thumbnails
+            Images will be compressed to 1280px minimum side with 500px thumbnails
           </div>
         </div>
       )}
