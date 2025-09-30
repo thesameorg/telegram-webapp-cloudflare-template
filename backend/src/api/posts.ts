@@ -71,28 +71,12 @@ export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
   try {
     const { limit, offset } = parsePagination(c);
 
-    const cacheKey = `feed:${limit}:${offset}`;
-
-    // Try cache first
-    const cachedData = await c.env.SESSIONS.get(cacheKey);
-    if (cachedData) {
-      c.header('Cache-Control', 'public, max-age=60');
-      c.header('X-Cache', 'HIT');
-      return c.json(JSON.parse(cachedData));
-    }
-
-    // Cache miss - fetch from database
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
     const posts = await postService.getPostsWithImages({ limit, offset });
 
     const responseData = createPaginationResponse(posts, limit, offset);
 
-    // Cache the response with TTL
-    await c.env.SESSIONS.put(cacheKey, JSON.stringify(responseData), { expirationTtl: 300 });
-
-    c.header('Cache-Control', 'public, max-age=60');
-    c.header('X-Cache', 'MISS');
     return c.json(responseData);
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -117,11 +101,6 @@ export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
     const posts = await postService.getUserPostsWithImages({ userId, limit, offset });
-
-    // No-cache headers for user posts
-    c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-    c.header('Pragma', 'no-cache');
-    c.header('Expires', '0');
 
     return c.json(createPaginationResponse(posts, limit, offset));
   } catch (error) {

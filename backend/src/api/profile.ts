@@ -108,7 +108,7 @@ export const updateMyProfile = async (c: Context<{ Bindings: Env }>) => {
     const profileService = new ProfileService(c.env.DB);
     const updatedProfile = await profileService.updateProfile(session.userId, updateData);
 
-    // Invalidate posts cache if display name changed
+    // Update display name in all posts if changed
     if (updateData.display_name !== undefined) {
       const db = createDatabase(c.env.DB);
       const postService = new PostService(db, c.env);
