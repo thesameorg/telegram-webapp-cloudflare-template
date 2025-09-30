@@ -2,11 +2,23 @@ import { useState, useRef } from 'react';
 import PostList from '../components/PostList';
 import CreatePostButton from '../components/CreatePostButton';
 import CreatePost from '../components/CreatePost';
+import EditPost from '../components/EditPost';
 import DeletePostConfirm from '../components/DeletePostConfirm';
 import { useSimpleAuth } from '../hooks/use-simple-auth';
 
+interface Post {
+  id: number;
+  userId: number;
+  username: string;
+  displayName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const refetchRef = useRef<(() => void) | null>(null);
   const { user, isAdmin } = useSimpleAuth();
@@ -15,6 +27,17 @@ export default function Feed() {
     if (refetchRef.current) {
       refetchRef.current();
     }
+  };
+
+  const handleEdit = (post: Post) => {
+    setEditingPost(post);
+  };
+
+  const handlePostUpdated = () => {
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
+    setEditingPost(null);
   };
 
   const handleDelete = (postId: number) => {
@@ -46,6 +69,15 @@ export default function Feed() {
         />
       )}
 
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <EditPost
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onPostUpdated={handlePostUpdated}
+        />
+      )}
+
       {/* Delete Post Confirmation */}
       {deletingPostId && (
         <DeletePostConfirm
@@ -60,6 +92,7 @@ export default function Feed() {
         currentUserId={user?.id}
         showActions={true}
         isAdmin={isAdmin}
+        onEdit={handleEdit}
         onDelete={handleDelete}
         onRefetchReady={(refetch) => { refetchRef.current = refetch; }}
       />
