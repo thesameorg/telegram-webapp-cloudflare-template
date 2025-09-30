@@ -28,7 +28,8 @@ export class SessionManager {
       expiresAt: now + (this.sessionTTL * 1000),
       isActive: true,
       role: getAdminRole(user.id, this.env),
-      telegramId: user.id
+      telegramId: user.id,
+      isPremium: user.is_premium
     };
 
     await this.kv.put(

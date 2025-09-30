@@ -54,7 +54,8 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
           last_name: session.displayName.split(' ').slice(1).join(' ') || undefined,
           username: session.username,
           language_code: 'en',
-          photo_url: session.profilePictureUrl
+          photo_url: session.profilePictureUrl,
+          is_premium: session.isPremium
         },
         expiresAt: session.expiresAt,
         role: session.role,

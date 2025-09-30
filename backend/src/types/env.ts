@@ -39,4 +39,5 @@ export interface SessionData {
   isActive: boolean;
   role: 'admin' | 'user';
   telegramId: number;
+  isPremium?: boolean;
 }
