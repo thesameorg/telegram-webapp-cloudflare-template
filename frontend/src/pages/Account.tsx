@@ -62,7 +62,7 @@ export default function Account() {
   }, [sessionId]);
 
   const handleEditProfile = () => {
-    navigate('/profile/edit');
+    navigate('/edit-profile');
   };
 
   if (isLoading) {

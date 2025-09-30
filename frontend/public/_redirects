@@ -1,10 +1,5 @@
 # API routes go to Functions
 /api/* /api/:splat 200
 
-# Specific SPA routes (optional but explicit)
-/profile/* /index.html 200
-/my-posts /index.html 200
-/account /index.html 200
-
 # Everything else goes to React app (SPA)
 /* /index.html 200
