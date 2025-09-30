@@ -80,7 +80,7 @@ export default function UnifiedProfile() {
 
       try {
         const endpoint = isOwnProfile ? '/api/profile/me' : `/api/profile/${actualUserId}`;
-        const fetchOptions: RequestInit = {};
+        const fetchOptions: { headers?: { 'x-session-id': string } } = {};
 
         if (isOwnProfile && sessionId) {
           fetchOptions.headers = { 'x-session-id': sessionId };
