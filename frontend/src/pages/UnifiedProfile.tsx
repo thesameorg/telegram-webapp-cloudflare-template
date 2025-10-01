@@ -89,7 +89,7 @@ export default function UnifiedProfile() {
 
       try {
         const endpoint = isOwnProfile ? '/api/profile/me' : `/api/profile/${actualUserId}`;
-        const fetchOptions: { headers?: { 'x-session-id': string }; credentials?: RequestCredentials } = {
+        const fetchOptions: RequestInit = {
           credentials: 'include',
         };
 

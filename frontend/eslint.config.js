@@ -43,6 +43,8 @@ export default [
         { allowConstantExport: true },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
+      // Disable no-undef for TypeScript files - TypeScript handles this better
+      'no-undef': 'off',
     },
   },
   {
