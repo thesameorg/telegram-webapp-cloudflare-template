@@ -20,7 +20,7 @@ export interface Env {
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_ADMIN_ID: string;
   WEB_APP_URL: string;
-  LOCAL_BASE_URL?: string;
+  DEV_AUTH_BYPASS_ENABLED?: string;
 }
 
 

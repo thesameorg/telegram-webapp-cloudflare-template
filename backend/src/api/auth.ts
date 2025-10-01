@@ -23,7 +23,39 @@ export async function authHandler(c: Context<{ Bindings: Env }>): Promise<Respon
   }
 }
 
+import { mockUser as devMockUser } from '../dev/mock-user';
+
 async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const sessionManager = SessionManager.create(c.env);
+
+  // DEV-ONLY: Auth bypass for local development
+  if (c.env.DEV_AUTH_BYPASS_ENABLED === 'true') {
+    const mockUser = {
+      ...devMockUser,
+      role: devMockUser.id.toString() === c.env.TELEGRAM_ADMIN_ID ? 'admin' : 'user'
+    };
+
+    const session = await sessionManager.createSession(mockUser as any);
+
+    return c.json({
+      authenticated: true,
+      sessionId: session!.sessionId,
+      user: {
+        id: mockUser.id,
+        first_name: mockUser.first_name,
+        last_name: mockUser.last_name,
+        username: mockUser.username,
+        language_code: mockUser.language_code,
+        is_premium: mockUser.is_premium,
+        photo_url: mockUser.photo_url
+      },
+      expiresAt: session!.expiresAt,
+      role: session!.role,
+      isAdmin: session!.role === 'admin',
+      source: 'dev_bypass'
+    });
+  }
+
   let body: Record<string, unknown> = {};
   try {
     const rawBody = await c.req.text();
@@ -39,7 +71,6 @@ async function handleAuthentication(c: Context<{ Bindings: Env }>): Promise<Resp
   const finalSessionId = (sessionId || sessionIdHeader) as string | undefined;
   const initDataParam = initData as string | undefined;
 
-  const sessionManager = SessionManager.create(c.env);
   const telegramAuth = new TelegramAuthService(c.env.TELEGRAM_BOT_TOKEN);
 
   // Try session validation first
