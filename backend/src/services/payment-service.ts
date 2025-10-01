@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import type { Database } from '../db';
 import { payments, posts } from '../db/schema';
 import type { Env } from '../types/env';
@@ -17,6 +17,13 @@ export interface UpdatePaymentStatusInput {
   telegramPaymentChargeId?: string;
   providerPaymentChargeId?: string;
   rawUpdate?: unknown;
+}
+
+export interface ReconciliationResult {
+  updated: Array<{ paymentId: string; oldStatus: string; newStatus: string }>;
+  unchanged: number;
+  notFoundInTelegram: Array<{ paymentId: string; status: string; createdAt: string }>;
+  errors: Array<{ paymentId: string; error: string }>;
 }
 
 export class PaymentService {
@@ -293,5 +300,163 @@ export class PaymentService {
 
     // All retries exhausted
     return { success: false, error: lastError?.message || 'Refund failed after all retries' };
+  }
+
+  /**
+   * Reconcile payments with Telegram Star transactions (admin only)
+   * Syncs local DB payment statuses with actual Telegram transaction states
+   */
+  async reconcilePayments(): Promise<ReconciliationResult> {
+    const result: ReconciliationResult = {
+      updated: [],
+      unchanged: 0,
+      notFoundInTelegram: [],
+      errors: [],
+    };
+
+    try {
+      const bot = new Bot(this.env.TELEGRAM_BOT_TOKEN);
+
+      // Fetch star transactions from Telegram (last 30 days worth)
+      // We'll fetch in batches since API has pagination
+      const allTransactions: any[] = [];
+      let offset = 0;
+      const limit = 100; // Max per request
+      const maxPages = 10; // Safety limit (1000 transactions max)
+
+      console.log('[Reconcile] Fetching Telegram star transactions...');
+
+      for (let page = 0; page < maxPages; page++) {
+        const response = await bot.api.getStarTransactions({ offset, limit });
+
+        if (!response.transactions || response.transactions.length === 0) {
+          break;
+        }
+
+        allTransactions.push(...response.transactions);
+        console.log(`[Reconcile] Fetched ${response.transactions.length} transactions (page ${page + 1})`);
+
+        // If we got less than limit, we've reached the end
+        if (response.transactions.length < limit) {
+          break;
+        }
+
+        offset += limit;
+      }
+
+      console.log(`[Reconcile] Total Telegram transactions: ${allTransactions.length}`);
+
+      // Fetch all payments from DB (last 30 days for performance)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const dbPayments = await this.db
+        .select()
+        .from(payments)
+        .where(sql`${payments.createdAt} >= ${thirtyDaysAgo}`)
+        .orderBy(desc(payments.createdAt));
+
+      console.log(`[Reconcile] DB payments (last 30 days): ${dbPayments.length}`);
+
+      // Build a map of Telegram transactions by charge ID
+      // Note: Telegram transactions have an 'id' field which is the transaction ID
+      // We need to match this with our telegramPaymentChargeId
+      const telegramTxMap = new Map<string, any>();
+
+      for (const tx of allTransactions) {
+        // Star transactions can be incoming (payments) or outgoing (refunds)
+        // Incoming: tx.source is defined (user who paid)
+        // Outgoing: tx.receiver is defined (user who received refund)
+        if (tx.id) {
+          telegramTxMap.set(tx.id, tx);
+        }
+      }
+
+      // Process each DB payment
+      for (const payment of dbPayments) {
+        try {
+          // Skip payments that don't have a Telegram charge ID yet
+          if (!payment.telegramPaymentChargeId) {
+            // These are likely still in 'created' status, waiting for payment
+            continue;
+          }
+
+          const telegramTx = telegramTxMap.get(payment.telegramPaymentChargeId);
+
+          if (!telegramTx) {
+            // Payment not found in Telegram transactions
+            // This could be normal if payment is very old or failed
+            if (payment.status === 'succeeded') {
+              // This is concerning - succeeded payment not in Telegram
+              result.notFoundInTelegram.push({
+                paymentId: payment.id,
+                status: payment.status,
+                createdAt: payment.createdAt,
+              });
+            }
+            continue;
+          }
+
+          // Determine expected status from Telegram transaction
+          let expectedStatus: PaymentStatus | null = null;
+
+          // Check if this is a refund transaction (negative amount or receiver present)
+          const isRefund = telegramTx.amount < 0 || telegramTx.receiver;
+
+          if (isRefund) {
+            expectedStatus = 'refunded';
+          } else if (telegramTx.source) {
+            // Incoming payment with source (user paid)
+            expectedStatus = 'succeeded';
+          }
+
+          // Compare and update if different
+          if (expectedStatus && expectedStatus !== payment.status) {
+            console.log(`[Reconcile] Updating payment ${payment.id}: ${payment.status} -> ${expectedStatus}`);
+
+            await this.updatePaymentStatus(payment.id, {
+              status: expectedStatus,
+              rawUpdate: { reconciled: true, telegramTx },
+            });
+
+            result.updated.push({
+              paymentId: payment.id,
+              oldStatus: payment.status,
+              newStatus: expectedStatus,
+            });
+
+            // If refunded, also update the post
+            if (expectedStatus === 'refunded' && payment.postId) {
+              const now = new Date().toISOString();
+              await this.db.update(posts)
+                .set({
+                  starCount: 0,
+                  paymentId: null,
+                  updatedAt: now,
+                })
+                .where(eq(posts.id, payment.postId));
+            }
+          } else {
+            result.unchanged++;
+          }
+        } catch (error: any) {
+          console.error(`[Reconcile] Error processing payment ${payment.id}:`, error);
+          result.errors.push({
+            paymentId: payment.id,
+            error: error.message || String(error),
+          });
+        }
+      }
+
+      console.log('[Reconcile] Summary:', {
+        updated: result.updated.length,
+        unchanged: result.unchanged,
+        notFound: result.notFoundInTelegram.length,
+        errors: result.errors.length,
+      });
+
+      return result;
+    } catch (error: any) {
+      console.error('[Reconcile] Fatal error:', error);
+      throw new Error(`Reconciliation failed: ${error.message || String(error)}`);
+    }
   }
 }

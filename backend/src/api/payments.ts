@@ -310,3 +310,43 @@ export const refundPayment = async (c: Context<{ Bindings: Env }>) => {
     return c.json({ error: 'Failed to process refund' }, 500);
   }
 };
+
+/**
+ * POST /api/payments/reconcile
+ * Reconcile payments with Telegram Star transactions (admin only)
+ */
+export const reconcilePayments = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    // Authenticate user
+    const authResult = await authenticateUser(c);
+    if ('error' in authResult && authResult.error) {
+      return c.json({ error: authResult.error.message }, authResult.error.status);
+    }
+    const { session } = authResult;
+
+    // Check admin
+    if (!isAdmin(session.telegramId, c.env)) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    const db = createDatabase(c.env.DB);
+    const paymentService = new PaymentService(db, c.env);
+
+    // Run reconciliation
+    const result = await paymentService.reconcilePayments();
+
+    return c.json({
+      success: true,
+      summary: {
+        updated: result.updated.length,
+        unchanged: result.unchanged,
+        notFoundInTelegram: result.notFoundInTelegram.length,
+        errors: result.errors.length,
+      },
+      details: result,
+    });
+  } catch (error) {
+    console.error('Error reconciling payments:', error);
+    return c.json({ error: 'Failed to reconcile payments' }, 500);
+  }
+};

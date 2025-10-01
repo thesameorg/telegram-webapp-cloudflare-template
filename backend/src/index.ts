@@ -6,7 +6,7 @@ import { authHandler } from './api/auth'
 import { getAllPosts, getUserPosts, createPost, updatePost, deletePost, uploadPostImages, deletePostImage } from './api/posts'
 import { getProfile, getMyProfile, updateMyProfile, uploadProfileAvatar } from './api/profile'
 import { banUser, unbanUser } from './api/admin'
-import { makePremium, clearPending, getAllPayments, getBalance, refreshBalance, refundPayment } from './api/payments'
+import { makePremium, clearPending, getAllPayments, getBalance, refreshBalance, refundPayment, reconcilePayments } from './api/payments'
 import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -50,6 +50,7 @@ app.post('/api/posts/:postId/clear-pending', clearPending)
 app.get('/api/payments', getAllPayments)
 app.get('/api/payments/balance', getBalance)
 app.post('/api/payments/refresh-balance', refreshBalance)
+app.post('/api/payments/reconcile', reconcilePayments)
 app.post('/api/payments/:paymentId/refund', refundPayment)
 
 // R2 image serving for local development

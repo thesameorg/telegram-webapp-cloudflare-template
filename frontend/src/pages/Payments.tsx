@@ -28,6 +28,7 @@ export default function Payments() {
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
+  const [isReconciling, setIsReconciling] = useState(false);
   const [refundingPaymentId, setRefundingPaymentId] = useState<string | null>(null);
   const [confirmRefund, setConfirmRefund] = useState<{ id: string; starAmount: number; userId: number } | null>(null);
   const [limit] = useState(50);
@@ -123,6 +124,59 @@ export default function Payments() {
       );
     } finally {
       setIsRefreshingBalance(false);
+    }
+  };
+
+  const handleReconcile = async () => {
+    setIsReconciling(true);
+    try {
+      const sessionId = localStorage.getItem('telegram_session_id');
+      if (!sessionId) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('/api/payments/reconcile', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${sessionId}` },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reconcile payments');
+      }
+
+      const data = await response.json();
+
+      // Refresh payments list
+      const updatedPayments = await fetchPayments();
+      if (updatedPayments) {
+        setPayments(updatedPayments);
+      }
+
+      // Show success message with summary
+      const { summary } = data;
+      if (summary.updated > 0) {
+        showToast(
+          `Reconciled: ${summary.updated} updated, ${summary.unchanged} unchanged`,
+          'success'
+        );
+      } else {
+        showToast('All payments already in sync', 'success');
+      }
+
+      // Show warnings if any
+      if (summary.notFoundInTelegram > 0) {
+        console.warn(`${summary.notFoundInTelegram} payments not found in Telegram`);
+      }
+      if (summary.errors > 0) {
+        console.error(`${summary.errors} errors during reconciliation`);
+      }
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : 'Failed to reconcile payments',
+        'error'
+      );
+    } finally {
+      setIsReconciling(false);
     }
   };
 
@@ -312,30 +366,57 @@ export default function Payments() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleRefreshBalance}
-            disabled={isRefreshingBalance}
-            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
-          >
-            {isRefreshingBalance ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 dark:border-gray-300"></div>
-                <span>Refreshing...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                <span>Refresh</span>
-              </>
-            )}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleRefreshBalance}
+              disabled={isRefreshingBalance}
+              className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+            >
+              {isRefreshingBalance ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 dark:border-gray-300"></div>
+                  <span>Refreshing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span>Refresh</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleReconcile}
+              disabled={isReconciling}
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 border border-blue-600 dark:border-blue-700 rounded-lg text-sm font-medium text-white hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              title="Sync payments with Telegram server"
+            >
+              {isReconciling ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Syncing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span>Reconcile</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
