@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useCreatePost } from '../hooks/use-create-post';
 import ImageUpload, { ImageData } from './ImageUpload';
 import { useToast } from '../hooks/use-toast';
+import { config } from '../config';
 
 interface Post {
   id: number;
@@ -63,12 +64,13 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/posts/${postId}/images`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}/images`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${sessionId}`,
         },
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -96,13 +98,14 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/posts/${postId}`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${sessionId}`,
         },
         body: JSON.stringify({ content }),
+        credentials: 'include',
       });
 
       if (!response.ok) {

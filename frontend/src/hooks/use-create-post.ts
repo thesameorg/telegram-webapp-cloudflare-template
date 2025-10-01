@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTelegramAuth } from './use-telegram-auth';
+import { config } from '../config';
 
 interface CreatePostData {
   content: string;
@@ -47,7 +48,7 @@ export function useCreatePost(): CreatePostResult {
     setError(null);
 
     try {
-      const response = await fetch('/api/posts', {
+      const response = await fetch(`${config.apiBaseUrl}/api/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,6 +57,7 @@ export function useCreatePost(): CreatePostResult {
         body: JSON.stringify({
           content: data.content.trim(),
         }),
+        credentials: 'include',
       });
 
       if (!response.ok) {

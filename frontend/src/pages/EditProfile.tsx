@@ -4,6 +4,7 @@ import { ProfileEditor } from '../components/profile/ProfileEditor';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
 import { useToast } from '../hooks/use-toast';
 import { useSimpleAuth } from '../hooks/use-simple-auth';
+import { config } from '../config';
 
 interface ProfileData {
   telegram_id: number;
@@ -37,10 +38,11 @@ export default function EditProfile() {
       }
 
       setLoading(true);
-      const response = await fetch('/api/profile/me', {
+      const response = await fetch(`${config.apiBaseUrl}/api/profile/me`, {
         headers: {
           'x-session-id': sessionId,
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -80,13 +82,14 @@ export default function EditProfile() {
         throw new Error('No session found');
       }
 
-      const response = await fetch('/api/profile/me', {
+      const response = await fetch(`${config.apiBaseUrl}/api/profile/me`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'x-session-id': sessionId,
         },
         body: JSON.stringify(updatedProfile),
+        credentials: 'include',
       });
 
       if (!response.ok) {

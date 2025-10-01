@@ -13,6 +13,7 @@ import DeletePostConfirm from '../components/DeletePostConfirm';
 import BanUserConfirm from '../components/BanUserConfirm';
 import MakePremiumModal from '../components/MakePremiumModal';
 import { ImageUrlData } from '../components/ImageGallery';
+import { config } from '../config';
 
 interface ProfileData {
   telegram_id: number;
@@ -88,13 +89,15 @@ export default function UnifiedProfile() {
 
       try {
         const endpoint = isOwnProfile ? '/api/profile/me' : `/api/profile/${actualUserId}`;
-        const fetchOptions: { headers?: { 'x-session-id': string } } = {};
+        const fetchOptions: { headers?: { 'x-session-id': string }; credentials?: RequestCredentials } = {
+          credentials: 'include',
+        };
 
         if (isOwnProfile && sessionId) {
           fetchOptions.headers = { 'x-session-id': sessionId };
         }
 
-        const response = await fetch(endpoint, fetchOptions);
+        const response = await fetch(`${config.apiBaseUrl}${endpoint}`, fetchOptions);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -124,7 +127,9 @@ export default function UnifiedProfile() {
       if (!actualUserId) return;
 
       try {
-        const response = await fetch(`/api/posts/user/${actualUserId}`);
+        const response = await fetch(`${config.apiBaseUrl}/api/posts/user/${actualUserId}`, {
+          credentials: 'include',
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -190,7 +195,9 @@ export default function UnifiedProfile() {
       if (!actualUserId) return;
 
       try {
-        const response = await fetch(`/api/profile/${actualUserId}`);
+        const response = await fetch(`${config.apiBaseUrl}/api/profile/${actualUserId}`, {
+          credentials: 'include',
+        });
         if (response.ok) {
           const data = await response.json();
           setProfile(data.profile);

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AuthStorage } from '../utils/auth-storage';
+import { config } from '../config';
 
 // Type declarations for global
 declare const global: typeof globalThis;
@@ -64,7 +65,7 @@ describe('Frontend Authentication Integration Tests', () => {
         json: async () => mockBackendResponse
       });
 
-      const response = await fetch('/api/auth', {
+      const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: mockInitData }),
@@ -74,7 +75,7 @@ describe('Frontend Authentication Integration Tests', () => {
       const result = await response.json();
 
       expect(result).toEqual(mockBackendResponse);
-      expect(global.fetch).toHaveBeenCalledWith('/api/auth', {
+      expect(global.fetch).toHaveBeenCalledWith(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: mockInitData }),
@@ -95,7 +96,7 @@ describe('Frontend Authentication Integration Tests', () => {
         json: async () => mockErrorResponse
       });
 
-      const response = await fetch('/api/auth', {
+      const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: mockInitData }),
@@ -129,7 +130,7 @@ describe('Frontend Authentication Integration Tests', () => {
         json: async () => mockBackendResponse
       });
 
-      const response = await fetch('/api/auth', {
+      const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId }),
@@ -139,7 +140,7 @@ describe('Frontend Authentication Integration Tests', () => {
       const result = await response.json();
 
       expect(result).toEqual(mockBackendResponse);
-      expect(global.fetch).toHaveBeenCalledWith('/api/auth', {
+      expect(global.fetch).toHaveBeenCalledWith(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId }),
@@ -249,7 +250,7 @@ describe('Frontend Authentication Integration Tests', () => {
       const initData = 'query_id=AAG&user=%7B%22id%22%3A123456789%7D&auth_date=1727404800&hash=mockhash';
 
       // Step 2: Authenticate using direct fetch (as app does)
-      const authResponse = await fetch('/api/auth', {
+      const authResponse = await fetch(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData }),
@@ -271,7 +272,7 @@ describe('Frontend Authentication Integration Tests', () => {
       });
 
       // Step 4: Validate session using direct fetch
-      const validateResponse = await fetch('/api/auth', {
+      const validateResponse = await fetch(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: authResult.sessionId }),
@@ -303,7 +304,7 @@ describe('Frontend Authentication Integration Tests', () => {
       const initData = 'invalid_init_data';
 
       // Attempt authentication using direct fetch
-      const authResponse = await fetch('/api/auth', {
+      const authResponse = await fetch(`${config.apiBaseUrl}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData }),

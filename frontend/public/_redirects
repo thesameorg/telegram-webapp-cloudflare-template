@@ -1,5 +1,3 @@
-# API routes go to Functions
-/api/* /api/:splat 200
-
-# Everything else goes to React app (SPA)
+# Everything goes to React app (SPA)
+# API calls now go directly to Worker (not through Pages Functions)
 /* /index.html 200

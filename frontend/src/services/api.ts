@@ -1,3 +1,5 @@
+import { config } from '../config';
+
 interface Post {
   id: number;
   userId: number;
@@ -44,7 +46,9 @@ export const api = {
       offset: offset.toString(),
     });
 
-    const response = await fetch(`/api/posts?${params}`);
+    const response = await fetch(`${config.apiBaseUrl}/api/posts?${params}`, {
+      credentials: 'include',
+    });
     return handleResponse(response);
   },
 
@@ -55,19 +59,22 @@ export const api = {
       offset: offset.toString(),
     });
 
-    const response = await fetch(`/api/posts/user/${userId}?${params}`);
+    const response = await fetch(`${config.apiBaseUrl}/api/posts/user/${userId}?${params}`, {
+      credentials: 'include',
+    });
     return handleResponse(response);
   },
 
   // Create a new post
   async createPost(data: CreatePostData, sessionId: string): Promise<{ post: Post }> {
-    const response = await fetch('/api/posts', {
+    const response = await fetch(`${config.apiBaseUrl}/api/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${sessionId}`,
       },
       body: JSON.stringify(data),
+      credentials: 'include',
     });
 
     return handleResponse(response);

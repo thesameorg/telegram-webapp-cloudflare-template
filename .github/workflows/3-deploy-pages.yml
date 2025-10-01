@@ -58,18 +58,6 @@ jobs:
         run: |
           cd frontend
 
-          # Update function config with GitHub variables
-          echo "Worker URL: ${{ vars.WORKER_URL }}"
-          echo "Pages URL: ${{ vars.PAGES_URL }}"
-
-          # Replace URLs in functions config
-          sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g' functions/config.ts
-          sed -i 's|https://twa-cf-tpl.pages.dev|${{ vars.PAGES_URL }}|g' functions/config.ts
-
-          # Copy functions to the output directory
-          echo "Copying functions to dist..."
-          cp -r functions dist/
-
           # Deploy to Pages (show real errors)
           echo "Starting Pages deployment..."
           npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true

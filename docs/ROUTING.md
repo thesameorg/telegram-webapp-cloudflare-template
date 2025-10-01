@@ -8,10 +8,14 @@ This document provides a comprehensive analysis of the routing architecture, ide
 - ✅ CSP header now uses config instead of hardcoded URL
 - ✅ Removed unused `VITE_WORKER_URL` and `VITE_PAGES_URL` env vars from workflow
 
-**Phase 2 (Direct Worker Calls): ⏸️ NOT STARTED**
-- Would eliminate Pages Functions proxy entirely
-- Reduces complexity from 7/10 → 4/10
-- See [Implementation Guide](#phase-2-direct-worker-calls-medium-risk) below
+**Phase 2 (Direct Worker Calls): ✅ COMPLETED**
+- ✅ Added CORS middleware to Worker backend
+- ✅ Created frontend config.ts with API base URL
+- ✅ Updated all 30+ frontend API calls to use config
+- ✅ Removed Pages Functions proxy entirely
+- ✅ Updated _redirects to only handle SPA routing
+- ✅ Cleaned up deployment workflow
+- **Complexity reduced from 6.5/10 → 4/10** 🎉
 
 **Phase 3 (Custom Domains): ⏸️ NOT STARTED**
 - Requires custom domain purchase/configuration
@@ -87,9 +91,15 @@ twa-cf-tpl/
 | Location | Value | Type | Impact |
 |----------|-------|------|--------|
 | `frontend/src/utils/image-url.ts:7` | `https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev` | R2 Public URL | Must update if R2 bucket changes |
-| `frontend/functions/config.ts:4` | `https://twa-cf-tpl-prod.workers.dev` | Worker URL | Replaced by sed during deploy |
-| `frontend/functions/config.ts:5` | `https://twa-cf-tpl.pages.dev` | Pages URL | Replaced by sed during deploy |
-| ~~`frontend/functions/api/[[path]].ts:42`~~ | ~~`https://twa-cf-tpl-prod.workers.dev`~~ | ~~CSP Worker URL~~ | ✅ **FIXED** - Now uses config |
+| ~~`frontend/functions/config.ts:4`~~ | ~~`https://twa-cf-tpl-prod.workers.dev`~~ | ~~Worker URL~~ | ✅ **REMOVED** - Now in frontend/src/config.ts |
+| ~~`frontend/functions/config.ts:5`~~ | ~~`https://twa-cf-tpl.pages.dev`~~ | ~~Pages URL~~ | ✅ **REMOVED** - No longer needed |
+| ~~`frontend/functions/api/[[path]].ts:42`~~ | ~~`https://twa-cf-tpl-prod.workers.dev`~~ | ~~CSP Worker URL~~ | ✅ **REMOVED** - Functions deleted |
+
+**New Configuration (Phase 2):**
+| Location | Value | Type | Notes |
+|----------|-------|------|-------|
+| `frontend/src/config.ts` | `https://twa-cf-tpl-prod.workers.dev` | Worker URL | Single source of truth, no sed needed |
+| `backend/src/index.ts:24` | `https://twa-cf-tpl.pages.dev` | CORS allowed origin | In CORS middleware |
 
 ### 🟡 Infrastructure IDs (Less Critical)
 
@@ -303,37 +313,39 @@ sed -i 's|https://twa-cf-tpl.pages.dev|${{ vars.PAGES_URL }}|g' functions/config
 
 ### 🔴 High Priority Issues
 
-#### 1. Double-Hop API Routing in Production
-**Problem:** Every API call goes Pages → Functions → Workers
+#### 1. ~~Double-Hop API Routing in Production~~ ✅ **FIXED**
+~~**Problem:** Every API call goes Pages → Functions → Workers~~
 
-**Why it exists:**
-- Allows using relative paths in frontend (`/api/posts`)
-- Avoids CORS configuration on Worker
-- Centralizes CORS headers in one place
+**Solution Implemented (Phase 2):**
+- Frontend now calls Worker directly
+- CORS middleware added to Worker backend
+- Pages Functions completely removed
+- Single-hop routing: Frontend → Worker
 
-**Downsides:**
-- Extra latency (additional network hop)
-- Extra cost (Pages Functions + Workers execution)
-- More points of failure
-- Harder to debug (two layers)
+**Benefits:**
+- ✅ Reduced latency (one hop instead of two)
+- ✅ Lower cost (only Workers execution, no Functions)
+- ✅ Fewer points of failure
+- ✅ Easier to debug (single layer)
 
-#### 2. Hardcoded URLs with sed Replacement
-**Problem:** URLs are hardcoded, then replaced during deploy
+#### 2. ~~Hardcoded URLs with sed Replacement~~ ✅ **FIXED**
+~~**Problem:** URLs are hardcoded, then replaced during deploy~~
 
-**Code:**
+**Solution Implemented (Phase 2):**
 ```typescript
-// functions/config.ts (before deploy)
-export const WORKER_URL = "https://twa-cf-tpl-prod.workers.dev"
-
-// Workflow replaces with actual URL
-sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g'
+// frontend/src/config.ts - New single source of truth
+export const config = {
+  apiBaseUrl: import.meta.env.PROD
+    ? 'https://twa-cf-tpl-prod.workers.dev'
+    : '',  // Local: Vite proxy
+}
 ```
 
-**Downsides:**
-- Fragile (what if sed pattern doesn't match?)
-- Hard to test locally with real URLs
-- Config file doesn't reflect deployed reality
-- CSP header has duplicate hardcoded URL that must match
+**Benefits:**
+- ✅ No more sed replacement needed
+- ✅ Config file is clear and explicit
+- ✅ Easy to update (one location)
+- ✅ Works consistently across environments
 
 #### 3. Different Image Serving Mechanisms
 **Problem:** Images served differently in local vs production
@@ -770,39 +782,42 @@ export const getImageUrl = (key: string) => {
 
 ## Summary & Recommendations
 
-### Current State: Complexity Score 6.5/10 (improved from 7/10)
+### Current State: Complexity Score 4/10 (improved from 7/10) 🎉
 
 **Remaining Complexities:**
-- ❌ Double-hop API routing (Pages Functions proxy)
-- ❌ Hardcoded URLs with sed replacement
-- ❌ Different image serving local vs prod
-- ✅ ~~CSP header hardcoded~~ **FIXED**
-- ❌ Config scattered across files (partially improved)
+- ✅ ~~Double-hop API routing~~ **FIXED** (Phase 2)
+- ✅ ~~Hardcoded URLs with sed replacement~~ **FIXED** (Phase 2)
+- ❌ Different image serving local vs prod (minor - works fine)
+- ✅ ~~CSP header hardcoded~~ **FIXED** (Phase 1)
+- ✅ ~~Pages Functions proxy~~ **REMOVED** (Phase 2)
 - ✅ React Router works well
 - ✅ Vite proxy works well locally
 
-**Phase 1 Improvements:**
-- ✅ CSP header now uses config (cleaner, maintainable)
-- ✅ Unused env vars removed (less confusion)
+**Improvements Completed:**
+
+**Phase 1:**
+- ✅ CSP header now uses config
+- ✅ Unused env vars removed
+
+**Phase 2:**
+- ✅ Frontend calls Worker directly (no proxy)
+- ✅ CORS middleware on Worker
+- ✅ Pages Functions completely removed
+- ✅ Simpler workflow (no sed, no functions copy)
+- ✅ Single config file for API URL
 
 ### Recommended Path
 
 **✅ Phase 1 (Quick Wins): COMPLETED**
-1. ✅ Use config for CSP header (completed)
-2. ✅ Remove unused env vars (completed)
-3. **Result: Complexity reduced from 7/10 → 6.5/10**
+- Result: 7/10 → 6.5/10
 
-**Short-Term (Optional - This Week):**
-3. ⏸️ Phase 2: Direct Worker calls (2 hours)
-   - Eliminates Pages Functions entirely
-   - Reduces latency and cost
-   - Simplifies debugging
-   - **New Complexity Score: 4/10**
+**✅ Phase 2 (Direct Worker Calls): COMPLETED**
+- Result: 6.5/10 → 4/10 🎉
 
-**Long-Term (When Ready):**
-4. ✅ Phase 3: Custom domains (4 hours + DNS wait)
+**Optional - Phase 3 (Custom Domains):**
+3. ⏸️ Phase 3: Custom domains (when domain available)
    - Professional URLs
-   - No CORS issues
+   - Same-origin (no CORS complexity)
    - Clean image CDN
    - **Final Complexity Score: 2/10**
 
@@ -865,4 +880,4 @@ export const getImageUrl = (key: string) => {
 ---
 
 **Last Updated:** 2025-10-01
-**Version:** 2.1 (Phase 1 implemented - CSP header + unused env vars fixed)
+**Version:** 3.0 (Phase 2 implemented - Direct Worker calls, Pages Functions removed) 🎉

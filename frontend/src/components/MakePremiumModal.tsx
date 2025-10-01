@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../hooks/use-toast';
+import { config } from '../config';
 
 interface MakePremiumModalProps {
   postId: number;
@@ -38,8 +39,9 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
     if (!sessionId) return false;
 
     try {
-      const response = await fetch(`/api/posts`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/posts`, {
         headers: { 'Authorization': `Bearer ${sessionId}` },
+        credentials: 'include',
       });
 
       if (!response.ok) return false;
@@ -110,13 +112,14 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
       }
 
       // Create payment and get invoice URL
-      const response = await fetch(`/api/posts/${postId}/make-premium`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}/make-premium`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${sessionId}`,
         },
         body: JSON.stringify({ star_count: starCount }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -136,17 +139,19 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
             startWaitingForUpdate();
           } else if (status === 'cancelled') {
             // Clear pending flag
-            await fetch(`/api/posts/${postId}/clear-pending`, {
+            await fetch(`${config.apiBaseUrl}/api/posts/${postId}/clear-pending`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${sessionId}` },
+              credentials: 'include',
             });
             showToast('Payment cancelled', 'info');
             onSuccess?.(); // Refresh to clear loading state
           } else if (status === 'failed') {
             // Clear pending flag
-            await fetch(`/api/posts/${postId}/clear-pending`, {
+            await fetch(`${config.apiBaseUrl}/api/posts/${postId}/clear-pending`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${sessionId}` },
+              credentials: 'include',
             });
             showToast('Payment failed', 'error');
             onSuccess?.(); // Refresh to clear loading state

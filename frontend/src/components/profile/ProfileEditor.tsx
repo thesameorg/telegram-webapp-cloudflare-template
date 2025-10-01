@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ContactLinks } from './ContactLinks';
 import { useToast } from '../../hooks/use-toast';
+import { config } from '../../config';
 
 interface ContactLinksData {
   website?: string;
@@ -63,12 +64,13 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
         throw new Error('No session found');
       }
 
-      const response = await fetch('/api/profile/me/avatar', {
+      const response = await fetch(`${config.apiBaseUrl}/api/profile/me/avatar`, {
         method: 'POST',
         headers: {
           'x-session-id': sessionId,
         },
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {

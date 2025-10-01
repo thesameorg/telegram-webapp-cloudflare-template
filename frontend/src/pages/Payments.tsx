@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSimpleAuth } from '../hooks/use-simple-auth';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { config } from '../config';
 
 interface Payment {
   id: string;
@@ -62,9 +63,10 @@ export default function Payments() {
 
         // Fetch payments
         const paymentsResponse = await fetch(
-          `/api/payments?limit=${limit}&offset=${offset}`,
+          `${config.apiBaseUrl}/api/payments?limit=${limit}&offset=${offset}`,
           {
             headers: { 'Authorization': `Bearer ${sessionId}` },
+            credentials: 'include',
           }
         );
 
@@ -76,8 +78,9 @@ export default function Payments() {
         setPayments(paymentsData.payments);
 
         // Fetch balance
-        const balanceResponse = await fetch('/api/payments/balance', {
+        const balanceResponse = await fetch(`${config.apiBaseUrl}/api/payments/balance`, {
           headers: { 'Authorization': `Bearer ${sessionId}` },
+          credentials: 'include',
         });
 
         if (balanceResponse.ok) {
@@ -105,9 +108,10 @@ export default function Payments() {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch('/api/payments/refresh-balance', {
+      const response = await fetch(`${config.apiBaseUrl}/api/payments/refresh-balance`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${sessionId}` },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -135,9 +139,10 @@ export default function Payments() {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch('/api/payments/reconcile', {
+      const response = await fetch(`${config.apiBaseUrl}/api/payments/reconcile`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${sessionId}` },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -186,9 +191,10 @@ export default function Payments() {
 
     try {
       const response = await fetch(
-        `/api/payments?limit=${limit}&offset=${offset}`,
+        `${config.apiBaseUrl}/api/payments?limit=${limit}&offset=${offset}`,
         {
           headers: { 'Authorization': `Bearer ${sessionId}` },
+          credentials: 'include',
         }
       );
 
@@ -244,9 +250,10 @@ export default function Payments() {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/payments/${paymentId}/refund`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/payments/${paymentId}/refund`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${sessionId}` },
+        credentials: 'include',
       });
 
       if (!response.ok) {

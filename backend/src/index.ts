@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { prettyJSON } from 'hono/pretty-json'
+import { cors } from 'hono/cors'
 import { handleWebhook } from './webhook'
 import { healthHandler } from './api/health'
 import { authHandler } from './api/auth'
@@ -14,6 +15,24 @@ const app = new Hono<{ Bindings: Env }>()
 
 // Simple middleware
 app.use('*', prettyJSON())
+
+// CORS middleware for API endpoints
+app.use('/api/*', cors({
+  origin: (origin) => {
+    // Allow Pages domain and Telegram
+    const allowed = [
+      'https://twa-cf-tpl.pages.dev',
+      'https://t.me',
+    ]
+    // Check if origin starts with any allowed domain
+    if (origin && allowed.some(a => origin.startsWith(a))) {
+      return origin
+    }
+    // Default to first allowed origin for preflight requests
+    return allowed[0]
+  },
+  credentials: true,
+}))
 
 // API endpoints
 app.get('/api/health', healthHandler)

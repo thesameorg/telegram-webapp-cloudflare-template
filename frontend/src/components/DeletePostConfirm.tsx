@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../hooks/use-toast';
+import { config } from '../config';
 
 interface DeletePostConfirmProps {
   postId: number;
@@ -22,11 +23,12 @@ export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: De
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/posts/${postId}`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${sessionId}`,
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {

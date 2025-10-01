@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { config } from '../config'
 
 interface HealthData {
   status: string
@@ -17,7 +18,9 @@ export function useHealthCheck() {
   const [kvStatus, setKvStatus] = useState('Checking...')
 
   useEffect(() => {
-    fetch('/api/health')
+    fetch(`${config.apiBaseUrl}/api/health`, {
+      credentials: 'include'
+    })
       .then(r => r.json())
       .then((data: HealthData) => {
         setHealthStatus(data.status)

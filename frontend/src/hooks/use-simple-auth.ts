@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AuthStorage } from '../utils/auth-storage';
 import { useTelegram } from '../utils/telegram';
+import { config } from '../config';
 
 interface TelegramUser {
   id: number;
@@ -64,7 +65,7 @@ export function useSimpleAuth(): AuthState {
 
         console.log('Frontend: Sending authentication request with body:', requestBody);
 
-        const response = await fetch('/api/auth', {
+        const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
