@@ -379,6 +379,7 @@ export default function UnifiedProfile() {
                 currentUserId={user?.id}
                 showActions={isAdmin}
                 isAdmin={isAdmin}
+                onDelete={handleDelete}
               />
             )
           ) : (
