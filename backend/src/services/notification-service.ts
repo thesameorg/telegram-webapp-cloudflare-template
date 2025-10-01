@@ -147,3 +147,66 @@ export async function sendAdminPaymentAlert(
     console.error(`Failed to send admin payment alert:`, error);
   }
 }
+
+/**
+ * Send notification to user when their payment is refunded
+ *
+ * @param env - Environment variables containing bot token
+ * @param telegramId - The telegram ID of the user
+ * @param postId - The ID of the post
+ * @param starAmount - Number of stars refunded
+ */
+export async function sendPaymentRefundNotification(
+  env: Env,
+  telegramId: number,
+  postId: number,
+  starAmount: number
+): Promise<void> {
+  try {
+    const bot = getBotInstance(env);
+    await bot.api.sendMessage(
+      telegramId,
+      `↩️ Your payment was reverted!\n\n` +
+      `Post ID: ${postId}\n` +
+      `Stars refunded: ${starAmount} ⭐️\n\n` +
+      `Your post is now a regular post (not starred).`
+    );
+  } catch (error) {
+    console.error(`Failed to send refund notification to user ${telegramId}:`, error);
+  }
+}
+
+/**
+ * Send notification to admin when a refund is processed
+ *
+ * @param env - Environment variables containing bot token and admin ID
+ * @param details - Refund details
+ */
+export async function sendAdminRefundAlert(
+  env: Env,
+  details: {
+    userId: number;
+    postId: number;
+    starAmount: number;
+    chargeId: string;
+  }
+): Promise<void> {
+  try {
+    if (!env.TELEGRAM_ADMIN_ID) {
+      console.warn('TELEGRAM_ADMIN_ID not set, skipping admin refund alert');
+      return;
+    }
+
+    const bot = getBotInstance(env);
+    await bot.api.sendMessage(
+      env.TELEGRAM_ADMIN_ID,
+      `↩️ Refund processed!\n\n` +
+      `User ID: ${details.userId}\n` +
+      `Post ID: ${details.postId}\n` +
+      `Stars refunded: ${details.starAmount} ⭐️\n` +
+      `Charge ID: ${details.chargeId}`
+    );
+  } catch (error) {
+    console.error(`Failed to send admin refund alert:`, error);
+  }
+}

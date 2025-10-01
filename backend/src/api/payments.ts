@@ -269,3 +269,44 @@ export const refreshBalance = async (c: Context<{ Bindings: Env }>) => {
     return c.json({ error: 'Failed to refresh balance' }, 500);
   }
 };
+
+/**
+ * POST /api/payments/:paymentId/refund
+ * Refund a payment (admin only)
+ */
+export const refundPayment = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    // Authenticate user
+    const authResult = await authenticateUser(c);
+    if ('error' in authResult && authResult.error) {
+      return c.json({ error: authResult.error.message }, authResult.error.status);
+    }
+    const { session } = authResult;
+
+    // Check admin
+    if (!isAdmin(session.telegramId, c.env)) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    // Parse payment ID
+    const paymentId = c.req.param('paymentId');
+    if (!paymentId) {
+      return c.json({ error: 'Invalid payment ID' }, 400);
+    }
+
+    const db = createDatabase(c.env.DB);
+    const paymentService = new PaymentService(db, c.env);
+
+    // Attempt refund
+    const result = await paymentService.refundPayment(paymentId);
+
+    if (!result.success) {
+      return c.json({ error: result.error }, 400);
+    }
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Error processing refund:', error);
+    return c.json({ error: 'Failed to process refund' }, 500);
+  }
+};

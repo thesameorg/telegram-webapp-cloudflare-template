@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../hooks/use-toast';
 
 interface MakePremiumModalProps {
@@ -10,7 +10,19 @@ interface MakePremiumModalProps {
 export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePremiumModalProps) {
   const [starCount, setStarCount] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isWaitingForUpdate, setIsWaitingForUpdate] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const { showToast } = useToast();
+  const pollIntervalRef = useRef<number | null>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
+  }, []);
 
   // Calculate golden gradient preview
   const getGradientPreview = (stars: number) => {
@@ -18,6 +30,69 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
     const lightness = 90 - (intensity * 30);
     const saturation = 70 + (intensity * 20);
     return `linear-gradient(135deg, hsl(45, ${saturation}%, ${lightness}%), hsl(39, ${saturation + 10}%, ${lightness - 5}%))`;
+  };
+
+  // Poll for post update after payment
+  const pollPostUpdate = async () => {
+    const sessionId = localStorage.getItem('telegram_session_id');
+    if (!sessionId) return false;
+
+    try {
+      const response = await fetch(`/api/posts`, {
+        headers: { 'Authorization': `Bearer ${sessionId}` },
+      });
+
+      if (!response.ok) return false;
+
+      const data = await response.json();
+      const updatedPost = data.posts?.find((p: any) => p.id === postId);
+
+      // Check if payment has been processed (starCount > 0 or no longer pending)
+      if (updatedPost && (updatedPost.starCount > 0 || updatedPost.isPaymentPending !== 1)) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error polling post update:', error);
+      return false;
+    }
+  };
+
+  // Start polling and countdown after successful payment
+  const startWaitingForUpdate = () => {
+    setIsWaitingForUpdate(true);
+    setCountdown(5);
+
+    // Start countdown
+    countdownIntervalRef.current = window.setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+          handleReload();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Poll every 500ms for post update
+    pollIntervalRef.current = window.setInterval(async () => {
+      const isUpdated = await pollPostUpdate();
+      if (isUpdated) {
+        // Payment processed! Refresh immediately
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        handleReload();
+      }
+    }, 500);
+  };
+
+  const handleReload = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    onSuccess?.();
+    onClose();
   };
 
   const handleConfirm = async () => {
@@ -57,9 +132,8 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
           setIsProcessing(false);
 
           if (status === 'paid') {
-            showToast(`Payment successful! Your post is now premium ⭐️`, 'success');
-            onSuccess?.();
-            onClose();
+            showToast(`Payment successful! Updating post...`, 'success');
+            startWaitingForUpdate();
           } else if (status === 'cancelled') {
             // Clear pending flag
             await fetch(`/api/posts/${postId}/clear-pending`, {
@@ -86,6 +160,55 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
       showToast(error instanceof Error ? error.message : 'Failed to process payment', 'error');
     }
   };
+
+  // If waiting for update, show success screen
+  if (isWaitingForUpdate) {
+    return (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
+        onClick={(e) => e.stopPropagation()}
+        role="presentation"
+        tabIndex={-1}
+      >
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-3">
+                <svg className="w-12 h-12 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Payment Successful! 🎉
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Your post is being updated with premium status...
+            </p>
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+            </div>
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handleReload}
+                className="w-full px-4 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-lg font-medium transition-colors"
+              >
+                Reload Now
+              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Auto-reloading in {countdown} second{countdown !== 1 ? 's' : ''}...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

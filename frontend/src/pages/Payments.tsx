@@ -28,6 +28,8 @@ export default function Payments() {
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
+  const [refundingPaymentId, setRefundingPaymentId] = useState<string | null>(null);
+  const [confirmRefund, setConfirmRefund] = useState<{ id: string; starAmount: number; userId: number } | null>(null);
   const [limit] = useState(50);
   const [offset] = useState(0);
 
@@ -114,6 +116,59 @@ export default function Payments() {
     } finally {
       setIsRefreshingBalance(false);
     }
+  };
+
+  const handleRefund = async (paymentId: string) => {
+    setRefundingPaymentId(paymentId);
+    try {
+      const sessionId = localStorage.getItem('telegram_session_id');
+      if (!sessionId) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`/api/payments/${paymentId}/refund`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${sessionId}` },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to refund payment');
+      }
+
+      showToast('Refund initiated successfully', 'success');
+
+      // Refresh payments list
+      const paymentsResponse = await fetch(
+        `/api/payments?limit=${limit}&offset=${offset}`,
+        {
+          headers: { 'Authorization': `Bearer ${sessionId}` },
+        }
+      );
+
+      if (paymentsResponse.ok) {
+        const paymentsData = await paymentsResponse.json();
+        setPayments(paymentsData.payments);
+      }
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : 'Failed to refund payment',
+        'error'
+      );
+    } finally {
+      setRefundingPaymentId(null);
+      setConfirmRefund(null);
+    }
+  };
+
+  const canRefund = (payment: Payment) => {
+    // Can only refund succeeded payments
+    if (payment.status !== 'succeeded') return false;
+
+    // Check 7-day (168 hours) window
+    const paymentAge = Date.now() - new Date(payment.createdAt).getTime();
+    const SEVEN_DAYS_MS = 168 * 60 * 60 * 1000;
+    return paymentAge <= SEVEN_DAYS_MS;
   };
 
   const formatDate = (dateString: string) => {
@@ -231,89 +286,108 @@ export default function Payments() {
         </div>
       </div>
 
-      {/* Payments List */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  User ID
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Post ID
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Stars
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Charge ID
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {payments.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+      {/* Payments List - Compact Card Layout */}
+      <div className="space-y-2">
+        {payments.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            No payments yet
+          </div>
+        ) : (
+          payments.map((payment) => (
+            <div
+              key={payment.id}
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              {/* Line 1: User, Stars, Status, Action */}
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <button
+                    onClick={() => navigate(`/profile/${payment.userId}`)}
+                    className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium truncate"
                   >
-                    No payments yet
-                  </td>
-                </tr>
-              ) : (
-                payments.map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {formatDate(payment.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => navigate(`/profile/${payment.userId}`)}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {payment.userId}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {payment.postId || '-'}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <div className="flex items-center space-x-1">
-                        <span className="text-gray-900 dark:text-white font-medium">
-                          {payment.starAmount}
-                        </span>
-                        <span>⭐️</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {getStatusBadge(payment.status)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 font-mono text-xs">
-                      {payment.telegramPaymentChargeId ? (
-                        <span title={payment.telegramPaymentChargeId}>
-                          {payment.telegramPaymentChargeId.substring(0, 12)}...
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    User {payment.userId}
+                  </button>
+                  <span className="text-gray-400 dark:text-gray-600">•</span>
+                  <div className="flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white shrink-0">
+                    <span>{payment.starAmount}</span>
+                    <span>⭐️</span>
+                  </div>
+                  <span className="hidden sm:inline">
+                    {getStatusBadge(payment.status)}
+                  </span>
+                </div>
+                <div className="shrink-0">
+                  {canRefund(payment) ? (
+                    <button
+                      onClick={() => setConfirmRefund({ id: payment.id, starAmount: payment.starAmount, userId: payment.userId })}
+                      disabled={refundingPaymentId === payment.id}
+                      className="px-2 py-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Refund payment"
+                    >
+                      {refundingPaymentId === payment.id ? '...' : '↩️'}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-600 px-2">
+                      {payment.status === 'refunded' ? '✓' :
+                       payment.status !== 'succeeded' ? '-' :
+                       '✗'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Line 2: Date, Post ID, Charge ID, Status (mobile) */}
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <span className="shrink-0">{formatDate(payment.createdAt)}</span>
+                <span>•</span>
+                <span className="shrink-0">Post {payment.postId || '-'}</span>
+                {payment.telegramPaymentChargeId && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline font-mono truncate" title={payment.telegramPaymentChargeId}>
+                      {payment.telegramPaymentChargeId.substring(0, 8)}...
+                    </span>
+                  </>
+                )}
+                <span className="sm:hidden ml-auto">
+                  {getStatusBadge(payment.status)}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
+
+      {/* Refund Confirmation Modal */}
+      {confirmRefund && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              Confirm Refund
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to refund <strong>{confirmRefund.starAmount} star{confirmRefund.starAmount > 1 ? 's' : ''}</strong> to user <strong>{confirmRefund.userId}</strong>?
+              <br /><br />
+              This action will revert the post to a regular (not-starred) post and return the stars to the user.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setConfirmRefund(null)}
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRefund(confirmRefund.id)}
+                disabled={refundingPaymentId !== null}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {refundingPaymentId ? 'Refunding...' : 'Confirm Refund'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

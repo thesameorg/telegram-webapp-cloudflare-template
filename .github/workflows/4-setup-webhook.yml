@@ -42,7 +42,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{
               \"url\": \"$WEBHOOK_URL\",
-              \"allowed_updates\": [\"message\", \"callback_query\"],
+              \"allowed_updates\": [\"message\", \"callback_query\", \"pre_checkout_query\"],
               \"drop_pending_updates\": true
             }")
 

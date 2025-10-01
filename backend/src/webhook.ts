@@ -2,7 +2,7 @@ import { Context } from 'hono'
 import { Bot, webhookCallback, Context as GrammyContext } from 'grammy'
 import { createDatabase } from './db'
 import { PaymentService } from './services/payment-service'
-import { sendPaymentSuccessNotification, sendAdminPaymentAlert } from './services/notification-service'
+import { sendPaymentSuccessNotification, sendAdminPaymentAlert, sendPaymentRefundNotification, sendAdminRefundAlert } from './services/notification-service'
 import { posts, payments } from './db/schema'
 import { eq } from 'drizzle-orm'
 
@@ -169,6 +169,77 @@ export async function handleWebhook(c: Context) {
       console.log(`✅ Payment succeeded: user=${userId}, post=${postId}, stars=${total_amount}`)
     } catch (error) {
       console.error('❌ Error in successful_payment handler:', error)
+    }
+  })
+
+  bot.on('message:refunded_payment', async (ctx: GrammyContext) => {
+    console.log('↩️ Received refunded_payment message')
+    try {
+      const refundedPayment = ctx.message?.refunded_payment
+      if (!refundedPayment) {
+        console.error('❌ No refunded_payment in message')
+        return
+      }
+
+      const { telegram_payment_charge_id, total_amount } = refundedPayment
+      console.log('💳 Processing refund:', { telegram_payment_charge_id, total_amount })
+
+      if (!telegram_payment_charge_id) {
+        console.error('❌ Missing telegram_payment_charge_id in refunded_payment')
+        return
+      }
+
+      const db = createDatabase(c.env.DB)
+      const paymentService = new PaymentService(db, c.env)
+
+      // Idempotency check: find payment by charge ID
+      const payment = await paymentService.getPaymentByChargeId(telegram_payment_charge_id)
+      if (!payment) {
+        console.warn(`⚠️ Payment not found for charge ID: ${telegram_payment_charge_id}`)
+        return
+      }
+
+      // Skip if already refunded
+      if (payment.status === 'refunded') {
+        console.log(`⏭️ Payment already refunded: ${payment.id}`)
+        return
+      }
+
+      // Atomic update: payment status + revert post
+      const now = new Date().toISOString()
+
+      // Update payment status
+      await db.update(payments)
+        .set({
+          status: 'refunded',
+          rawUpdate: JSON.stringify(ctx.message),
+          updatedAt: now,
+        })
+        .where(eq(payments.id, payment.id))
+
+      // Revert post if it exists
+      if (payment.postId !== null) {
+        await db.update(posts)
+          .set({
+            starCount: 0,
+            paymentId: null,
+            updatedAt: now,
+          })
+          .where(eq(posts.id, payment.postId))
+      }
+
+      // Send notifications
+      await sendPaymentRefundNotification(c.env, payment.userId, payment.postId ?? 0, payment.starAmount)
+      await sendAdminRefundAlert(c.env, {
+        userId: payment.userId,
+        postId: payment.postId ?? 0,
+        starAmount: payment.starAmount,
+        chargeId: telegram_payment_charge_id,
+      })
+
+      console.log(`✅ Refund processed: user=${payment.userId}, post=${payment.postId ?? 'N/A'}, stars=${payment.starAmount}`)
+    } catch (error) {
+      console.error('❌ Error in refunded_payment handler:', error)
     }
   })
 

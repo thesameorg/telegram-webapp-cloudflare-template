@@ -209,4 +209,89 @@ export class PaymentService {
   async clearBalanceCache() {
     await this.env.SESSIONS.delete('bot_star_balance');
   }
+
+  /**
+   * Refund a payment (admin only)
+   * Validates 7-day window and calls Telegram API
+   */
+  async refundPayment(paymentId: string): Promise<{ success: boolean; error?: string }> {
+    // Get payment
+    const payment = await this.getPaymentById(paymentId);
+    if (!payment) {
+      return { success: false, error: 'Payment not found' };
+    }
+
+    // Validate status
+    if (payment.status !== 'succeeded') {
+      return { success: false, error: `Cannot refund payment with status '${payment.status}'` };
+    }
+
+    // Validate 7-day window (168 hours)
+    const paymentAge = Date.now() - new Date(payment.createdAt).getTime();
+    const SEVEN_DAYS_MS = 168 * 60 * 60 * 1000; // 168 hours in milliseconds
+    if (paymentAge > SEVEN_DAYS_MS) {
+      return { success: false, error: 'Payment is older than 7 days and cannot be refunded' };
+    }
+
+    // Validate telegram payment charge ID exists
+    if (!payment.telegramPaymentChargeId) {
+      return { success: false, error: 'Payment missing telegram_payment_charge_id' };
+    }
+
+    // Call Telegram API with retry logic
+    const bot = new Bot(this.env.TELEGRAM_BOT_TOKEN);
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[Refund] Attempt ${attempt}/${maxRetries} for payment ${paymentId}`);
+
+        await bot.api.refundStarPayment(payment.userId, payment.telegramPaymentChargeId);
+
+        console.log(`[Refund] Success for payment ${paymentId}`);
+        return { success: true };
+      } catch (error: any) {
+        lastError = error;
+        console.error(`[Refund] Attempt ${attempt} failed:`, error);
+
+        // Check if error is permanent (don't retry)
+        const errorMessage = error.message || String(error);
+        const isPermanentError =
+          errorMessage.includes('payment not found') ||
+          errorMessage.includes('already refunded') ||
+          errorMessage.includes('PAYMENT_NOT_FOUND') ||
+          errorMessage.includes('PAYMENT_ALREADY_REFUNDED') ||
+          (error.error_code && error.error_code === 400);
+
+        if (isPermanentError) {
+          console.error(`[Refund] Permanent error, not retrying:`, errorMessage);
+          return { success: false, error: errorMessage };
+        }
+
+        // Retry for transient errors (network, timeout, rate limit, 5xx)
+        const isTransientError =
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('network') ||
+          errorMessage.includes('ETIMEDOUT') ||
+          errorMessage.includes('ECONNRESET') ||
+          (error.error_code && (error.error_code === 429 || error.error_code >= 500));
+
+        if (!isTransientError && attempt === maxRetries) {
+          // Unknown error, exhausted retries
+          return { success: false, error: errorMessage };
+        }
+
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5s
+          console.log(`[Refund] Waiting ${delayMs}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+
+    // All retries exhausted
+    return { success: false, error: lastError?.message || 'Refund failed after all retries' };
+  }
 }
