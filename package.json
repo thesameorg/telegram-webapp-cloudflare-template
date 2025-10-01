@@ -26,11 +26,12 @@
     "clean-check": "npm run clean && npm run install && npm run build && npm run typecheck && npm run lint && npm run test",
     "check": "npm run typecheck && npm run lint && npm run test",
     "db:migrate:local": "npx wrangler d1 migrations apply twa-tpl-db --local",
-    "tunnel:start": "./scripts/start-ngrok-tunnel.sh",
-    "tunnel:stop": "./scripts/stop-ngrok-tunnel.sh",
-    "tunnel:start:cloudflared": "./scripts/start-cloudflared-tunnel.sh",
-    "tunnel:stop:cloudflared": "./scripts/stop-cloudflared-tunnel.sh",
-    "tunnel:status": "./scripts/webhook-status.sh"
+    "tunnel:start": "./scripts/tunnel.sh start",
+    "tunnel:stop": "./scripts/tunnel.sh stop",
+    "tunnel:status": "./scripts/tunnel.sh status",
+    "webhook:set": "./scripts/webhook.sh set",
+    "webhook:status": "./scripts/webhook.sh status",
+    "webhook:clear": "./scripts/webhook.sh clear"
   },
   "repository": {
     "type": "git",

@@ -93,7 +93,7 @@ npm run tunnel:stop
   - `src/components/SimpleAuthWrapper.tsx`: Authentication wrapper
 
 ### Environment Configuration
-- **Local**: Uses ngrok/cloudflared tunnels for webhook development
+- **Local**: Uses ngrok tunnels for webhook development
 - **Preview**: Deployed on PR creation with separate bot token
 - **Production**: Deployed on main branch merge
 - **Files**: `.env` (local), `wrangler.toml` (Workers config), GitHub Secrets (CI/CD)
