@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSimpleAuth } from '../hooks/use-simple-auth';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +32,14 @@ export default function Payments() {
   const [confirmRefund, setConfirmRefund] = useState<{ id: string; starAmount: number; userId: number } | null>(null);
   const [limit] = useState(50);
   const [offset] = useState(0);
+  const pollIntervalRef = useRef<number | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   // Redirect if not admin (but wait for auth to load first)
   useEffect(() => {
@@ -118,6 +126,62 @@ export default function Payments() {
     }
   };
 
+  const fetchPayments = async () => {
+    const sessionId = localStorage.getItem('telegram_session_id');
+    if (!sessionId) return null;
+
+    try {
+      const response = await fetch(
+        `/api/payments?limit=${limit}&offset=${offset}`,
+        {
+          headers: { 'Authorization': `Bearer ${sessionId}` },
+        }
+      );
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      return data.payments;
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      return null;
+    }
+  };
+
+  const pollForRefundStatus = (paymentId: string) => {
+    let attempts = 0;
+    const maxAttempts = 20; // 10 seconds max (500ms * 20)
+
+    pollIntervalRef.current = window.setInterval(async () => {
+      attempts++;
+
+      const updatedPayments = await fetchPayments();
+      if (updatedPayments) {
+        const refundedPayment = updatedPayments.find((p: Payment) => p.id === paymentId);
+
+        if (refundedPayment?.status === 'refunded') {
+          // Refund processed! Update UI
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          setPayments(updatedPayments);
+          setRefundingPaymentId(null);
+          setConfirmRefund(null);
+          showToast('Refund completed successfully', 'success');
+          return;
+        }
+      }
+
+      // Stop polling after max attempts
+      if (attempts >= maxAttempts) {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        // Refresh one last time
+        const finalPayments = await fetchPayments();
+        if (finalPayments) setPayments(finalPayments);
+        setRefundingPaymentId(null);
+        setConfirmRefund(null);
+      }
+    }, 500);
+  };
+
   const handleRefund = async (paymentId: string) => {
     setRefundingPaymentId(paymentId);
     try {
@@ -136,26 +200,15 @@ export default function Payments() {
         throw new Error(data.error || 'Failed to refund payment');
       }
 
-      showToast('Refund initiated successfully', 'success');
+      showToast('Refund initiated, waiting for confirmation...', 'success');
 
-      // Refresh payments list
-      const paymentsResponse = await fetch(
-        `/api/payments?limit=${limit}&offset=${offset}`,
-        {
-          headers: { 'Authorization': `Bearer ${sessionId}` },
-        }
-      );
-
-      if (paymentsResponse.ok) {
-        const paymentsData = await paymentsResponse.json();
-        setPayments(paymentsData.payments);
-      }
+      // Start polling for refund status
+      pollForRefundStatus(paymentId);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to refund payment',
         'error'
       );
-    } finally {
       setRefundingPaymentId(null);
       setConfirmRefund(null);
     }
@@ -321,10 +374,12 @@ export default function Payments() {
                     <button
                       onClick={() => setConfirmRefund({ id: payment.id, starAmount: payment.starAmount, userId: payment.userId })}
                       disabled={refundingPaymentId === payment.id}
-                      className="px-2 py-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-2 py-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                       title="Refund payment"
                     >
-                      {refundingPaymentId === payment.id ? '...' : '↩️'}
+                      {refundingPaymentId === payment.id ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-600 dark:border-orange-400"></div>
+                      ) : '↩️'}
                     </button>
                   ) : (
                     <span className="text-xs text-gray-400 dark:text-gray-600 px-2">
