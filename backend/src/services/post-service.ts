@@ -130,6 +130,9 @@ export class PostService {
         username: posts.username,
         displayName: posts.displayName,
         content: posts.content,
+        starCount: posts.starCount,
+        paymentId: posts.paymentId,
+        isPaymentPending: posts.isPaymentPending,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
       })

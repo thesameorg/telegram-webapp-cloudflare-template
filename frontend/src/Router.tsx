@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Feed from './pages/Feed';
 import UnifiedProfile from './pages/UnifiedProfile';
 import EditProfile from './pages/EditProfile';
+import Payments from './pages/Payments';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       {
         path: 'profile/:telegramId',
         element: <UnifiedProfile />,
+      },
+      {
+        path: 'payments',
+        element: <Payments />,
       },
     ],
   },

@@ -6,6 +6,7 @@ import { authHandler } from './api/auth'
 import { getAllPosts, getUserPosts, createPost, updatePost, deletePost, uploadPostImages, deletePostImage } from './api/posts'
 import { getProfile, getMyProfile, updateMyProfile, uploadProfileAvatar } from './api/profile'
 import { banUser, unbanUser } from './api/admin'
+import { makePremium, clearPending, getAllPayments, getBalance, refreshBalance } from './api/payments'
 import type { Env } from './types/env'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -42,6 +43,13 @@ app.get('/api/profile/:telegramId', getProfile)
 // Admin endpoints
 app.post('/api/admin/ban/:telegramId', banUser)
 app.post('/api/admin/unban/:telegramId', unbanUser)
+
+// Payment endpoints
+app.post('/api/posts/:postId/make-premium', makePremium)
+app.post('/api/posts/:postId/clear-pending', clearPending)
+app.get('/api/payments', getAllPayments)
+app.get('/api/payments/balance', getBalance)
+app.post('/api/payments/refresh-balance', refreshBalance)
 
 // R2 image serving for local development
 app.get('/r2/*', async (c) => {
@@ -112,6 +120,11 @@ app.get('/', async (c) => {
       uploadAvatar: '/api/profile/me/avatar',
       banUser: '/api/admin/ban/:telegramId',
       unbanUser: '/api/admin/unban/:telegramId',
+      makePremium: '/api/posts/:postId/make-premium',
+      clearPending: '/api/posts/:postId/clear-pending',
+      payments: '/api/payments',
+      paymentsBalance: '/api/payments/balance',
+      refreshBalance: '/api/payments/refresh-balance',
       r2Images: '/r2/{key}',
     }
   })

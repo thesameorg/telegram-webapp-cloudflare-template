@@ -29,6 +29,20 @@
       "when": 1759238364399,
       "tag": "0003_luxuriant_tyger_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1759264652287,
+      "tag": "0004_add_payments_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1759264652288,
+      "tag": "0005_add_user_ban_field",
+      "breakpoints": true
     }
   ]
 }

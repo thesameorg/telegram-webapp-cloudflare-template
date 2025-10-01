@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import { useTelegramAuth } from '../hooks/use-telegram-auth';
+import { useSimpleAuth } from '../hooks/use-simple-auth';
 
 export default function BottomNavigation() {
   const { user } = useTelegramAuth();
+  const { isAdmin } = useSimpleAuth();
 
   const navItems = [
     {
@@ -25,21 +27,43 @@ export default function BottomNavigation() {
     },
   ];
 
+  // Add Payments tab for admins
+  if (isAdmin) {
+    navItems.push({
+      path: '/payments',
+      name: 'Payments',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    });
+  }
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-      <div className="flex justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe">
+      <div className="flex justify-around" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             end={item.path === '/'}
-            className={({ isActive }) =>
-              `flex flex-col items-center py-2 px-3 text-xs font-medium transition-colors duration-200 ${
+            className={({ isActive }) => {
+              // Special red styling for Payments tab
+              if (item.path === '/payments') {
+                return `flex flex-col items-center py-2 px-3 text-xs font-medium transition-colors duration-200 ${
+                  isActive
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300'
+                }`;
+              }
+              // Default styling for other tabs
+              return `flex flex-col items-center py-2 px-3 text-xs font-medium transition-colors duration-200 ${
                 isActive
                   ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`
-            }
+              }`;
+            }}
           >
             {item.icon}
             <span className="mt-1">{item.name}</span>

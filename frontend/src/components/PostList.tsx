@@ -10,6 +10,9 @@ interface Post {
   username: string;
   displayName: string;
   content: string;
+  starCount?: number;
+  paymentId?: string | null;
+  isPaymentPending?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,10 +24,11 @@ interface PostListProps {
   isAdmin?: boolean; // Whether current user is admin
   onEdit?: (post: Post) => void;
   onDelete?: (postId: number) => void;
+  onMakePremium?: (postId: number) => void;
   onRefetchReady?: (refetch: () => void) => void; // Callback to expose refetch function
 }
 
-export default function PostList({ userId, currentUserId, showActions, isAdmin, onEdit, onDelete, onRefetchReady }: PostListProps) {
+export default function PostList({ userId, currentUserId, showActions, isAdmin, onEdit, onDelete, onMakePremium, onRefetchReady }: PostListProps) {
   const { posts, loading, loadingMore, error, hasMore, loadMore, refetch } = useInfinitePosts(userId);
 
   useInfiniteScroll({
@@ -90,6 +94,7 @@ export default function PostList({ userId, currentUserId, showActions, isAdmin, 
           isAdmin={isAdmin}
           onEdit={onEdit}
           onDelete={onDelete}
+          onMakePremium={onMakePremium}
         />
       ))}
 

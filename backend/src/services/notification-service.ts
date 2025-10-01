@@ -64,3 +64,86 @@ export async function sendBanNotification(
 export function getBotInstance(env: Env): Bot {
   return new Bot(env.TELEGRAM_BOT_TOKEN);
 }
+
+/**
+ * Send notification to user when payment succeeds
+ *
+ * @param env - Environment variables containing bot token
+ * @param telegramId - The telegram ID of the user
+ * @param postId - The ID of the post that became premium
+ * @param starCount - Number of stars paid
+ */
+export async function sendPaymentSuccessNotification(
+  env: Env,
+  telegramId: number,
+  postId: number,
+  starCount: number
+): Promise<void> {
+  try {
+    const bot = getBotInstance(env);
+    await bot.api.sendMessage(
+      telegramId,
+      `✅ Payment successful! Your post (ID: ${postId}) is now premium with ${starCount} star${starCount > 1 ? 's' : ''} ⭐️`
+    );
+  } catch (error) {
+    console.error(`Failed to send payment success notification to user ${telegramId}:`, error);
+  }
+}
+
+/**
+ * Send notification to user when payment fails
+ *
+ * @param env - Environment variables containing bot token
+ * @param telegramId - The telegram ID of the user
+ * @param reason - Reason for payment failure
+ */
+export async function sendPaymentFailureNotification(
+  env: Env,
+  telegramId: number,
+  reason: string
+): Promise<void> {
+  try {
+    const bot = getBotInstance(env);
+    await bot.api.sendMessage(
+      telegramId,
+      `❌ Payment failed: ${reason}`
+    );
+  } catch (error) {
+    console.error(`Failed to send payment failure notification to user ${telegramId}:`, error);
+  }
+}
+
+/**
+ * Send notification to admin when a payment is received
+ *
+ * @param env - Environment variables containing bot token and admin ID
+ * @param details - Payment details
+ */
+export async function sendAdminPaymentAlert(
+  env: Env,
+  details: {
+    userId: number;
+    postId: number;
+    starAmount: number;
+    chargeId: string;
+  }
+): Promise<void> {
+  try {
+    if (!env.TELEGRAM_ADMIN_ID) {
+      console.warn('TELEGRAM_ADMIN_ID not set, skipping admin payment alert');
+      return;
+    }
+
+    const bot = getBotInstance(env);
+    await bot.api.sendMessage(
+      env.TELEGRAM_ADMIN_ID,
+      `💰 New payment received!\n\n` +
+      `User ID: ${details.userId}\n` +
+      `Post ID: ${details.postId}\n` +
+      `Stars: ${details.starAmount} ⭐️\n` +
+      `Charge ID: ${details.chargeId}`
+    );
+  } catch (error) {
+    console.error(`Failed to send admin payment alert:`, error);
+  }
+}

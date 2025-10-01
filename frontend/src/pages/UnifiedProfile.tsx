@@ -11,6 +11,7 @@ import StaticPostList from '../components/StaticPostList';
 import EditPost from '../components/EditPost';
 import DeletePostConfirm from '../components/DeletePostConfirm';
 import BanUserConfirm from '../components/BanUserConfirm';
+import MakePremiumModal from '../components/MakePremiumModal';
 import { ImageUrlData } from '../components/ImageGallery';
 
 interface ProfileData {
@@ -40,6 +41,9 @@ interface PostData {
   username: string;
   displayName: string;
   content: string;
+  starCount?: number;
+  paymentId?: string | null;
+  isPaymentPending?: number;
   createdAt: string;
   updatedAt: string;
   images?: ImageUrlData[];
@@ -60,6 +64,7 @@ export default function UnifiedProfile() {
 
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(null);
   const [showBanConfirm, setShowBanConfirm] = useState(false);
   const refetchRef = useRef<(() => void) | null>(null);
 
@@ -160,6 +165,16 @@ export default function UnifiedProfile() {
     setDeletingPostId(postId);
   };
 
+  const handleMakePremium = (postId: number) => {
+    setMakingPremiumPostId(postId);
+  };
+
+  const handlePaymentSuccess = () => {
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
+  };
+
   const handleEditProfile = () => {
     navigate('/edit-profile');
   };
@@ -237,6 +252,15 @@ export default function UnifiedProfile() {
           postId={deletingPostId}
           onClose={() => setDeletingPostId(null)}
           onPostDeleted={handlePostDeleted}
+        />
+      )}
+
+      {/* Make Premium Modal */}
+      {makingPremiumPostId && (
+        <MakePremiumModal
+          postId={makingPremiumPostId}
+          onClose={() => setMakingPremiumPostId(null)}
+          onSuccess={handlePaymentSuccess}
         />
       )}
 
@@ -337,6 +361,7 @@ export default function UnifiedProfile() {
                 showActions={true}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onMakePremium={handleMakePremium}
                 onRefetchReady={(refetch) => {
                   refetchRef.current = refetch;
                 }}

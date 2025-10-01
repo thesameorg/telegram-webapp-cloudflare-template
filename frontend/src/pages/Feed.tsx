@@ -4,6 +4,7 @@ import CreatePostButton from '../components/CreatePostButton';
 import CreatePost from '../components/CreatePost';
 import EditPost from '../components/EditPost';
 import DeletePostConfirm from '../components/DeletePostConfirm';
+import MakePremiumModal from '../components/MakePremiumModal';
 import { useSimpleAuth } from '../hooks/use-simple-auth';
 
 interface Post {
@@ -12,6 +13,9 @@ interface Post {
   username: string;
   displayName: string;
   content: string;
+  starCount?: number;
+  paymentId?: string | null;
+  isPaymentPending?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +24,7 @@ export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(null);
   const refetchRef = useRef<(() => void) | null>(null);
   const { user, isAdmin } = useSimpleAuth();
 
@@ -49,6 +54,16 @@ export default function Feed() {
       refetchRef.current();
     }
     setDeletingPostId(null);
+  };
+
+  const handleMakePremium = (postId: number) => {
+    setMakingPremiumPostId(postId);
+  };
+
+  const handlePaymentSuccess = () => {
+    if (refetchRef.current) {
+      refetchRef.current();
+    }
   };
 
   return (
@@ -87,6 +102,15 @@ export default function Feed() {
         />
       )}
 
+      {/* Make Premium Modal */}
+      {makingPremiumPostId && (
+        <MakePremiumModal
+          postId={makingPremiumPostId}
+          onClose={() => setMakingPremiumPostId(null)}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+
       {/* Posts Feed */}
       <PostList
         currentUserId={user?.id}
@@ -94,6 +118,7 @@ export default function Feed() {
         isAdmin={isAdmin}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onMakePremium={handleMakePremium}
         onRefetchReady={(refetch) => { refetchRef.current = refetch; }}
       />
     </div>
