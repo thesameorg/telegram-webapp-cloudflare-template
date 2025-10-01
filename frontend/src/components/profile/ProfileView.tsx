@@ -1,5 +1,9 @@
+import { useState } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ContactLinks } from './ContactLinks';
+import { getImageUrl } from '../../utils/image-url';
 
 interface ProfileData {
   telegram_id: number;
@@ -26,8 +30,15 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanClick, postCount, isAdmin = false }: ProfileViewProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const displayName = profile.display_name || `User ${profile.telegram_id}`;
   const isBanned = profile.is_banned === true;
+
+  const handleAvatarClick = () => {
+    if (profile.profile_image_key && !isBanned) {
+      setLightboxOpen(true);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
@@ -38,6 +49,7 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanC
             profileImageKey={profile.profile_image_key}
             displayName={displayName}
             size="xl"
+            onClick={profile.profile_image_key ? handleAvatarClick : undefined}
           />
         )}
 
@@ -126,6 +138,40 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanC
             )}
           </div>
         </div>
+      )}
+
+      {/* Avatar Lightbox */}
+      {profile.profile_image_key && (
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={[
+            {
+              src: getImageUrl(profile.profile_image_key),
+              alt: displayName,
+            }
+          ]}
+          animation={{ fade: 300 }}
+          controller={{ closeOnBackdropClick: true }}
+          toolbar={{
+            buttons: ['close'],
+          }}
+          render={{
+            slide: ({ slide }) => (
+              <div className="flex items-center justify-center w-full h-full">
+                <img
+                  src={slide.src}
+                  alt={slide.alt}
+                  className="max-w-full max-h-full object-contain"
+                  style={{
+                    maxWidth: '90vw',
+                    maxHeight: '90vh',
+                  }}
+                />
+              </div>
+            ),
+          }}
+        />
       )}
     </div>
   );
