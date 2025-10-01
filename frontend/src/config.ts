@@ -6,6 +6,6 @@ export const config = {
   // - Production: Direct to Worker
   // - Development: Empty string (uses Vite proxy to localhost:8787)
   apiBaseUrl: import.meta.env.PROD
-    ? 'https://twa-cf-tpl-prod.workers.dev'
+    ? 'https://twa-cf-tpl.dksg87.workers.dev'
     : '',
 }
