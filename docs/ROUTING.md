@@ -1,358 +1,868 @@
-# Routing Architecture
+# Routing Architecture Analysis & Simplification Guide
 
-This document explains how URLs and API requests are handled across different environments in this Telegram Web App template.
+This document provides a comprehensive analysis of the routing architecture, identifies complexities and hardcoded values, and proposes simplifications.
 
-## Overview
+## 🎯 Implementation Status
 
-The application uses a **monorepo architecture** with:
-- **Frontend**: React SPA with React Router (client-side routing)
-- **Backend**: Cloudflare Workers with Hono.js (API server)
-- **Deployment**: Cloudflare Pages (frontend) + Cloudflare Workers (backend)
+**Phase 1 (Quick Wins): ✅ COMPLETED**
+- ✅ CSP header now uses config instead of hardcoded URL
+- ✅ Removed unused `VITE_WORKER_URL` and `VITE_PAGES_URL` env vars from workflow
 
-## URL Types
+**Phase 2 (Direct Worker Calls): ⏸️ NOT STARTED**
+- Would eliminate Pages Functions proxy entirely
+- Reduces complexity from 7/10 → 4/10
+- See [Implementation Guide](#phase-2-direct-worker-calls-medium-risk) below
 
-### 1. Frontend Routes (React Router)
-These are **client-side routes** handled by React Router in the browser:
+**Phase 3 (Custom Domains): ⏸️ NOT STARTED**
+- Requires custom domain purchase/configuration
+- Final complexity: 2/10
+- See [Implementation Guide](#phase-3-custom-domains-long-term) below
 
-- `/` - Feed page
-- `/my-posts` - User's posts
-- `/account` - Account information page
-- `/edit-profile` - Profile editing page
-- `/profile/:telegramId` - User profile view
+---
 
-**Defined in**: `frontend/src/Router.tsx`
+## Table of Contents
+1. [Current Architecture Overview](#current-architecture-overview)
+2. [Hardcoded Values & Configuration](#hardcoded-values--configuration)
+3. [Routing Flow by Environment](#routing-flow-by-environment)
+4. [Identified Issues & Complexities](#identified-issues--complexities)
+5. [Proposed Simplifications](#proposed-simplifications)
+6. [Implementation Guide](#implementation-guide)
 
-**Important**: These routes only exist in the browser. If you navigate directly to `/edit-profile` via a full page load, the server must serve `index.html` so React Router can take over.
+---
 
-### 2. Backend API Routes
-These are **server-side endpoints** handled by the Cloudflare Worker:
+## Current Architecture Overview
 
-- `GET /api/health` - Health check
-- `POST /webhook` - Telegram webhook handler
-- `GET /api/auth` - Authentication
-- `POST /api/auth` - Authentication
-- `GET /api/posts` - Get all posts
-- `GET /api/posts/user/:userId` - Get user's posts
-- `POST /api/posts` - Create post
-- `PUT /api/posts/:postId` - Update post
-- `DELETE /api/posts/:postId` - Delete post
-- `POST /api/posts/:postId/images` - Upload post images
-- `DELETE /api/posts/:postId/images/:imageId` - Delete post image
-- `GET /api/profile/me` - Get current user's profile
-- `PUT /api/profile/me` - Update current user's profile
-- `POST /api/profile/me/avatar` - Upload profile avatar
-- `GET /api/profile/:telegramId` - Get user profile
-- `GET /r2/*` - Serve R2 images (local dev only)
+### Components
 
-**Defined in**: `backend/src/index.ts`
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React SPA)                     │
+│  - React Router (client-side routing)                       │
+│  - Vite dev server (local: :3000)                          │
+│  - Cloudflare Pages (deployed)                             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│              ROUTING LAYER (varies by env)                  │
+│                                                             │
+│  LOCAL:     Vite proxy                                     │
+│  DEPLOYED:  _redirects + Pages Functions [[path]].ts      │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  BACKEND (Cloudflare Workers)               │
+│  - Hono.js API server                                      │
+│  - Wrangler dev (local: :8787)                            │
+│  - Cloudflare Workers (deployed)                          │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## Environment-Specific Routing
+### File Structure
+
+```
+twa-cf-tpl/
+├── frontend/
+│   ├── src/
+│   │   ├── Router.tsx              # React Router routes
+│   │   ├── services/api.ts         # API calls (relative paths)
+│   │   └── utils/image-url.ts      # ⚠️ HARDCODED R2 URL
+│   ├── public/
+│   │   └── _redirects              # Cloudflare Pages routing
+│   ├── functions/
+│   │   ├── config.ts               # ⚠️ HARDCODED Worker/Pages URLs
+│   │   └── api/[[path]].ts         # Pages Functions proxy
+│   └── vite.config.ts              # Local proxy config
+├── backend/
+│   └── src/
+│       └── index.ts                # Hono API routes + /r2/* endpoint
+└── wrangler.toml                   # ⚠️ HARDCODED IDs (KV, D1, R2)
+```
+
+---
+
+## Hardcoded Values & Configuration
+
+### 🔴 Critical Hardcoded Values
+
+| Location | Value | Type | Impact |
+|----------|-------|------|--------|
+| `frontend/src/utils/image-url.ts:7` | `https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev` | R2 Public URL | Must update if R2 bucket changes |
+| `frontend/functions/config.ts:4` | `https://twa-cf-tpl-prod.workers.dev` | Worker URL | Replaced by sed during deploy |
+| `frontend/functions/config.ts:5` | `https://twa-cf-tpl.pages.dev` | Pages URL | Replaced by sed during deploy |
+| ~~`frontend/functions/api/[[path]].ts:42`~~ | ~~`https://twa-cf-tpl-prod.workers.dev`~~ | ~~CSP Worker URL~~ | ✅ **FIXED** - Now uses config |
+
+### 🟡 Infrastructure IDs (Less Critical)
+
+| Location | Value | Type | Notes |
+|----------|-------|------|-------|
+| `wrangler.toml:14` | `214af53e9fd44c18ba913499a606dd70` | KV Namespace ID | Required for KV binding |
+| `wrangler.toml:19` | `c9fe2099-a700-4a59-8294-08e8e1049ca7` | D1 Database ID | Required for D1 binding |
+| `wrangler.toml:27` | `twa-tpl-images` | R2 Bucket Name | Required for R2 binding |
+| `wrangler.toml:5` | `e023ec3576222c6a7b6cdf933de3d915` | Account ID | Required for deployment |
+
+### 🟢 GitHub Secrets (Properly Configured)
+
+- `TELEGRAM_BOT_TOKEN` - Telegram bot API token
+- `TELEGRAM_ADMIN_ID` - Admin user ID
+- `CLOUDFLARE_API_TOKEN` - CF API access
+- `CLOUDFLARE_ACCOUNT_ID` - CF account ID
+
+### 🟢 GitHub Variables (Properly Configured)
+
+- `WORKER_URL` - Used to replace config during deploy
+- `PAGES_URL` - Used to replace config during deploy
+
+### ⚠️ Unused Configuration
+
+- ~~`VITE_WORKER_URL`~~ - ✅ **REMOVED** - Was defined in workflow but not used
+- ~~`VITE_PAGES_URL`~~ - ✅ **REMOVED** - Was defined in workflow but not used
+
+---
+
+## Routing Flow by Environment
 
 ### Local Development (`npm run dev`)
 
-**Frontend**: `http://localhost:3000`
-**Backend**: `http://localhost:8787`
+```
+┌──────────────────────────────────────────────────────────────┐
+│ User Action: Click "View Profile"                           │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ React Router: navigate('/profile/123')                      │
+│ - Client-side only                                          │
+│ - No server request                                         │
+│ - URL changes in browser                                    │
+└──────────────────────────────────────────────────────────────┘
 
-#### How it works:
-1. **Frontend routes** (`/`, `/account`, `/edit-profile`, etc.):
-   - Served by Vite dev server at `:3000`
-   - React Router handles navigation client-side
-   - No server requests for route changes
 
-2. **API routes** (`/api/*`, `/webhook`, `/r2/*`):
-   - Vite proxy intercepts these requests
-   - Forwards to backend at `localhost:8787`
-   - Backend Worker responds
+┌──────────────────────────────────────────────────────────────┐
+│ User Action: Upload Avatar                                   │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Frontend: POST /api/profile/me/avatar                       │
+│ - fetch('/api/profile/me/avatar')                          │
+│ - Relative path                                            │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Vite Proxy (vite.config.ts)                                │
+│ - Matches '/api' prefix                                     │
+│ - Forwards to http://localhost:8787                        │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Backend Worker (Wrangler Dev :8787)                        │
+│ - Hono routes handle request                                │
+│ - Returns response                                          │
+└──────────────────────────────────────────────────────────────┘
 
-**Configuration**:
-```typescript
-// frontend/vite.config.ts
-server: {
-  port: 3000,
-  proxy: {
-    '/api': 'http://localhost:8787',
-    '/health': 'http://localhost:8787',
-    '/webhook': 'http://localhost:8787',
-    '/r2': 'http://localhost:8787'
-  }
-}
+
+┌──────────────────────────────────────────────────────────────┐
+│ Component: Load Avatar Image                                │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ getImageUrl('avatars/123.jpg')                              │
+│ - DEV mode detected (import.meta.env.DEV)                  │
+│ - Returns: '/r2/avatars/123.jpg'                           │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Vite Proxy                                                   │
+│ - Matches '/r2' prefix                                      │
+│ - Forwards to http://localhost:8787/r2/avatars/123.jpg    │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Backend /r2/* Route (index.ts:57)                          │
+│ - Extracts path: 'avatars/123.jpg'                        │
+│ - Fetches from R2 binding                                  │
+│ - Returns image with headers                               │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-**Example flow**:
-```
-User clicks "Edit Profile" button
-→ navigate('/edit-profile')
-→ React Router updates URL in browser
-→ EditProfile component renders
-→ No server request!
+**Key Points:**
+- Frontend runs on `:3000`, backend on `:8787`
+- Vite proxy handles ALL API and image requests
+- Images served through backend `/r2/*` endpoint
+- No CORS issues (same-origin through proxy)
 
-User uploads avatar
-→ POST http://localhost:3000/api/profile/me/avatar
-→ Vite proxy forwards to http://localhost:8787/api/profile/me/avatar
-→ Backend Worker processes upload
-→ Returns success
-→ React re-fetches profile data
-```
-
-### Local Development with Telegram (`npm run tunnel:start`)
-
-Uses **ngrok** or **cloudflared** to create a public HTTPS URL for Telegram webhook testing.
-
-**Setup**:
-1. Start dev servers: `npm run dev`
-2. Start tunnel: `npm run tunnel:start`
-3. Tunnel creates public URL: `https://abc123.ngrok-free.app`
-4. Set Telegram webhook to: `https://abc123.ngrok-free.app/webhook`
-
-**How it works**:
-- Tunnel forwards `https://abc123.ngrok-free.app` → `http://localhost:8787`
-- Telegram sends webhook events to the tunnel URL
-- Backend Worker receives and processes webhooks
-- Frontend still served from `localhost:3000` (Vite dev server)
-
-**Allowed hosts**:
-```typescript
-// frontend/vite.config.ts
-server: {
-  allowedHosts: ['*.ngrok-free.app', '*.trycloudflare.com']
-}
-```
+---
 
 ### Deployed Production
 
-**Frontend**: `https://twa-cf-tpl.pages.dev` (Cloudflare Pages)
-**Backend**: `https://twa-cf-tpl-prod.workers.dev` (Cloudflare Workers)
-
-#### Architecture:
 ```
-User Browser
-    ↓
-Cloudflare Pages (frontend)
-    ↓
-├─ Static files (HTML, JS, CSS) → Served directly
-├─ /api/* requests → Functions [[path]].ts (proxy)
-    ↓
-    Cloudflare Workers (backend) → Processes API requests
+┌──────────────────────────────────────────────────────────────┐
+│ User visits: https://twa-cf-tpl.pages.dev/profile/123      │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Cloudflare Pages Receives Request                          │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ _redirects Processing                                        │
+│ - Rule: /* /index.html 200                                 │
+│ - Serves index.html (React app)                            │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ React Router Takes Over                                     │
+│ - Sees /profile/123 in URL                                 │
+│ - Renders Profile component                                │
+│ - No more server requests                                  │
+└──────────────────────────────────────────────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────┐
+│ Frontend: POST /api/profile/me/avatar                       │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Request to: https://twa-cf-tpl.pages.dev/api/profile/me/avatar
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ _redirects Processing                                        │
+│ - Rule: /api/* /api/:splat 200                            │
+│ - Matches, routes to Pages Functions                       │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Pages Function: functions/api/[[path]].ts                  │
+│ - Receives: /api/profile/me/avatar                        │
+│ - Extracts path: ['profile', 'me', 'avatar']              │
+│ - Reads config: WORKER_URL from functions/config.ts       │
+│ - Builds target: https://twa-cf-tpl-prod.workers.dev/api/profile/me/avatar
+│ - Proxies request (method, headers, body)                  │
+│ - Adds CORS headers                                        │
+│ - Adds CSP headers                                         │
+│ - Returns response                                         │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Cloudflare Workers Backend                                  │
+│ - Receives: /api/profile/me/avatar                        │
+│ - Hono routes handle request                               │
+│ - Uploads to R2                                            │
+│ - Returns success                                          │
+└──────────────────────────────────────────────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────┐
+│ Component: Load Avatar Image                                │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ getImageUrl('avatars/123.jpg')                              │
+│ - NOT DEV mode (production build)                          │
+│ - Returns: 'https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev/avatars/123.jpg'
+│ - ⚠️ HARDCODED URL                                         │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Browser: GET https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev/avatars/123.jpg
+│ - Direct request to R2 public URL                          │
+│ - No proxy, no Pages Functions                             │
+│ - Cached by CDN                                            │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-#### How it works:
+**Key Points:**
+- Frontend and backend are SEPARATE services with different domains
+- API requests go through TWO hops: Pages → Functions proxy → Workers
+- Images served directly from R2 public URL (single hop)
+- CORS handled by Pages Functions proxy
+- CSP headers hardcoded with Worker URL
 
-1. **Frontend routes** (`/`, `/account`, `/edit-profile`, etc.):
-   - Initial load: Cloudflare Pages serves `index.html`
-   - `_redirects` file ensures all non-API routes serve `index.html`
-   - React Router takes over after page loads
-   - Navigation happens client-side (no server requests)
+---
 
-2. **API routes** (`/api/*`):
-   - Request goes to Cloudflare Pages
-   - `_redirects` routes to Pages Functions
-   - `[[path]].ts` proxy forwards to Workers backend
-   - Workers backend processes and responds
+### Deployment Process
 
-**Configuration files**:
+The deployment workflow replaces hardcoded URLs:
 
-**`frontend/public/_redirects`** (Cloudflare Pages redirect rules):
-```
-# API routes go to Functions
-/api/* /api/:splat 200
-
-# Everything else goes to React app (SPA)
-/* /index.html 200
+```bash
+# In .github/workflows/3-deploy-pages.yml:69-70
+sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g' functions/config.ts
+sed -i 's|https://twa-cf-tpl.pages.dev|${{ vars.PAGES_URL }}|g' functions/config.ts
 ```
 
-**`frontend/functions/api/[[path]].ts`** (Pages Functions proxy):
+**Process:**
+1. Worker URL and Pages URL are committed in `functions/config.ts`
+2. During deploy, workflow uses `sed` to replace with GitHub variables
+3. Modified `functions/` directory is copied to `dist/functions/`
+4. Deployed to Cloudflare Pages with Functions
+
+**Problem:** Config file has placeholder URLs that don't match actual deployed URLs until workflow runs
+
+---
+
+## Identified Issues & Complexities
+
+### 🔴 High Priority Issues
+
+#### 1. Double-Hop API Routing in Production
+**Problem:** Every API call goes Pages → Functions → Workers
+
+**Why it exists:**
+- Allows using relative paths in frontend (`/api/posts`)
+- Avoids CORS configuration on Worker
+- Centralizes CORS headers in one place
+
+**Downsides:**
+- Extra latency (additional network hop)
+- Extra cost (Pages Functions + Workers execution)
+- More points of failure
+- Harder to debug (two layers)
+
+#### 2. Hardcoded URLs with sed Replacement
+**Problem:** URLs are hardcoded, then replaced during deploy
+
+**Code:**
 ```typescript
-// Proxies /api/* requests to Workers backend
-const targetUrl = `${WORKER_URL}/api/${params.path.join('/')}${url.search}`;
-const response = await fetch(targetUrl, {
-  method: request.method,
-  headers: request.headers,
-  body: request.body,
-});
-```
-
-**`frontend/functions/config.ts`** (Environment URLs):
-```typescript
+// functions/config.ts (before deploy)
 export const WORKER_URL = "https://twa-cf-tpl-prod.workers.dev"
-export const PAGES_URL = "https://twa-cf-tpl.pages.dev"
+
+// Workflow replaces with actual URL
+sed -i 's|https://twa-cf-tpl-prod.workers.dev|${{ vars.WORKER_URL }}|g'
 ```
 
-**Example flow**:
-```
-User visits https://twa-cf-tpl.pages.dev/edit-profile
-→ Cloudflare Pages receives request
-→ _redirects: /* → /index.html (200)
-→ Serves index.html with React app
-→ React Router sees /edit-profile path
-→ Renders EditProfile component
+**Downsides:**
+- Fragile (what if sed pattern doesn't match?)
+- Hard to test locally with real URLs
+- Config file doesn't reflect deployed reality
+- CSP header has duplicate hardcoded URL that must match
 
-User uploads avatar
-→ POST https://twa-cf-tpl.pages.dev/api/profile/me/avatar
-→ _redirects: /api/* → /api/:splat (200)
-→ Pages Function [[path]].ts receives request
-→ Proxies to https://twa-cf-tpl-prod.workers.dev/api/profile/me/avatar
-→ Workers backend processes upload
-→ Response flows back through proxy
-→ React updates UI
-```
+#### 3. Different Image Serving Mechanisms
+**Problem:** Images served differently in local vs production
 
-## Common Routing Issues & Solutions
+| Environment | Method | Path/URL |
+|-------------|--------|----------|
+| Local | Backend `/r2/*` route through Vite proxy | `/r2/avatars/123.jpg` |
+| Production | Direct R2 public URL | `https://pub-733fa418...r2.dev/avatars/123.jpg` |
 
-### Issue 1: 404 on Frontend Routes After Page Reload
-
-**Problem**: Visiting `/edit-profile` directly (or refreshing the page) returns 404.
-
-**Cause**: Server doesn't know about React Router routes.
-
-**Solution**: Ensure `_redirects` file routes all non-API requests to `index.html`:
-```
-/* /index.html 200
-```
-
-**Local fix**: Vite dev server handles this automatically.
-**Deployed fix**: Verify `frontend/public/_redirects` is copied to `frontend/dist/_redirects` during build.
-
-### Issue 2: `window.location.reload()` Causes 404
-
-**Problem**: Full page reload after uploading avatar caused GET request to `/edit-profile` → 404 in production.
-
-**Cause**: Page reload bypasses React Router and makes server request. If `_redirects` isn't working, you get 404.
-
-**Solution**: Avoid full page reloads in SPAs. Use React state updates instead:
+**Code:**
 ```typescript
-// ❌ Bad: Full page reload
-window.location.reload();
-
-// ✅ Good: Refresh data via React state
-await fetchProfile(); // Re-fetch and update state
+// frontend/src/utils/image-url.ts
+export const getImageUrl = (key: string) => {
+  const isDev = import.meta.env.DEV;
+  if (isDev) {
+    return `/r2/${key}`;  // Proxied through backend
+  }
+  return `https://pub-733fa418a1974ad8aaea18a49e4154b9.r2.dev/${key}`;  // Direct R2
+};
 ```
 
-**Fixed in**: `frontend/src/components/profile/ProfileEditor.tsx` (replaced `window.location.reload()` with callback)
+**Downsides:**
+- Hardcoded R2 URL
+- Different code paths for local/prod
+- Backend `/r2/*` route only used locally (dead code in production)
+- Must update code if R2 bucket changes
 
-### Issue 3: API Calls Fail with CORS Errors
+#### 4. ~~CSP Header Hardcoded~~ ✅ **FIXED**
+~~**Problem:** Content Security Policy header has hardcoded Worker URL~~
 
-**Problem**: API requests from frontend fail with CORS errors.
+**Solution Implemented:**
+```typescript
+// frontend/functions/api/[[path]].ts:42
+import { WORKER_URL } from '../config';
 
-**Cause**: Cross-origin requests between Pages (frontend) and Workers (backend).
+newResponse.headers.set('Content-Security-Policy',
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' https://telegram.org; " +
+  `connect-src 'self' ${WORKER_URL} https://api.telegram.org; ` +  // Now uses config!
+  "img-src 'self' data: https:; " +
+  "style-src 'self' 'unsafe-inline';"
+);
+```
 
-**Solution**: Pages Functions proxy sets CORS headers:
+**Benefits:**
+- ✅ Single source of truth (uses config.ts)
+- ✅ Automatically updated when config changes
+- ✅ No manual updates needed
+
+### 🟡 Medium Priority Issues
+
+#### 5. ~~Unused Environment Variables~~ ✅ **FIXED**
+~~**Problem:** `VITE_WORKER_URL` and `VITE_PAGES_URL` are set but never used~~
+
+**Solution Implemented:**
+Removed unused environment variables from workflow:
+```yaml
+# .github/workflows/3-deploy-pages.yml
+# REMOVED:
+# env:
+#   VITE_WORKER_URL: ${{ vars.WORKER_URL }}
+#   VITE_PAGES_URL: ${{ vars.PAGES_URL }}
+```
+
+**Benefits:**
+- ✅ Cleaner workflow configuration
+- ✅ No confusion about unused variables
+- ✅ Reduced maintenance burden
+
+#### 6. Config Split Across Multiple Files
+**Problem:** Configuration scattered in many places
+
+| Config Item | Location 1 | Location 2 | Location 3 |
+|-------------|-----------|-----------|-----------|
+| Worker URL | `functions/config.ts` | `[[path]].ts` CSP | GitHub vars |
+| Pages URL | `functions/config.ts` | GitHub vars | - |
+| R2 URL | `image-url.ts` | - | - |
+| Account ID | `wrangler.toml` | GitHub secrets | - |
+
+### 🟢 Low Priority Issues (By Design)
+
+#### 7. Infrastructure IDs in wrangler.toml
+**Not really an issue:** These must be in `wrangler.toml` for Wrangler to work
+
+#### 8. Separate Frontend/Backend Services
+**Not an issue:** This is the Cloudflare architecture (Pages + Workers)
+
+---
+
+## Proposed Simplifications
+
+### 🎯 Goal: Reduce complexity while maintaining functionality
+
+### Option A: Direct Worker Calls (Simplest)
+
+**Change:** Frontend calls Worker directly, remove Pages Functions proxy
+
+**Impact:**
+- ✅ Eliminates double-hop routing
+- ✅ Removes `functions/` directory entirely
+- ✅ No sed replacement needed
+- ✅ Faster API responses
+- ✅ Lower cost
+- ❌ Requires CORS configuration on Worker
+- ❌ Frontend must know Worker URL
+
+**Implementation:**
+```typescript
+// NEW: frontend/src/config.ts
+export const API_BASE_URL = import.meta.env.PROD
+  ? 'https://twa-cf-tpl-prod.workers.dev'
+  : '';  // Local: use relative paths (Vite proxy)
+
+// frontend/src/services/api.ts
+export const api = {
+  async getAllPosts() {
+    const response = await fetch(`${API_BASE_URL}/api/posts`);
+    return response.json();
+  }
+};
+
+// backend/src/index.ts - Add CORS middleware
+import { cors } from 'hono/cors';
+
+app.use('/api/*', cors({
+  origin: ['https://twa-cf-tpl.pages.dev', 'https://t.me'],
+  credentials: true,
+}));
+```
+
+**Trade-off Analysis:**
+| Aspect | Current | Proposed |
+|--------|---------|----------|
+| API latency | Pages → Functions → Worker | Direct to Worker |
+| Configuration complexity | High (sed replacement) | Medium (hardcoded URL) |
+| CORS complexity | Medium (Pages Functions) | Medium (Worker middleware) |
+| Cost | Higher (2 services) | Lower (1 service) |
+| Debugging | Harder (2 layers) | Easier (1 layer) |
+
+**Verdict:** ⭐ **Recommended** - Significant simplification with minimal downside
+
+---
+
+### Option B: Environment Variables for URLs
+
+**Change:** Use Vite environment variables instead of hardcoding
+
+**Impact:**
+- ✅ No more sed replacement
+- ✅ Config files work in all environments
+- ✅ Single source of truth
+- ⚠️ Requires build-time env vars
+
+**Implementation:**
+```typescript
+// frontend/src/utils/image-url.ts
+export const getImageUrl = (key: string) => {
+  if (import.meta.env.DEV) {
+    return `/r2/${key}`;
+  }
+  // Use environment variable instead of hardcoded URL
+  const baseUrl = import.meta.env.VITE_R2_PUBLIC_URL;
+  return `${baseUrl}/${key}`;
+};
+
+// frontend/functions/config.ts
+export const WORKER_URL = import.meta.env.VITE_WORKER_URL || "https://twa-cf-tpl-prod.workers.dev"
+export const PAGES_URL = import.meta.env.VITE_PAGES_URL || "https://twa-cf-tpl.pages.dev"
+```
+
+**Note:** Vite replaces `import.meta.env.VITE_*` at build time, so Functions can't use them. This only works for frontend code, not Pages Functions.
+
+**Verdict:** ⚠️ **Partial solution** - Helps frontend, doesn't solve Functions config
+
+---
+
+### Option C: Custom Domain (Best Long-Term)
+
+**Change:** Use custom domain for both Pages and Workers
+
+**Impact:**
+- ✅ Single domain for everything
+- ✅ No CORS issues at all
+- ✅ Cleaner URLs
+- ✅ Professional appearance
+- ❌ Requires domain purchase
+- ❌ More DNS configuration
+
+**Architecture:**
+```
+https://myapp.com           → Cloudflare Pages (frontend)
+https://myapp.com/api/*     → Cloudflare Workers (backend via Routes)
+https://images.myapp.com/*  → R2 bucket (custom domain)
+```
+
+**Setup:**
+```bash
+# 1. Configure custom domain for Pages
+# Dashboard: Pages → twa-cf-tpl → Custom domains → Add: myapp.com
+
+# 2. Configure Workers Route
+# Dashboard: Workers → twa-cf-tpl-prod → Triggers → Routes
+# Add route: myapp.com/api/*
+# Add route: myapp.com/webhook
+
+# 3. Configure R2 custom domain
+# Dashboard: R2 → twa-tpl-images → Settings → Custom domains
+# Add: images.myapp.com
+```
+
+**Benefits:**
+- Frontend can use relative paths (`/api/posts`)
+- No CORS (same origin)
+- No Pages Functions proxy needed
+- Images use clean URL: `https://images.myapp.com/avatars/123.jpg`
+
+**Verdict:** ⭐⭐⭐ **Best solution** if domain is available
+
+---
+
+### Option D: R2 Custom Domain (Quick Win)
+
+**Change:** Just add custom domain for R2, keep rest as-is
+
+**Impact:**
+- ✅ Consistent image URLs
+- ✅ No hardcoded R2 URL
+- ✅ Professional image CDN
+- ⚠️ Still requires domain
+
+**Implementation:**
+```typescript
+// frontend/src/utils/image-url.ts
+export const getImageUrl = (key: string) => {
+  if (import.meta.env.DEV) {
+    return `/r2/${key}`;
+  }
+  // Clean, branded URL
+  return `https://images.myapp.com/${key}`;
+};
+```
+
+**Verdict:** ⭐ **Quick improvement** - Solves image URL problem
+
+---
+
+## Implementation Guide
+
+### Phase 1: Quick Wins (Low Risk)
+
+#### 1.1 Use Config for CSP Header
+**Goal:** Remove hardcoded URL from CSP header
+
 ```typescript
 // frontend/functions/api/[[path]].ts
-response.headers.set('Access-Control-Allow-Origin', origin)
-response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
-response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-response.headers.set('Access-Control-Allow-Credentials', 'true')
+import { WORKER_URL } from '../config';
+
+newResponse.headers.set('Content-Security-Policy',
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' https://telegram.org; " +
+  `connect-src 'self' ${WORKER_URL} https://api.telegram.org; ` +  // Use config
+  "img-src 'self' data: https:; " +
+  "style-src 'self' 'unsafe-inline';"
+);
 ```
 
-### Issue 4: Different Behavior Local vs Deployed
+**Risk:** ✅ Low (just referencing existing config)
 
-**Problem**: Feature works locally but fails in production.
+#### 1.2 Remove Unused Vite Env Vars
+**Goal:** Clean up unused configuration
 
-**Cause**: Different routing mechanisms:
-- Local: Vite dev server + proxy
-- Deployed: Cloudflare Pages + Functions + Workers
+Remove from `.github/workflows/3-deploy-pages.yml`:
+```yaml
+# DELETE these lines:
+env:
+  VITE_WORKER_URL: ${{ vars.WORKER_URL }}
+  VITE_PAGES_URL: ${{ vars.PAGES_URL }}
+```
 
-**Debug steps**:
-1. Check if `_redirects` file exists in `frontend/dist/` after build
-2. Verify `frontend/functions/config.ts` has correct URLs
-3. Check Cloudflare Pages deployment logs
-4. Test API calls directly to Workers backend URL
-5. Ensure no `window.location` methods bypass React Router
+**Risk:** ✅ None (they're unused)
 
-## Best Practices
+---
 
-### 1. Always Use React Router for Navigation
+### Phase 2: Direct Worker Calls (Medium Risk)
+
+#### 2.1 Add CORS to Worker
 ```typescript
-// ✅ Good: Client-side navigation
-import { useNavigate } from 'react-router-dom';
-const navigate = useNavigate();
-navigate('/edit-profile');
+// backend/src/index.ts
+import { cors } from 'hono/cors';
 
-// ❌ Bad: Server request
-window.location.href = '/edit-profile';
+const app = new Hono<{ Bindings: Env }>();
+
+// Add CORS middleware
+app.use('/api/*', cors({
+  origin: (origin) => {
+    // Allow Pages domain and Telegram
+    const allowed = [
+      'https://twa-cf-tpl.pages.dev',
+      'https://t.me',
+    ];
+    return allowed.some(a => origin.startsWith(a)) ? origin : allowed[0];
+  },
+  credentials: true,
+}));
 ```
 
-### 2. Avoid Full Page Reloads
+#### 2.2 Update Frontend API Calls
 ```typescript
-// ✅ Good: Update state
-await fetchData();
-setData(newData);
+// NEW: frontend/src/config.ts
+export const config = {
+  apiBaseUrl: import.meta.env.PROD
+    ? 'https://twa-cf-tpl-prod.workers.dev'
+    : '',  // Local uses Vite proxy
+};
 
-// ❌ Bad: Reload page
-window.location.reload();
+// frontend/src/services/api.ts
+import { config } from '../config';
+
+export const api = {
+  async getAllPosts(limit = 50, offset = 0) {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+    });
+
+    const response = await fetch(`${config.apiBaseUrl}/api/posts?${params}`, {
+      credentials: 'include',  // Important for CORS with credentials
+    });
+    return handleResponse(response);
+  },
+  // ... update all other methods
+};
 ```
 
-### 3. Use Relative API Paths
-```typescript
-// ✅ Good: Works in all environments
-fetch('/api/profile/me')
-
-// ❌ Bad: Hardcoded URLs break
-fetch('http://localhost:8787/api/profile/me')
+#### 2.3 Remove Pages Functions
+```bash
+# Delete entire directory
+rm -rf frontend/functions/
 ```
 
-### 4. Keep _redirects Simple
+#### 2.4 Update _redirects
 ```
-# API routes to Functions
-/api/* /api/:splat 200
-
-# Everything else to SPA
+# frontend/public/_redirects
+# Remove API routing (now goes direct to Worker)
+# Keep only SPA routing
 /* /index.html 200
 ```
 
-### 5. Test in All Environments
-- Local dev server
-- Local with ngrok/tunnel
-- Deployed preview
-- Deployed production
+#### 2.5 Remove sed Replacement from Workflow
+```yaml
+# .github/workflows/3-deploy-pages.yml
+# DELETE these lines (62-70):
+      # - name: Deploy to Cloudflare Pages
+      #   run: |
+      #     cd frontend
+      #     sed -i 's|https://...|...|g' functions/config.ts  # DELETE
+      #     cp -r functions dist/  # DELETE
+```
 
-## Debugging Tips
+**Testing Checklist:**
+- [ ] Local dev still works (Vite proxy handles API calls)
+- [ ] Deployed app can fetch posts
+- [ ] Auth works (cookies/sessions)
+- [ ] Image uploads work
+- [ ] No CORS errors in console
 
-### Check What's Being Requested
+**Rollback Plan:**
+1. Restore `frontend/functions/` from git
+2. Restore _redirects
+3. Restore workflow sed commands
+4. Redeploy
+
+**Risk:** ⚠️ Medium - Changes production behavior, test thoroughly
+
+---
+
+### Phase 3: Custom Domains (Long-Term)
+
+#### 3.1 Purchase/Configure Domain
+1. Buy domain (e.g., `myapp.com`)
+2. Point nameservers to Cloudflare
+3. Add to Cloudflare account
+
+#### 3.2 Configure Pages Custom Domain
+1. Dashboard → Pages → twa-cf-tpl
+2. Custom domains → Add domain
+3. Enter: `myapp.com`
+4. Verify DNS
+
+#### 3.3 Configure Workers Route
+1. Dashboard → Workers → twa-cf-tpl-prod
+2. Triggers → Routes → Add route
+3. Route: `myapp.com/api/*` → twa-cf-tpl-prod
+4. Route: `myapp.com/webhook` → twa-cf-tpl-prod
+
+#### 3.4 Configure R2 Custom Domain
+1. Dashboard → R2 → twa-tpl-images
+2. Settings → Custom domains
+3. Add: `images.myapp.com`
+4. Verify DNS
+
+#### 3.5 Update Frontend Config
 ```typescript
-// Add to frontend code
-console.log('Fetching:', url, method);
+// frontend/src/config.ts
+export const config = {
+  // No Worker URL needed! Same origin now.
+  apiBaseUrl: '',  // Relative paths work in prod too
+};
 
-// Add to backend code (backend/src/index.ts)
-app.use('*', async (c, next) => {
-  console.log(`${c.req.method} ${c.req.url}`);
-  await next();
-});
-
-// Add to Pages Functions (frontend/functions/api/[[path]].ts)
-console.log('Proxy request:', request.method, request.url, 'Path:', params.path);
+// frontend/src/utils/image-url.ts
+export const getImageUrl = (key: string) => {
+  if (import.meta.env.DEV) {
+    return `/r2/${key}`;
+  }
+  return `https://images.myapp.com/${key}`;
+};
 ```
 
-### Verify _redirects Deployment
-1. Build frontend: `cd frontend && npm run build`
-2. Check file exists: `ls frontend/dist/_redirects`
-3. Check Cloudflare Pages deployment includes `_redirects`
-
-### Test Workers Backend Directly
-```bash
-# Health check
-curl https://twa-cf-tpl-prod.workers.dev/api/health
-
-# Get profile (needs auth)
-curl https://twa-cf-tpl-prod.workers.dev/api/profile/me \
-  -H "x-session-id: YOUR_SESSION_ID"
+#### 3.6 Remove CORS (No Longer Needed)
+```typescript
+// backend/src/index.ts
+// DELETE CORS middleware - same origin now!
 ```
 
-### Check Cloudflare Logs
-```bash
-# Tail Workers logs
-npx wrangler tail
+**Benefits:**
+- ✅ No CORS at all (same origin)
+- ✅ Clean URLs
+- ✅ No hardcoded Worker URL
+- ✅ Professional appearance
 
-# Check Pages Functions logs
-# Visit: https://dash.cloudflare.com → Pages → twa-cf-tpl → Functions
-```
+**Risk:** ⚠️ Medium - Requires DNS changes, domain cost
 
-## Summary
+---
 
-| Environment | Frontend Routing | API Routing | Notes |
-|-------------|------------------|-------------|-------|
-| **Local** | React Router (`:3000`) | Vite proxy → `:8787` | Separate ports, proxy handles API |
-| **Local + Tunnel** | React Router (`:3000`) | Tunnel → `:8787` | Public HTTPS for webhooks |
-| **Deployed** | React Router (Pages) | Pages Functions → Workers | `_redirects` + `[[path]].ts` proxy |
+## Summary & Recommendations
 
-**Key principle**: Frontend routes are client-side only. API routes are server-side only. Never mix them.
+### Current State: Complexity Score 6.5/10 (improved from 7/10)
+
+**Remaining Complexities:**
+- ❌ Double-hop API routing (Pages Functions proxy)
+- ❌ Hardcoded URLs with sed replacement
+- ❌ Different image serving local vs prod
+- ✅ ~~CSP header hardcoded~~ **FIXED**
+- ❌ Config scattered across files (partially improved)
+- ✅ React Router works well
+- ✅ Vite proxy works well locally
+
+**Phase 1 Improvements:**
+- ✅ CSP header now uses config (cleaner, maintainable)
+- ✅ Unused env vars removed (less confusion)
+
+### Recommended Path
+
+**✅ Phase 1 (Quick Wins): COMPLETED**
+1. ✅ Use config for CSP header (completed)
+2. ✅ Remove unused env vars (completed)
+3. **Result: Complexity reduced from 7/10 → 6.5/10**
+
+**Short-Term (Optional - This Week):**
+3. ⏸️ Phase 2: Direct Worker calls (2 hours)
+   - Eliminates Pages Functions entirely
+   - Reduces latency and cost
+   - Simplifies debugging
+   - **New Complexity Score: 4/10**
+
+**Long-Term (When Ready):**
+4. ✅ Phase 3: Custom domains (4 hours + DNS wait)
+   - Professional URLs
+   - No CORS issues
+   - Clean image CDN
+   - **Final Complexity Score: 2/10**
+
+### What NOT to Change
+
+**Keep as-is:**
+- ✅ React Router (works perfectly)
+- ✅ Vite proxy for local dev (essential)
+- ✅ _redirects SPA routing (required)
+- ✅ wrangler.toml IDs (required by Cloudflare)
+- ✅ Separate Workers/Pages (Cloudflare architecture)
+
+---
+
+## Appendix: Complete Route Reference
+
+### Frontend Routes (React Router)
+| Path | Component | Purpose |
+|------|-----------|---------|
+| `/` | Feed | Homepage feed |
+| `/edit-profile` | EditProfile | Edit user profile |
+| `/profile/:telegramId` | UnifiedProfile | View user profile |
+| `/payments` | Payments | View payments |
+
+### Backend API Routes
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/health` | Health check |
+| POST | `/webhook` | Telegram webhook |
+| GET/POST | `/api/auth` | Authentication |
+| GET | `/api/posts` | Get all posts |
+| GET | `/api/posts/user/:userId` | Get user posts |
+| POST | `/api/posts` | Create post |
+| PUT | `/api/posts/:postId` | Update post |
+| DELETE | `/api/posts/:postId` | Delete post |
+| POST | `/api/posts/:postId/images` | Upload images |
+| DELETE | `/api/posts/:postId/images/:imageId` | Delete image |
+| GET | `/api/profile/me` | Get my profile |
+| PUT | `/api/profile/me` | Update my profile |
+| POST | `/api/profile/me/avatar` | Upload avatar |
+| GET | `/api/profile/:telegramId` | Get user profile |
+| POST | `/api/admin/ban/:telegramId` | Ban user |
+| POST | `/api/admin/unban/:telegramId` | Unban user |
+| POST | `/api/posts/:postId/make-premium` | Make post premium |
+| POST | `/api/posts/:postId/clear-pending` | Clear pending payment |
+| GET | `/api/payments` | Get all payments |
+| GET | `/api/payments/balance` | Get balance |
+| POST | `/api/payments/refresh-balance` | Refresh balance |
+| POST | `/api/payments/reconcile` | Reconcile payments |
+| POST | `/api/payments/:paymentId/refund` | Refund payment |
+| GET | `/r2/*` | Serve images (local only) |
+
+### Infrastructure Bindings (wrangler.toml)
+| Type | Binding | Resource |
+|------|---------|----------|
+| KV | `SESSIONS` | Session storage |
+| D1 | `DB` | Database |
+| R2 | `IMAGES` | Image storage |
+
+---
+
+**Last Updated:** 2025-10-01
+**Version:** 2.1 (Phase 1 implemented - CSP header + unused env vars fixed)

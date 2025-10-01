@@ -39,7 +39,7 @@ export async function onRequest(context: {
     newResponse.headers.set('Content-Security-Policy',
       "default-src 'self'; " +
       "script-src 'self' 'unsafe-inline' https://telegram.org; " +
-      "connect-src 'self' https://twa-cf-tpl-prod.workers.dev https://api.telegram.org; " +
+      `connect-src 'self' ${WORKER_URL} https://api.telegram.org; ` +
       "img-src 'self' data: https:; " +
       "style-src 'self' 'unsafe-inline';"
     )
