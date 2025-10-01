@@ -79,15 +79,30 @@ start_tunnel() {
 stop_tunnel() {
     echo "🛑 Stopping ngrok tunnel..."
 
+    local STOPPED=false
+
+    # Try PID file first
     if [ -f "$NGROK_PID_FILE" ]; then
         TUNNEL_PID=$(cat "$NGROK_PID_FILE")
         if kill $TUNNEL_PID 2>/dev/null; then
             echo "✅ Stopped tunnel (PID: $TUNNEL_PID)"
-        else
-            echo "⚠️  Process $TUNNEL_PID not found"
+            STOPPED=true
         fi
-    else
-        echo "⚠️  No PID file found"
+    fi
+
+    # If PID file method failed, find and kill ngrok process directly
+    if [ "$STOPPED" = false ]; then
+        NGROK_PIDS=$(pgrep -f "ngrok http" || true)
+        if [ -n "$NGROK_PIDS" ]; then
+            echo "$NGROK_PIDS" | while read -r pid; do
+                if kill $pid 2>/dev/null; then
+                    echo "✅ Stopped tunnel (PID: $pid)"
+                    STOPPED=true
+                fi
+            done
+        else
+            echo "⚠️  No running ngrok process found"
+        fi
     fi
 
     # Clean up
