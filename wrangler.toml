@@ -25,13 +25,14 @@ migrations_dir = "backend/drizzle/migrations"
 
 # R2 Buckets
 [[r2_buckets]]
-binding = "telefare_images"
+binding = "IMAGES"
 bucket_name = "telefare-images"
 
 
 # Non-secret environment variables
 [vars]
 ENVIRONMENT = "production"
+PAGES_URL = "https://telefare-pages.pages.dev"
 
 # Pages configuration
 pages_build_output_dir = "frontend/dist"

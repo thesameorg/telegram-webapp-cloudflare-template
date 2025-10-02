@@ -63,6 +63,9 @@
     `wrangler d1 create <your-database-name>`
     - copy database_name and database_id to wrangler.toml
     - KV Namespace:
+    - change `package.json`, line 28, to use your new <your-database-name>`
+    `"db:migrate:local": "npx wrangler d1 migrations <your-database-name>` apply  --local",`
+
     `wrangler kv namespace create <your-kv-namespace-name>`
     - copy binding and id to wrangler.toml to kv section
     -  R2 Bucket:
@@ -91,8 +94,16 @@
         - PAGES_PROJECT_NAME same as you used in WORKER_URL
 
 - set telegram bot's menu button the `PAGES_URL` in botfather
+- set `PAGES_URL` in `wrangler.dev
+
 - Create a new commit in copied repo & push
 - watch it in github actions, gotta be green
+- go to bot and check:
+    - send /start message
+    - open webapp, gotta work!
+    - gotta have "payments" if your TG ID is ADMIN
+    - gotta have profile name as your telegram name
+- Congrats!
 
 
 
@@ -102,9 +113,4 @@ Congrats if you have one!
 1. Setup custom domain in coudflare worker
 2. Setup custom domain in coudflare pages
 3. Change Github envs to these new urls
-
-
-
-- create telegram bot for local dev & test purposes
-- get your telegram ID
 
