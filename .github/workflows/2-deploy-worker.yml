@@ -46,7 +46,6 @@ jobs:
       - name: Set Cloudflare Secrets
         run: |
           cd backend
-          # Update existing secrets or create if they don't exist
           echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler secret put TELEGRAM_BOT_TOKEN --env="" || true
           echo "${{ secrets.TELEGRAM_ADMIN_ID }}" | npx wrangler secret put TELEGRAM_ADMIN_ID --env="" || true
         env:
@@ -57,7 +56,6 @@ jobs:
         id: deploy
         run: |
           cd backend
-          # Deploy with PAGES_URL from GitHub Variables
           npx wrangler deploy --env="" --var PAGES_URL="${{ vars.PAGES_URL }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -66,7 +64,6 @@ jobs:
       - name: Get Worker URL
         id: worker-url
         run: |
-          # Use static GitHub variable instead of dynamic URL
           WORKER_URL="${{ vars.WORKER_URL }}"
           echo "Worker URL: $WORKER_URL"
           echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
@@ -76,7 +73,6 @@ jobs:
           sleep 5
           echo "Testing Worker at: ${{ steps.worker-url.outputs.url }}"
 
-          # Test health endpoint with detailed output
           echo "Testing /api/health endpoint..."
           health_response=$(curl -s -w "%{http_code}" "${{ steps.worker-url.outputs.url }}/api/health")
           health_status=$(echo "$health_response" | tail -c 4)

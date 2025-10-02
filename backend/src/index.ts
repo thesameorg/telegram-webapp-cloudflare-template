@@ -19,7 +19,7 @@ app.use('*', prettyJSON())
 // CORS middleware for API endpoints
 app.use('/api/*', cors({
   origin: (origin, c) => {
-    // Get Pages URL from environment
+    // Get Pages URL from environment - used for CORS validation
     // Local: from .env file
     // Production: passed via --var during deployment
     // Tests: undefined, falls back to wildcard

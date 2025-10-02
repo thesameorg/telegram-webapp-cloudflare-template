@@ -213,11 +213,82 @@ cd frontend && npm test
 3. **Update tests** (`frontend/tests/components/NewPage.test.tsx`)
 4. **Add API endpoints** if needed
 
-### Environment Variables
+### Environment Variables & Configuration
+
+#### Complete Configuration Reference
+
+**Environment Variables (.env for local, GitHub Secrets for production):**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `TELEGRAM_BOT_TOKEN` | ✅ Yes | - | Bot authentication token from @BotFather |
+| `TELEGRAM_ADMIN_ID` | ✅ Yes | - | Telegram user ID for admin access |
+| `PAGES_URL` | No | `*` (wildcard) | Frontend URL for CORS validation |
+| `ENVIRONMENT` | No | `local` | Environment identifier (local/preview/production) |
+| `DEV_AUTH_BYPASS_ENABLED` | No | `false` | Skip Telegram auth for local browser testing |
+
+**Cloudflare Configuration (wrangler.toml):**
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| `account_id` | Your Cloudflare account ID | Get from Cloudflare dashboard |
+| **KV Namespace** | | |
+| `binding` | `SESSIONS` | Binding name in code |
+| `id` | Your KV namespace ID | Create in Cloudflare dashboard |
+| **D1 Database** | | |
+| `binding` | `DB` | Binding name in code |
+| `database_name` | `twa-tpl-db` | Database name |
+| `database_id` | Your D1 database ID | Create with `wrangler d1 create` |
+| `migrations_dir` | `backend/drizzle/migrations` | Database migrations path |
+| **R2 Bucket** | | |
+| `binding` | `IMAGES` | Binding name in code |
+| `bucket_name` | `twa-tpl-images` | Bucket name (create in dashboard) |
+| **Compatibility** | | |
+| `compatibility_date` | `2024-09-01` | Workers runtime version |
+| `compatibility_flags` | `["nodejs_compat"]` | Enable Node.js APIs |
+| `head_sampling_rate` | `0.1` | Log 10% of requests |
+
+**GitHub Secrets (for CI/CD):**
+- `CLOUDFLARE_API_TOKEN` - API token with Workers and Pages permissions
+- `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
+- `TELEGRAM_BOT_TOKEN` - Production bot token
+- `TELEGRAM_ADMIN_ID` - Admin Telegram ID
+
+**GitHub Variables (for CI/CD):**
+- `WORKER_URL` - Worker URL for frontend API calls (build-time)
+- `PAGES_URL` - Pages URL for CORS validation (runtime, optional)
+
+**Setup Steps:**
+
+1. **Create Cloudflare Resources:**
+   ```bash
+   # Create KV namespace
+   npx wrangler kv:namespace create SESSIONS
+
+   # Create D1 database
+   npx wrangler d1 create twa-tpl-db
+
+   # Create R2 bucket
+   npx wrangler r2 bucket create twa-tpl-images
+   ```
+
+2. **Update wrangler.toml** with the IDs from step 1
+
+3. **Set up .env file** for local development:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your values
+   ```
+
+4. **Configure GitHub Secrets** (Settings → Secrets and variables → Actions)
+
+For detailed environment setup, see [ROUTING_AND_ENVS.md](docs/ROUTING_AND_ENVS.md).
+
 Add new environment variables to:
 - `.env.example` (with example values)
-- `wrangler.toml` (for Workers)
-- GitHub Secrets (for production)
+- `backend/src/types/env.ts` (TypeScript types)
+- `wrangler.toml` (for Workers, if non-secret)
+- GitHub Secrets (for production secrets)
 
 ## 🛡️ Security
 

@@ -19,11 +19,8 @@ export interface Env {
   ENVIRONMENT: string;
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_ADMIN_ID: string;
-  WEB_APP_URL: string;
+  PAGES_URL?: string; // Optional: Frontend URL for CORS validation (defaults to wildcard *)
   DEV_AUTH_BYPASS_ENABLED?: string;
-
-  // Optional custom domain URLs (fall back to *.workers.dev / *.pages.dev if not set)
-  PAGES_URL?: string;
 }
 
 

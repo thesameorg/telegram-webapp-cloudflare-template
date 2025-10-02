@@ -20,10 +20,7 @@ jobs:
       - name: Configure URLs
         id: config
         run: |
-          # Set default worker URL
           echo "worker_url=https://twa-cf-tpl.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
-
-          # Override with manual input if provided
           if [ "${{ inputs.worker_url }}" != "" ]; then
             echo "worker_url=${{ inputs.worker_url }}" >> $GITHUB_OUTPUT
           fi

@@ -38,9 +38,9 @@ jobs:
             echo "WORKER_URL is not set"
             exit 1
           fi
+          # PAGES_URL is optional - only needed for strict CORS validation in production
           if [ -z "${{ vars.PAGES_URL }}" ]; then
-            echo "PAGES_URL is not set"
-            exit 1
+            echo "⚠️  PAGES_URL is not set - Worker will use wildcard CORS (*)"
           fi
 
       - name: Install dependencies
@@ -59,11 +59,7 @@ jobs:
         id: deploy-pages
         run: |
           cd frontend
-
-          # Deploy to Pages (show real errors)
-          echo "Starting Pages deployment..."
           npx wrangler pages deploy dist --project-name=twa-cf-tpl --commit-dirty=true
-          echo "Deployment completed successfully"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
