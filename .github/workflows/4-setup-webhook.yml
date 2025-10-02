@@ -20,10 +20,12 @@ jobs:
       - name: Configure URLs
         id: config
         run: |
-          echo "worker_url=https://twa-cf-tpl.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
-          if [ "${{ inputs.worker_url }}" != "" ]; then
-            echo "worker_url=${{ inputs.worker_url }}" >> $GITHUB_OUTPUT
+          WORKER_URL="${{ vars.WORKER_URL }}"
+          if [ -z "$WORKER_URL" ]; then
+            echo "❌ WORKER_URL GitHub variable is not set"
+            exit 1
           fi
+          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
 
 
       - name: Setup Telegram webhook

@@ -32,3 +32,6 @@ bucket_name = "telefare-images"
 # Non-secret environment variables
 [vars]
 ENVIRONMENT = "production"
+
+# Pages configuration
+pages_build_output_dir = "frontend/dist"
