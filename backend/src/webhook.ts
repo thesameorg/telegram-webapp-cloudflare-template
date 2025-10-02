@@ -18,7 +18,7 @@ export async function handleWebhook(c: Context) {
     const firstName = ctx.from?.first_name || 'User'
 
     await ctx.reply(
-      `👋 Hello ${firstName}!\n\nWelcome to the Telegram Web App Template!`
+      `👋 Hello ${firstName}!\n\nWelcome to the Telegram Web App Template!\n\nhttps://github.com/garootman/telegram-webapp-cloudflare-template/`
     )
   })
 
