@@ -1,3 +1,8 @@
+https://telefare-pages.pages.dev/
+https://t.me/telefare_bot
+
+
+
 # Telegram Web App + Bot Template
 
 A complete template for building Telegram Web Apps with integrated bot functionality, deployed on Cloudflare infrastructure.
@@ -70,7 +75,7 @@ npm run dev
 
 ### 5. Test Your Setup
 - Send `/start` to your bot in Telegram
-- Click "Open Web App" button
+
 
 ## 🏗️ Project Structure
 
