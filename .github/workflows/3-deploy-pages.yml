@@ -52,6 +52,8 @@ jobs:
         run: |
           cd frontend
           npm run build
+        env:
+          VITE_WORKER_URL: ${{ vars.WORKER_URL }}
 
       - name: Deploy to Cloudflare Pages
         id: deploy-pages

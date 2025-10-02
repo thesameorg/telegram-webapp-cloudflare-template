@@ -18,12 +18,19 @@ app.use('*', prettyJSON())
 
 // CORS middleware for API endpoints
 app.use('/api/*', cors({
-  origin: (origin) => {
-    // Allow Pages domain and Telegram
-    const allowed = [
-      'https://twa-cf-tpl.pages.dev',
-      'https://t.me',
-    ]
+  origin: (origin, c) => {
+    // Get Pages URL from environment
+    // Local: from .env file
+    // Production: passed via --var during deployment
+    // Tests: undefined, falls back to wildcard
+    const pagesUrl = c.env.PAGES_URL
+    if (!pagesUrl) {
+      console.warn('PAGES_URL not set - using wildcard CORS (not recommended for production)')
+      return origin || '*'
+    }
+
+    const allowed = [pagesUrl, 'https://t.me']
+
     // Check if origin starts with any allowed domain
     if (origin && allowed.some(a => origin.startsWith(a))) {
       return origin

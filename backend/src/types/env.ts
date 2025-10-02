@@ -21,6 +21,9 @@ export interface Env {
   TELEGRAM_ADMIN_ID: string;
   WEB_APP_URL: string;
   DEV_AUTH_BYPASS_ENABLED?: string;
+
+  // Optional custom domain URLs (fall back to *.workers.dev / *.pages.dev if not set)
+  PAGES_URL?: string;
 }
 
 
