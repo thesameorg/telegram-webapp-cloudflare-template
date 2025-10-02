@@ -31,6 +31,8 @@ A complete template for building Telegram Web Apps with integrated bot functiona
 
 ## 🛠️ Quick Start
 
+📖 **For detailed setup instructions, see [QUICKSTART.md](docs/QUICKSTART.md)**
+
 ### 1. Clone and Setup
 ```bash
 git clone <your-repo-url>

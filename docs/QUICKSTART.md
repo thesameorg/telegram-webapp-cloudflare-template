@@ -1,116 +1,220 @@
-# prerequisites
+# Quick Start Guide
 
-- make sure you have installed software:
-    - node (link to installation & check, v>=20)
-    - wrangler
-    - ngrok (install & register & auth manual)
+## Prerequisites
 
-- copy .env.example to .env
-    
+### Required Software
+- **Node.js** (v20 or higher) - [Installation guide](https://nodejs.org/)
+- **Wrangler CLI** - Cloudflare's command-line tool
+- **ngrok** - For local development tunneling
+  - [Install ngrok](https://ngrok.com/download)
+  - Create account and authenticate: `ngrok authtoken <your-token>`
 
+### Initial Setup
 
-- install root, front, back
-    - `npm install` - for root dependencies
-    - `npm run install`  - for backend & frontend dependencies
-    - `npm run check` - for lint, typechek & tests
+1. **Copy environment template:**
+   ```bash
+   cp .env.example .env
+   ```
 
-- make local DB: `npm run db:migrate:local`
+2. **Install dependencies:**
+   ```bash
+   npm install        # Root dependencies
+   npm run install    # Backend & frontend dependencies
+   npm run check      # Verify lint, typecheck & tests
+   ```
 
+3. **Initialize local database:**
+   ```bash
+   npm run db:migrate:local
+   ```
 
-## local "clean" run 
-- change `DEV_AUTH_BYPASS_ENABLED=true` in .env
-- `npm run clean-check` - should be no errors
-- `npm run dev`
-    - go to http://localhost:3000 - it should load
-    - go to **profile** section, there should be a "DEV Developer" user
-    - try adding a post or changing user - it all should work!
+---
 
+## Local Development (No Telegram)
 
-## Local telegram + ngrok run
-- setup ngrok tunnel: 
-    - `npm run tunnel:start`
-    - go to the URL you got like `https://1cd4689c783a.ngrok-free.app/`
-- create a telegram bot with botfather
-    - you will need bot token
-    - setup menu button URL to this ngrok url
-- get your own telegram_id:
-    - ask bot @username_to_id_bot
-    - set .env `TELEGRAM_ADMIN_ID=` to your digits of TG ID
-- edit .env:
-    - add bot token to `TELEGRAM_BOT_TOKEN`
-    - set `DEV_AUTH_BYPASS_ENABLED=false`, so you will login with your account
-- restart worker:
-    - `npm run stop && npm run dev`
+Perfect for testing the app without setting up a bot.
 
-- open the bot, open app - et voila! 
-- play around!
+1. **Enable dev bypass mode in `.env`:**
+   ```bash
+   DEV_AUTH_BYPASS_ENABLED=true
+   ```
 
-> [!] Warning! 
-> Do not do too much requests, as ngrok's free limits are 120 per minute, not too much. just cooldown a minute
+2. **Run verification and start dev servers:**
+   ```bash
+   npm run clean-check    # Should complete without errors
+   npm run dev
+   ```
 
+3. **Test the application:**
+   - Open http://localhost:3000
+   - Navigate to **Profile** section
+   - You should see a "DEV Developer" user
+   - Try adding posts and changing user data
 
+---
 
+## Local Development with Telegram
 
-## Production deployment
-- Go to Cloudflare dash and get:
-    - API token for workers & pages
-    - Account ID `wrangler whoami`
-    - i recoment you add `CF_API_TOKEN` and `CF_ACCOUNT_ID` to .env file
+Full integration testing with a real Telegram bot.
 
+### 1. Setup ngrok Tunnel
 
-- Create Cloudflare instaces (yes, all of them):
-    - D1 Database:
-    `wrangler d1 create <your-database-name>`
-    - copy database_name and database_id to wrangler.toml
-    - KV Namespace:
-    - change `package.json`, line 28, to use your new <your-database-name>`
-    `"db:migrate:local": "npx wrangler d1 migrations <your-database-name>` apply  --local",`
+```bash
+npm run tunnel:start
+```
 
-    `wrangler kv namespace create <your-kv-namespace-name>`
-    - copy binding and id to wrangler.toml to kv section
-    -  R2 Bucket:
-    `wrangler r2 bucket create <bucket-name>
-    - copy binding and bucket_name to wrangler.toml to R2 section
-    - Enable R2 bucket public access:
-        - go to cloudflare dashboard
-        - R2 -> your new R2 instance -> Settings -> Public Development URL (for custom domain visit [[DOMAIN]])
+Note the URL you receive (e.g., `https://1cd4689c783a.ngrok-free.app/`)
 
+### 2. Create Telegram Bot
 
-- make another TG-bot for production
-- go to github secrets & vars, and setup:
-    - **SECRETS**:
-        - `CLOUDFLARE_ACCOUNT_ID` - you can get it with `wrangler whoami`
-        - `CLOUDFLARE_API_TOKEN` - !! **NEED URL to manual**
-        - `TELEGRAM_ADMIN_ID` - your TG-ID
-        - `TELEGRAM_BOT_TOKEN` - for production bot
-    - **Variables**:
-        - PAGES_URL:
-            - set your project name in `wrangler.toml` (on 1st row)
-            - `wrangler deploy` - will create a new deployment, use its URL
-        - WORKER_URL:
-            `wrangler pages project create <my-project>`
-        - R2_URL:
-            - from above
-        - PAGES_PROJECT_NAME same as you used in WORKER_URL
+1. Message [@BotFather](https://t.me/botfather) on Telegram
+2. Create a new bot and save the **bot token**
+3. Set the menu button URL to your ngrok URL
 
-- set telegram bot's menu button the `PAGES_URL` in botfather
-- set `PAGES_URL` in `wrangler.dev
+### 3. Get Your Telegram ID
 
-- Create a new commit in copied repo & push
-- watch it in github actions, gotta be green
-- go to bot and check:
-    - send /start message
-    - open webapp, gotta work!
-    - gotta have "payments" if your TG ID is ADMIN
-    - gotta have profile name as your telegram name
-- Congrats!
+1. Message [@username_to_id_bot](https://t.me/username_to_id_bot)
+2. Save your numeric Telegram ID
 
+### 4. Configure Environment
 
+Edit `.env`:
+```bash
+TELEGRAM_BOT_TOKEN=<your-bot-token>
+TELEGRAM_ADMIN_ID=<your-telegram-id>
+DEV_AUTH_BYPASS_ENABLED=false
+```
 
-## Custom domain
+### 5. Restart Development Server
 
-Congrats if you have one! 
-1. Setup custom domain in coudflare worker
-2. Setup custom domain in coudflare pages
-3. Change Github envs to these new urls
+```bash
+npm run stop && npm run dev
+```
 
+### 6. Test the Bot
+
+1. Open your bot in Telegram
+2. Send `/start`
+3. Open the web app
+4. Enjoy!
+
+> **⚠️ Rate Limit Warning**
+>
+> ngrok free tier limits: 120 requests/minute. If you hit the limit, wait a minute before continuing.
+
+---
+
+## Production Deployment
+
+### 1. Cloudflare Setup
+
+**Get your credentials:**
+```bash
+wrangler whoami    # Get your Account ID
+```
+
+Add to `.env` (recommended):
+```bash
+CF_API_TOKEN=<your-api-token>
+CF_ACCOUNT_ID=<your-account-id>
+```
+
+### 2. Create Cloudflare Resources
+
+**D1 Database:**
+```bash
+wrangler d1 create <your-database-name>
+```
+- Copy `database_name` and `database_id` to `wrangler.toml`
+- Update `package.json` line 28:
+  ```json
+  "db:migrate:local": "npx wrangler d1 migrations apply <your-database-name> --local"
+  ```
+
+**KV Namespace:**
+```bash
+wrangler kv namespace create <your-kv-namespace-name>
+```
+- Copy `binding` and `id` to `wrangler.toml` KV section
+
+**R2 Bucket:**
+```bash
+wrangler r2 bucket create <bucket-name>
+```
+- Copy `binding` and `bucket_name` to `wrangler.toml` R2 section
+- **Enable public access:**
+  1. Go to Cloudflare Dashboard
+  2. Navigate to R2 → Your bucket → Settings
+  3. Enable "Public Development URL"
+
+### 3. Create Production Bot
+
+Create a new bot with [@BotFather](https://t.me/botfather) for production use (separate from development).
+
+### 4. Configure GitHub Secrets
+
+Go to your GitHub repository → Settings → Secrets and variables → Actions
+
+**Secrets:**
+- `CLOUDFLARE_ACCOUNT_ID` - From `wrangler whoami`
+- `CLOUDFLARE_API_TOKEN` - [Create API token](https://dash.cloudflare.com/profile/api-tokens)
+- `TELEGRAM_ADMIN_ID` - Your Telegram ID
+- `TELEGRAM_BOT_TOKEN` - Production bot token
+
+**Variables:**
+- `PAGES_URL` - Your Cloudflare Pages URL (see next step)
+- `WORKER_URL` - Your Cloudflare Worker URL
+- `R2_URL` - Your R2 bucket public URL (from step 2)
+- `PAGES_PROJECT_NAME` - Your Pages project name
+
+### 5. Deploy Infrastructure
+
+**Create Pages project:**
+```bash
+wrangler pages project create <my-project>
+```
+
+**Set project name in `wrangler.toml`** (line 1)
+
+**Deploy worker:**
+```bash
+wrangler deploy
+```
+Note the deployment URL for `WORKER_URL` variable.
+
+### 6. Configure Bot
+
+Update your production bot's menu button with `PAGES_URL` using [@BotFather](https://t.me/botfather).
+
+### 7. Deploy via GitHub Actions
+
+1. Commit and push your changes
+2. Monitor deployment in GitHub Actions
+3. Ensure the workflow completes successfully (green checkmark)
+
+### 8. Verify Deployment
+
+Test your production bot:
+- ✅ Send `/start` message
+- ✅ Open web app (should load)
+- ✅ Check "Payments" section (visible to admin)
+- ✅ Verify profile shows your Telegram name
+
+**🎉 Congratulations! Your app is live!**
+
+---
+
+## Custom Domain (Optional)
+
+If you have a custom domain:
+
+1. **Configure Worker domain:**
+   - Cloudflare Dashboard → Workers & Pages → Your worker → Settings → Domains
+
+2. **Configure Pages domain:**
+   - Cloudflare Dashboard → Workers & Pages → Your Pages project → Custom domains
+
+3. **Update GitHub variables:**
+   - Update `PAGES_URL` and `WORKER_URL` with your custom domains
+
+4. **Update bot menu button** in [@BotFather](https://t.me/botfather) with your custom domain
