@@ -63,15 +63,8 @@ jobs:
       - name: Deploy to Cloudflare Pages
         id: deploy-pages
         run: |
-          # Extract Pages project name from wrangler.toml
-          PAGES_PROJECT=$(grep '^name = ' wrangler.toml | cut -d'"' -f2)
-          if [ -z "$PAGES_PROJECT" ]; then
-            echo "❌ Failed to extract project name from wrangler.toml"
-            exit 1
-          fi
-          echo "Deploying Pages project: $PAGES_PROJECT"
           cd frontend
-          npx wrangler pages deploy dist --project-name="$PAGES_PROJECT" --commit-dirty=true
+          npx wrangler pages deploy dist --project-name="${{ vars.PAGES_PROJECT_NAME }}" --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

@@ -88,6 +88,7 @@
             `wrangler pages project create <my-project>`
         - R2_URL:
             - from above
+        - PAGES_PROJECT_NAME same as you used in WORKER_URL
 
 - Create a new commit in copied repo & push
 - watch it in github actions, gotta be green
