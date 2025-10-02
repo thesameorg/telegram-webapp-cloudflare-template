@@ -90,6 +90,7 @@
             - from above
         - PAGES_PROJECT_NAME same as you used in WORKER_URL
 
+- set telegram bot's menu button the `PAGES_URL` in botfather
 - Create a new commit in copied repo & push
 - watch it in github actions, gotta be green
 
