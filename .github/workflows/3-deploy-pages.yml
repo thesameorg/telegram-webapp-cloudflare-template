@@ -38,6 +38,10 @@ jobs:
             echo "WORKER_URL is not set"
             exit 1
           fi
+          if [ -z "${{ vars.R2_URL }}" ]; then
+            echo "R2_URL is not set"
+            exit 1
+          fi
           # PAGES_URL is optional - only needed for strict CORS validation in production
           if [ -z "${{ vars.PAGES_URL }}" ]; then
             echo "⚠️  PAGES_URL is not set - Worker will use wildcard CORS (*)"
@@ -54,6 +58,7 @@ jobs:
           npm run build
         env:
           VITE_WORKER_URL: ${{ vars.WORKER_URL }}
+          VITE_R2_URL: ${{ vars.R2_URL }}
 
       - name: Deploy to Cloudflare Pages
         id: deploy-pages

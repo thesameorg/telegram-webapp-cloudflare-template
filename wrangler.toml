@@ -1,4 +1,4 @@
-name = "twa-cf-tpl"
+name = "telegram-webapp-cloudflare-template"
 main = "backend/src/index.ts"
 compatibility_date = "2024-09-01"
 compatibility_flags = ["nodejs_compat"]
@@ -10,21 +10,23 @@ head_sampling_rate = 0.1
 
 # KV Namespaces - create a namespace in Cloudflare dashboard and replace with actual ID
 [[kv_namespaces]]
-binding = "SESSIONS"
-id = "214af53e9fd44c18ba913499a606dd70"
+binding = "telefare_kv"
+id = "c60b9a7fb0714e16bcf5200334ea23a1"
+
+
 
 # D1 Databases
 [[d1_databases]]
 binding = "DB"
-database_name = "twa-tpl-db"
-database_id = "c9fe2099-a700-4a59-8294-08e8e1049ca7"
+database_name = "telefare_prod_db"
+database_id = "a5c2804a-090a-4597-ba53-e571d36e3010"
 migrations_dir = "backend/drizzle/migrations"
 
 
 # R2 Buckets
 [[r2_buckets]]
-binding = "IMAGES"
-bucket_name = "twa-tpl-images"
+binding = "telefare_images"
+bucket_name = "telefare-images"
 
 
 # Non-secret environment variables

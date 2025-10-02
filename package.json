@@ -1,6 +1,6 @@
 {
-  "name": "twa-cf-tpl",
-  "version": "1.0.0",
+  "name": "telegram-webapp-cloudflare-template",
+  "version": "0.1.0",
   "description": "Telegram Web App + Bot Template for Cloudflare",
   "scripts": {
     "install": "npm run install:backend && npm run install:frontend",
@@ -32,10 +32,6 @@
     "webhook:set": "./scripts/webhook.sh set",
     "webhook:status": "./scripts/webhook.sh status",
     "webhook:clear": "./scripts/webhook.sh clear"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/your-username/twa-cf-tpl.git"
   },
   "keywords": [
     "telegram",
