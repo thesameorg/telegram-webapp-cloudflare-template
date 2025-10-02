@@ -37,8 +37,15 @@ jobs:
 
       - name: Run Database Migrations
         run: |
+          # Extract D1 database name from wrangler.toml
+          DB_NAME=$(grep -A 3 '\[\[d1_databases\]\]' wrangler.toml | grep 'database_name' | cut -d'"' -f2)
+          if [ -z "$DB_NAME" ]; then
+            echo "❌ Failed to extract database_name from wrangler.toml"
+            exit 1
+          fi
+          echo "Running migrations for database: $DB_NAME"
           cd backend
-          npx wrangler d1 migrations apply twa-tpl-db --remote || exit 1
+          npx wrangler d1 migrations apply "$DB_NAME" --remote || exit 1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

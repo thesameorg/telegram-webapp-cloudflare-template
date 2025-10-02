@@ -82,13 +82,15 @@
         - `TELEGRAM_BOT_TOKEN` - for production bot
     - **Variables**:
         - PAGES_URL:
+            - set your project name in `wrangler.toml` (on 1st row)
             - `wrangler deploy` - will create a new deployment, use its URL
         - WORKER_URL:
             `wrangler pages project create <my-project>`
         - R2_URL:
             - from above
 
-- Create a new commit in copied repo
+- Create a new commit in copied repo & push
+- watch it in github actions, gotta be green
 
 
 
