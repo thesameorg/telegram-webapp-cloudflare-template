@@ -42,14 +42,19 @@ PAGES_URL=https://abc123.ngrok-free.app  # Must match ngrok URL exactly!
 
 **Important:**
 - Update `PAGES_URL` in `.env` when ngrok restarts (URL changes)
-- Restart backend after changing `PAGES_URL`
+- Restart backend after changing `.env`
 - Bot sends Web App button with ngrok URL
 - User clicks → ngrok tunnel → localhost:3000 → Vite proxy → localhost:8787
+
+**ngrok internals:**
+- ngrok runs on port 3000 (tunnels to frontend)
+- ngrok API available at `http://localhost:4040` for status/management
+- Scripts use `http://localhost:4040/api/tunnels` to retrieve active tunnel URL
 
 **Request flow:**
 ```
 Telegram → https://abc123.ngrok-free.app
-  → ngrok → localhost:3000 (frontend)
+  → ngrok (port 4040 API) → localhost:3000 (frontend)
   → Vite proxy /api → localhost:8787 (backend)
 ```
 
@@ -120,7 +125,7 @@ This is normal - tests don't need real CORS validation.
 |----------|-------|---------|
 | `TELEGRAM_BOT_TOKEN` | Your dev bot token | Bot API access |
 | `TELEGRAM_ADMIN_ID` | Your Telegram ID | Admin role |
-| `PAGES_URL` | `http://localhost:3000` or ngrok URL | CORS validation |
+| `PAGES_URL` | `http://localhost:3000` or ngrok URL (optional) | CORS validation |
 | `DEV_AUTH_BYPASS_ENABLED` | `true` for browser testing | Skip Telegram auth |
 
 ### GitHub Secrets
@@ -137,18 +142,109 @@ This is normal - tests don't need real CORS validation.
 | Variable | Purpose |
 |----------|---------|
 | `WORKER_URL` | Frontend API base URL (build-time) |
-| `PAGES_URL` | Worker CORS origin (runtime) |
+| `PAGES_URL` | Worker CORS origin (runtime, optional) |
 
 ---
 
 ## Where Variables Come From
 
 | Environment | PAGES_URL | WORKER_URL | Auth |
-|-------------|-----------|------------|------|
+|-------------|-------------|------------|------|
 | Local (browser) | `.env` | Vite proxy | Bypass required |
 | Local (ngrok) | `.env` (ngrok URL) | Vite proxy | Telegram |
 | Tests | None (fallback `*`) | N/A | Mock |
 | Production | GitHub Var → `--var` | GitHub Var → build | Telegram |
+
+---
+
+## API Routes Reference
+
+Complete catalog of all backend API endpoints defined in `backend/src/index.ts`.
+
+### Public Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/` | GET | Root health check, returns "Telegram Web App + Bot Template" |
+| `/api/health` | GET | Health check endpoint |
+| `/webhook` | POST | Telegram bot webhook handler |
+| `/r2/*` | GET | Serve images from R2 storage (1-year cache) |
+
+### Authentication
+
+| Route | Method | Description | Auth Required |
+|-------|--------|-------------|---------------|
+| `/api/auth` | POST | Authenticate Telegram Web App user | No |
+
+### Posts
+
+| Route | Method | Description | Auth Required |
+|-------|--------|-------------|---------------|
+| `/api/posts` | GET | List posts with pagination (default 50, max 100) | Yes |
+| `/api/posts` | POST | Create new post | Yes |
+| `/api/posts/user/:userId` | GET | Get posts by specific user ID | Yes |
+| `/api/posts/:postId` | GET | Get single post by ID | Yes |
+| `/api/posts/:postId` | PUT | Update post | Yes (owner) |
+| `/api/posts/:postId` | DELETE | Delete post | Yes (owner) |
+| `/api/posts/:postId/images` | POST | Upload images to post (max 10, multipart/form-data) | Yes (owner) |
+| `/api/posts/:postId/images/:imageId` | DELETE | Delete specific image from post | Yes (owner) |
+| `/api/posts/:postId/make-premium` | POST | Create Telegram Stars invoice (1-10 stars) | Yes (owner) |
+| `/api/posts/:postId/clear-pending` | POST | Clear pending payment status for post | Yes (owner) |
+
+### Profile
+
+| Route | Method | Description | Auth Required |
+|-------|--------|-------------|---------------|
+| `/api/profile/me` | GET | Get current user profile | Yes |
+| `/api/profile/me` | PUT | Update current user profile | Yes |
+| `/api/profile/me/avatar` | POST | Upload user avatar (max 5MB) | Yes |
+| `/api/profile/me/avatar` | DELETE | Delete user avatar | Yes |
+| `/api/profile/:telegramId` | GET | Get profile by Telegram ID | Yes |
+
+### Payments
+
+| Route | Method | Description | Auth Required |
+|-------|--------|-------------|---------------|
+| `/api/payments` | GET | List payments with pagination (default 50, max 100) | Yes (admin) |
+| `/api/payments/balance` | GET | Get cached bot star balance (5min cache) | Yes (admin) |
+| `/api/payments/refresh-balance` | POST | Force refresh bot star balance from Telegram API | Yes (admin) |
+| `/api/payments/reconcile` | POST | Reconcile payments with Telegram transactions | Yes (admin) |
+| `/api/payments/:paymentId/refund` | POST | Refund payment (within 7 day window) | Yes (admin) |
+
+### Admin
+
+| Route | Method | Description | Auth Required |
+|-------|--------|-------------|---------------|
+| `/api/admin/ban/:telegramId` | POST | Ban user by Telegram ID | Yes (admin) |
+| `/api/admin/unban/:telegramId` | POST | Unban user by Telegram ID | Yes (admin) |
+
+### Request/Response Details
+
+**Pagination Parameters (query params):**
+- `page`: Page number (default 1)
+- `limit`: Items per page (default 50, max 100)
+
+**Image Upload (multipart/form-data):**
+- Fields: `image_N`, `thumbnail_N`, `order_N`, `width_N`, `height_N` (where N is index)
+- Max 10 images per post
+- Allowed types: `image/jpeg`, `image/png`, `image/webp`
+- Max size: 1MB (full images), 100KB (thumbnails), 10MB (frontend limit)
+
+**R2 Storage Paths:**
+- Full images: `images/{postId}/full/`
+- Thumbnails: `images/{postId}/thumbs/`
+
+**Payment Status Enum:**
+- `created`: Initial state (not sent to user yet)
+- `pending`: Invoice sent, awaiting user payment
+- `succeeded`: Payment completed successfully
+- `failed`: Payment failed or cancelled
+- `refunded`: Payment refunded to user
+
+**Authentication Methods:**
+- `Bearer {token}`: Standard OAuth token
+- `Session {sessionId}`: Custom session token
+- `tma {initData}`: Telegram Mini App initData
 
 ---
 
