@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { config } from '../config';
 
 interface Post {
   id: number;
@@ -52,10 +53,11 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
       }
 
       const url = userId
-        ? `/api/posts/user/${userId}?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`
-        : `/api/posts?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`;
+        ? `${config.apiBaseUrl}/api/posts/user/${userId}?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`
+        : `${config.apiBaseUrl}/api/posts?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`;
 
       const response = await fetch(url, {
+        credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
