@@ -22,6 +22,12 @@ export async function handleWebhook(c: Context) {
     )
   })
 
+  bot.command('repo', async (ctx: GrammyContext) => {
+    await ctx.reply(
+      'https://github.com/garootman/telegram-webapp-cloudflare-template/'
+    )
+  })
+
   // Payment webhook handlers (MUST be before generic message handler)
   bot.on('pre_checkout_query', async (ctx: GrammyContext) => {
     console.log('📋 Received pre_checkout_query')
