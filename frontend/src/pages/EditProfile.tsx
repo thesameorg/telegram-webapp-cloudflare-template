@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProfileEditor } from '../components/profile/ProfileEditor';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
 import { useToast } from '../hooks/use-toast';
-import { useSimpleAuth } from '../hooks/use-simple-auth';
+import { useAuth } from '../contexts/AuthContext';
 import { config } from '../config';
 
 interface ProfileData {
@@ -23,7 +23,7 @@ interface ProfileData {
 export default function EditProfile() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { sessionId, isLoading: authLoading } = useSimpleAuth();
+  const { sessionId, isLoading: authLoading } = useAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);

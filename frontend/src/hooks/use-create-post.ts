@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTelegramAuth } from './use-telegram-auth';
+import { useAuth } from '../contexts/AuthContext';
 import { config } from '../config';
 
 interface CreatePostData {
@@ -25,7 +25,7 @@ interface CreatePostResult {
 export function useCreatePost(): CreatePostResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { sessionId } = useTelegramAuth();
+  const { sessionId } = useAuth();
 
   const createPost = async (data: CreatePostData): Promise<{ post: Post } | null> => {
     if (!sessionId) {

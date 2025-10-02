@@ -1,10 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { useTelegramAuth } from '../hooks/use-telegram-auth';
-import { useSimpleAuth } from '../hooks/use-simple-auth';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function BottomNavigation() {
-  const { user } = useTelegramAuth();
-  const { isAdmin } = useSimpleAuth();
+  const { user, isAdmin } = useAuth();
 
   const navItems = [
     {

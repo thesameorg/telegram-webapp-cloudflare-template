@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useTelegram } from './utils/telegram'
 import Router from './Router'
 import { ToastProvider } from './hooks/use-toast'
+import { AuthProvider } from './contexts/AuthContext'
 import './index.css'
 
 function App() {
@@ -21,11 +22,13 @@ function App() {
   }, [webApp, isWebAppReady])
 
   return (
-    <ToastProvider>
-      <div className="App min-h-screen">
-        <Router />
-      </div>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <div className="App min-h-screen">
+          <Router />
+        </div>
+      </ToastProvider>
+    </AuthProvider>
   )
 }
 

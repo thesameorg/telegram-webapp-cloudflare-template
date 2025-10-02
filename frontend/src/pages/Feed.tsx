@@ -5,7 +5,7 @@ import CreatePost from '../components/CreatePost';
 import EditPost from '../components/EditPost';
 import DeletePostConfirm from '../components/DeletePostConfirm';
 import MakePremiumModal from '../components/MakePremiumModal';
-import { useSimpleAuth } from '../hooks/use-simple-auth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Post {
   id: number;
@@ -26,7 +26,7 @@ export default function Feed() {
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(null);
   const refetchRef = useRef<(() => void) | null>(null);
-  const { user, isAdmin } = useSimpleAuth();
+  const { user, isAdmin } = useAuth();
 
   const handlePostCreated = () => {
     if (refetchRef.current) {

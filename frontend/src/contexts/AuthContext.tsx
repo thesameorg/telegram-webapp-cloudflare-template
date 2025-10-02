@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthStorage } from '../utils/auth-storage';
 import { useTelegram } from '../utils/telegram';
 import { config } from '../config';
@@ -22,11 +22,17 @@ interface AuthState {
   isAdmin: boolean;
 }
 
+const AuthContext = createContext<AuthState | null>(null);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 /**
- * Simple auth hook that authenticates once on startup and reads from localStorage
- * Backend handles session-first logic (sessionId first, initData fallback)
+ * AuthProvider - Centralized authentication state for the entire app
+ * Performs a single auth request on startup and shares state via Context
  */
-export function useSimpleAuth(): AuthState {
+export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     isLoading: true,
@@ -130,5 +136,21 @@ export function useSimpleAuth(): AuthState {
     return () => { mounted = false; };
   }, [isWebAppReady, webApp]);
 
-  return authState;
+  return (
+    <AuthContext.Provider value={authState}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+/**
+ * useAuth - Hook to access centralized auth state
+ * Replaces the old useSimpleAuth hook
+ */
+export function useAuth(): AuthState {
+  const context = useContext(AuthContext);
+  if (context === null) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

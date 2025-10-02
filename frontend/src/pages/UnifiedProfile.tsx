@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSimpleAuth } from '../hooks/use-simple-auth';
+import { useAuth } from '../contexts/AuthContext';
 import { useTelegram } from '../utils/telegram';
 import { ProfileView } from '../components/profile/ProfileView';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
@@ -54,7 +54,7 @@ interface PostData {
 export default function UnifiedProfile() {
   const { telegramId } = useParams<{ telegramId: string }>();
   const navigate = useNavigate();
-  const { user, sessionId, expiresAt, isLoading, isAdmin } = useSimpleAuth();
+  const { user, sessionId, expiresAt, isLoading, isAdmin } = useAuth();
   const { webApp } = useTelegram();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);

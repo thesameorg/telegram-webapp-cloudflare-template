@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSimpleAuth } from '../hooks/use-simple-auth';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { config } from '../config';
@@ -22,7 +22,7 @@ interface BalanceData {
 }
 
 export default function Payments() {
-  const { isAdmin, isLoading: authLoading } = useSimpleAuth();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
