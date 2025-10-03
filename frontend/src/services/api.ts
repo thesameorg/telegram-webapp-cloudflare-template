@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from "../config";
 
 interface Post {
   id: number;
@@ -24,16 +24,21 @@ interface PostsResponse {
 }
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new ApiError(response.status, errorData.error || 'Request failed');
+    const errorData = await response
+      .json()
+      .catch(() => ({ error: "Unknown error" }));
+    throw new ApiError(response.status, errorData.error || "Request failed");
   }
   return response.json();
 };
@@ -47,34 +52,44 @@ export const api = {
     });
 
     const response = await fetch(`${config.apiBaseUrl}/api/posts?${params}`, {
-      credentials: 'include',
+      credentials: "include",
     });
     return handleResponse(response);
   },
 
   // Fetch posts by user ID
-  async getUserPosts(userId: number, limit = 50, offset = 0): Promise<PostsResponse> {
+  async getUserPosts(
+    userId: number,
+    limit = 50,
+    offset = 0,
+  ): Promise<PostsResponse> {
     const params = new URLSearchParams({
       limit: limit.toString(),
       offset: offset.toString(),
     });
 
-    const response = await fetch(`${config.apiBaseUrl}/api/posts/user/${userId}?${params}`, {
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/posts/user/${userId}?${params}`,
+      {
+        credentials: "include",
+      },
+    );
     return handleResponse(response);
   },
 
   // Create a new post
-  async createPost(data: CreatePostData, sessionId: string): Promise<{ post: Post }> {
+  async createPost(
+    data: CreatePostData,
+    sessionId: string,
+  ): Promise<{ post: Post }> {
     const response = await fetch(`${config.apiBaseUrl}/api/posts`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionId}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionId}`,
       },
       body: JSON.stringify(data),
-      credentials: 'include',
+      credentials: "include",
     });
 
     return handleResponse(response);

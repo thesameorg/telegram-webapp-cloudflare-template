@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from "react";
 
 interface UseInfiniteScrollOptions {
   hasMore: boolean;
@@ -11,7 +11,7 @@ export function useInfiniteScroll({
   hasMore,
   loading,
   onLoadMore,
-  threshold = 100
+  threshold = 100,
 }: UseInfiniteScrollOptions) {
   const handleScroll = useCallback(() => {
     if (loading || !hasMore) return;
@@ -26,7 +26,7 @@ export function useInfiniteScroll({
   }, [loading, hasMore, onLoadMore, threshold]);
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 }

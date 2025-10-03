@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import Cropper, { Area } from 'react-easy-crop';
-import { getCroppedImg, createImagePreview } from '../utils/image-crop';
-import { useToast } from '../hooks/use-toast';
+import React, { useState, useCallback } from "react";
+import Cropper, { Area } from "react-easy-crop";
+import { getCroppedImg, createImagePreview } from "../utils/image-crop";
+import { useToast } from "../hooks/use-toast";
 
 interface ImageCropModalProps {
   image: File;
@@ -16,12 +16,12 @@ export default function ImageCropModal({
   onCropComplete,
   onCancel,
   aspectRatio = 1,
-  showSkip = false
+  showSkip = false,
 }: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const { showToast } = useToast();
 
@@ -30,7 +30,7 @@ export default function ImageCropModal({
     createImagePreview(image)
       .then(setImageSrc)
       .catch(() => {
-        showToast('Failed to load image', 'error');
+        showToast("Failed to load image", "error");
         onCancel();
       });
   }, [image, onCancel, showToast]);
@@ -39,7 +39,7 @@ export default function ImageCropModal({
     (_croppedArea: Area, croppedAreaPixels: Area) => {
       setCroppedAreaPixels(croppedAreaPixels);
     },
-    []
+    [],
   );
 
   const handleDone = useCallback(async () => {
@@ -47,11 +47,15 @@ export default function ImageCropModal({
 
     setIsProcessing(true);
     try {
-      const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels, image);
+      const croppedFile = await getCroppedImg(
+        imageSrc,
+        croppedAreaPixels,
+        image,
+      );
       onCropComplete(croppedFile);
     } catch (error) {
-      console.error('Crop failed:', error);
-      showToast('Failed to crop image', 'error');
+      console.error("Crop failed:", error);
+      showToast("Failed to crop image", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -60,15 +64,15 @@ export default function ImageCropModal({
   // Handle keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onCancel();
-      } else if (e.key === 'Enter' && croppedAreaPixels && !isProcessing) {
+      } else if (e.key === "Enter" && croppedAreaPixels && !isProcessing) {
         handleDone();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [croppedAreaPixels, isProcessing, onCancel, handleDone]);
 
   const handleSkip = () => {
@@ -92,8 +96,18 @@ export default function ImageCropModal({
           className="text-gray-300 hover:text-white"
           aria-label="Cancel"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -125,7 +139,10 @@ export default function ImageCropModal({
 
       {/* Zoom Slider */}
       <div className="bg-black bg-opacity-50 px-4 py-3">
-        <label htmlFor="zoom-slider" className="block text-sm text-gray-300 mb-2">
+        <label
+          htmlFor="zoom-slider"
+          className="block text-sm text-gray-300 mb-2"
+        >
           Zoom: {zoom.toFixed(1)}x
         </label>
         <input
@@ -163,7 +180,7 @@ export default function ImageCropModal({
           disabled={isProcessing || !croppedAreaPixels}
           className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isProcessing ? 'Processing...' : 'Done'}
+          {isProcessing ? "Processing..." : "Done"}
         </button>
       </div>
     </div>

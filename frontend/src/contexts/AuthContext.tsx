@@ -1,7 +1,13 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthStorage } from '../utils/auth-storage';
-import { useTelegram } from '../utils/telegram';
-import { config } from '../config';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { AuthStorage } from "../utils/auth-storage";
+import { useTelegram } from "../utils/telegram";
+import { config } from "../config";
 
 interface TelegramUser {
   id: number;
@@ -39,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user: null,
     sessionId: null,
     expiresAt: null,
-    isAdmin: false
+    isAdmin: false,
   });
 
   const { webApp, isWebAppReady } = useTelegram();
@@ -69,13 +75,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           requestBody.initData = webApp.initData;
         }
 
-        console.log('Frontend: Sending authentication request with body:', requestBody);
+        console.log(
+          "Frontend: Sending authentication request with body:",
+          requestBody,
+        );
 
         const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody),
-          credentials: 'include'
+          credentials: "include",
         });
 
         if (response.ok) {
@@ -83,7 +92,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (authData.authenticated) {
             // Store auth state
-            AuthStorage.setAuthState(authData.sessionId, authData.expiresAt, authData.user);
+            AuthStorage.setAuthState(
+              authData.sessionId,
+              authData.expiresAt,
+              authData.user,
+            );
 
             if (mounted) {
               setAuthState({
@@ -92,7 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 user: authData.user,
                 sessionId: authData.sessionId,
                 expiresAt: authData.expiresAt,
-                isAdmin: authData.isAdmin || false
+                isAdmin: authData.isAdmin || false,
               });
             }
             return;
@@ -108,12 +121,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             user: null,
             sessionId: null,
             expiresAt: null,
-            isAdmin: false
+            isAdmin: false,
           });
         }
-
       } catch (error) {
-        console.error('Authentication error:', error);
+        console.error("Authentication error:", error);
         AuthStorage.clearSession();
         if (mounted) {
           setAuthState({
@@ -122,7 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             user: null,
             sessionId: null,
             expiresAt: null,
-            isAdmin: false
+            isAdmin: false,
           });
         }
       }
@@ -133,13 +145,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       authenticate();
     }
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [isWebAppReady, webApp]);
 
   return (
-    <AuthContext.Provider value={authState}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={authState}>{children}</AuthContext.Provider>
   );
 }
 
@@ -150,7 +162,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthState {
   const context = useContext(AuthContext);
   if (context === null) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

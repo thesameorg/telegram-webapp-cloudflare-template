@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { useToast } from '../hooks/use-toast';
-import { config } from '../config';
+import { useState, useEffect, useRef } from "react";
+import { useToast } from "../hooks/use-toast";
+import { config } from "../config";
 
 interface MakePremiumModalProps {
   postId: number;
@@ -8,7 +8,11 @@ interface MakePremiumModalProps {
   onSuccess?: () => void;
 }
 
-export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePremiumModalProps) {
+export default function MakePremiumModal({
+  postId,
+  onClose,
+  onSuccess,
+}: MakePremiumModalProps) {
   const [starCount, setStarCount] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isWaitingForUpdate, setIsWaitingForUpdate] = useState(false);
@@ -21,27 +25,28 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      if (countdownIntervalRef.current)
+        clearInterval(countdownIntervalRef.current);
     };
   }, []);
 
   // Calculate golden gradient preview
   const getGradientPreview = (stars: number) => {
     const intensity = stars / 10;
-    const lightness = 90 - (intensity * 30);
-    const saturation = 70 + (intensity * 20);
+    const lightness = 90 - intensity * 30;
+    const saturation = 70 + intensity * 20;
     return `linear-gradient(135deg, hsl(45, ${saturation}%, ${lightness}%), hsl(39, ${saturation + 10}%, ${lightness - 5}%))`;
   };
 
   // Poll for post update after payment
   const pollPostUpdate = async () => {
-    const sessionId = localStorage.getItem('telegram_session_id');
+    const sessionId = localStorage.getItem("telegram_session_id");
     if (!sessionId) return false;
 
     try {
       const response = await fetch(`${config.apiBaseUrl}/api/posts`, {
-        headers: { 'Authorization': `Bearer ${sessionId}` },
-        credentials: 'include',
+        headers: { Authorization: `Bearer ${sessionId}` },
+        credentials: "include",
       });
 
       if (!response.ok) return false;
@@ -50,13 +55,16 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
       const updatedPost = data.posts?.find((p: any) => p.id === postId);
 
       // Check if payment has been processed (starCount > 0 or no longer pending)
-      if (updatedPost && (updatedPost.starCount > 0 || updatedPost.isPaymentPending !== 1)) {
+      if (
+        updatedPost &&
+        (updatedPost.starCount > 0 || updatedPost.isPaymentPending !== 1)
+      ) {
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error('Error polling post update:', error);
+      console.error("Error polling post update:", error);
       return false;
     }
   };
@@ -70,7 +78,8 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
     countdownIntervalRef.current = window.setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+          if (countdownIntervalRef.current)
+            clearInterval(countdownIntervalRef.current);
           handleReload();
           return 0;
         }
@@ -84,7 +93,8 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
       if (isUpdated) {
         // Payment processed! Refresh immediately
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        if (countdownIntervalRef.current)
+          clearInterval(countdownIntervalRef.current);
         handleReload();
       }
     }, 500);
@@ -92,39 +102,43 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
 
   const handleReload = () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    if (countdownIntervalRef.current)
+      clearInterval(countdownIntervalRef.current);
     onSuccess?.();
     onClose();
   };
 
   const handleConfirm = async () => {
     if (starCount < 1 || starCount > 10) {
-      showToast('Please select between 1 and 10 stars', 'error');
+      showToast("Please select between 1 and 10 stars", "error");
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
       // Create payment and get invoice URL
-      const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}/make-premium`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionId}`,
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/posts/${postId}/make-premium`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionId}`,
+          },
+          body: JSON.stringify({ star_count: starCount }),
+          credentials: "include",
         },
-        body: JSON.stringify({ star_count: starCount }),
-        credentials: 'include',
-      });
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create payment');
+        throw new Error(error.error || "Failed to create payment");
       }
 
       const { invoice_url } = await response.json();
@@ -134,35 +148,44 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
         window.Telegram.WebApp.openInvoice(invoice_url, async (status) => {
           setIsProcessing(false);
 
-          if (status === 'paid') {
-            showToast(`Payment successful! Updating post...`, 'success');
+          if (status === "paid") {
+            showToast(`Payment successful! Updating post...`, "success");
             startWaitingForUpdate();
-          } else if (status === 'cancelled') {
+          } else if (status === "cancelled") {
             // Clear pending flag
-            await fetch(`${config.apiBaseUrl}/api/posts/${postId}/clear-pending`, {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${sessionId}` },
-              credentials: 'include',
-            });
-            showToast('Payment cancelled', 'info');
+            await fetch(
+              `${config.apiBaseUrl}/api/posts/${postId}/clear-pending`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${sessionId}` },
+                credentials: "include",
+              },
+            );
+            showToast("Payment cancelled", "info");
             onSuccess?.(); // Refresh to clear loading state
-          } else if (status === 'failed') {
+          } else if (status === "failed") {
             // Clear pending flag
-            await fetch(`${config.apiBaseUrl}/api/posts/${postId}/clear-pending`, {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${sessionId}` },
-              credentials: 'include',
-            });
-            showToast('Payment failed', 'error');
+            await fetch(
+              `${config.apiBaseUrl}/api/posts/${postId}/clear-pending`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${sessionId}` },
+                credentials: "include",
+              },
+            );
+            showToast("Payment failed", "error");
             onSuccess?.(); // Refresh to clear loading state
           }
         });
       } else {
-        throw new Error('Telegram WebApp API not available');
+        throw new Error("Telegram WebApp API not available");
       }
     } catch (error) {
       setIsProcessing(false);
-      showToast(error instanceof Error ? error.message : 'Failed to process payment', 'error');
+      showToast(
+        error instanceof Error ? error.message : "Failed to process payment",
+        "error",
+      );
     }
   };
 
@@ -184,8 +207,18 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-3">
-                <svg className="w-12 h-12 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-12 h-12 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
             </div>
@@ -206,7 +239,8 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
                 Reload Now
               </button>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Auto-reloading in {countdown} second{countdown !== 1 ? 's' : ''}...
+                Auto-reloading in {countdown} second{countdown !== 1 ? "s" : ""}
+                ...
               </p>
             </div>
           </div>
@@ -219,7 +253,7 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
     <div
       className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
       onClick={onClose}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
       role="presentation"
       tabIndex={-1}
     >
@@ -242,8 +276,18 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
             disabled={isProcessing}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -252,7 +296,10 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
         <div className="p-6 space-y-6">
           {/* Star selector */}
           <div className="space-y-3">
-            <label htmlFor="star-count" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="star-count"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Select Stars (1-10)
             </label>
             <div className="flex items-center space-x-4">
@@ -266,13 +313,15 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
                 disabled={isProcessing}
                 className="flex-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 disabled:opacity-50 touch-slider"
                 style={{
-                  height: '40px',
-                  background: `linear-gradient(to right, #FFD700 0%, #FFA500 ${(starCount / 10) * 100}%, #e5e7eb ${(starCount / 10) * 100}%, #e5e7eb 100%)`
+                  height: "40px",
+                  background: `linear-gradient(to right, #FFD700 0%, #FFA500 ${(starCount / 10) * 100}%, #e5e7eb ${(starCount / 10) * 100}%, #e5e7eb 100%)`,
                 }}
               />
               <div className="flex items-center space-x-1 min-w-[4rem] justify-end">
                 <span className="text-2xl">⭐️</span>
-                <span className="text-xl font-bold text-gray-900 dark:text-white">{starCount}</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                  {starCount}
+                </span>
               </div>
             </div>
             <style>{`
@@ -313,7 +362,7 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
               className="p-4 rounded-lg border-2"
               style={{
                 background: getGradientPreview(starCount),
-                borderImage: 'linear-gradient(135deg, #FFD700, #FFA500) 1',
+                borderImage: "linear-gradient(135deg, #FFD700, #FFA500) 1",
                 boxShadow: `0 0 ${10 + starCount * 2}px rgba(255, 215, 0, ${0.3 + (starCount / 10) * 0.4})`,
               }}
             >
@@ -326,7 +375,8 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
           {/* Cost info */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Cost:</strong> {starCount} Telegram Star{starCount > 1 ? 's' : ''}
+              <strong>Cost:</strong> {starCount} Telegram Star
+              {starCount > 1 ? "s" : ""}
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
               You&apos;ll be redirected to Telegram&apos;s payment interface
@@ -354,9 +404,7 @@ export default function MakePremiumModal({ postId, onClose, onSuccess }: MakePre
                 Processing...
               </>
             ) : (
-              <>
-                ⭐️ Make Premium
-              </>
+              <>⭐️ Make Premium</>
             )}
           </button>
         </div>

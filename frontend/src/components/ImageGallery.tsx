@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
-import GalleryImageItem, { type ImageUrlData } from './GalleryImageItem';
-import { getImageUrl } from '../utils/image-url';
+import { useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import GalleryImageItem, { type ImageUrlData } from "./GalleryImageItem";
+import { getImageUrl } from "../utils/image-url";
 
 interface ImageGalleryProps {
   images: ImageUrlData[];
@@ -15,16 +15,18 @@ interface ImageGalleryProps {
 
 export default function ImageGallery({
   images,
-  className = '',
+  className = "",
   maxThumbnails = 4,
   onImageDelete,
   canDelete = false,
-  showInfo = false
+  showInfo = false,
 }: ImageGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const sortedImages = [...images].sort((a, b) => a.uploadOrder - b.uploadOrder);
+  const sortedImages = [...images].sort(
+    (a, b) => a.uploadOrder - b.uploadOrder,
+  );
   const displayImages = sortedImages.slice(0, maxThumbnails);
   const remainingCount = Math.max(0, sortedImages.length - maxThumbnails);
 
@@ -33,7 +35,7 @@ export default function ImageGallery({
     setLightboxOpen(true);
   };
 
-  const lightboxSlides = sortedImages.map(image => ({
+  const lightboxSlides = sortedImages.map((image) => ({
     src: getImageUrl(image.imageKey),
     alt: image.originalName,
     width: image.width,
@@ -46,20 +48,20 @@ export default function ImageGallery({
 
   const getGridClasses = () => {
     const count = Math.min(displayImages.length, maxThumbnails);
-    if (count === 1) return 'grid-cols-1';
-    if (count === 2) return 'grid-cols-2';
-    if (count === 3) return 'grid-cols-3';
-    return 'grid-cols-2';
+    if (count === 1) return "grid-cols-1";
+    if (count === 2) return "grid-cols-2";
+    if (count === 3) return "grid-cols-3";
+    return "grid-cols-2";
   };
 
   const getImageClasses = (index: number) => {
     const count = Math.min(displayImages.length, maxThumbnails);
-    if (count === 1) return 'aspect-video';
-    if (count === 2) return 'aspect-square';
-    if (count === 3 && index === 0) return 'col-span-3 aspect-video';
-    if (count === 3) return 'aspect-square';
-    if (count === 4 && index === 0) return 'col-span-2 aspect-video';
-    return 'aspect-square';
+    if (count === 1) return "aspect-video";
+    if (count === 2) return "aspect-square";
+    if (count === 3 && index === 0) return "col-span-3 aspect-video";
+    if (count === 3) return "aspect-square";
+    if (count === 4 && index === 0) return "col-span-2 aspect-video";
+    return "aspect-square";
   };
 
   return (
@@ -83,7 +85,7 @@ export default function ImageGallery({
       {/* Image count info */}
       {images.length > 1 && (
         <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-          {images.length} image{images.length !== 1 ? 's' : ''}
+          {images.length} image{images.length !== 1 ? "s" : ""}
           {remainingCount > 0 && ` • ${remainingCount} more`}
         </div>
       )}
@@ -97,9 +99,7 @@ export default function ImageGallery({
         animation={{ fade: 300 }}
         controller={{ closeOnBackdropClick: true }}
         toolbar={{
-          buttons: [
-            'close'
-          ],
+          buttons: ["close"],
         }}
         render={{
           slide: ({ slide }) => (
@@ -109,8 +109,8 @@ export default function ImageGallery({
                 alt={slide.alt}
                 className="max-w-full max-h-full object-contain"
                 style={{
-                  maxWidth: '90vw',
-                  maxHeight: '90vh',
+                  maxWidth: "90vw",
+                  maxHeight: "90vh",
                 }}
               />
             </div>

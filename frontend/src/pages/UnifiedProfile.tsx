@@ -1,19 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTelegram } from '../utils/telegram';
-import { ProfileView } from '../components/profile/ProfileView';
-import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
-import { TelegramInfoSection } from '../components/TelegramInfoSection';
-import { CollapsibleSection } from '../components/CollapsibleSection';
-import PostList from '../components/PostList';
-import StaticPostList from '../components/StaticPostList';
-import EditPost from '../components/EditPost';
-import DeletePostConfirm from '../components/DeletePostConfirm';
-import BanUserConfirm from '../components/BanUserConfirm';
-import MakePremiumModal from '../components/MakePremiumModal';
-import { ImageUrlData } from '../components/ImageGallery';
-import { config } from '../config';
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useTelegram } from "../utils/telegram";
+import { ProfileView } from "../components/profile/ProfileView";
+import { ProfileSkeleton } from "../components/profile/ProfileSkeleton";
+import { TelegramInfoSection } from "../components/TelegramInfoSection";
+import { CollapsibleSection } from "../components/CollapsibleSection";
+import PostList from "../components/PostList";
+import StaticPostList from "../components/StaticPostList";
+import EditPost from "../components/EditPost";
+import DeletePostConfirm from "../components/DeletePostConfirm";
+import BanUserConfirm from "../components/BanUserConfirm";
+import MakePremiumModal from "../components/MakePremiumModal";
+import { ImageUrlData } from "../components/ImageGallery";
+import { config } from "../config";
 
 interface ProfileData {
   telegram_id: number;
@@ -65,7 +65,9 @@ export default function UnifiedProfile() {
 
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
-  const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(null);
+  const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(
+    null,
+  );
   const [showBanConfirm, setShowBanConfirm] = useState(false);
   const refetchRef = useRef<(() => void) | null>(null);
 
@@ -74,7 +76,7 @@ export default function UnifiedProfile() {
   const isOwnProfile = user?.id === actualUserId;
 
   const formatExpiryDate = (timestamp: number | null) => {
-    if (!timestamp) return 'Unknown';
+    if (!timestamp) return "Unknown";
     return new Date(timestamp).toLocaleString();
   };
 
@@ -82,28 +84,33 @@ export default function UnifiedProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!actualUserId) {
-        setError('Invalid profile ID');
+        setError("Invalid profile ID");
         setProfileLoading(false);
         return;
       }
 
       try {
-        const endpoint = isOwnProfile ? '/api/profile/me' : `/api/profile/${actualUserId}`;
+        const endpoint = isOwnProfile
+          ? "/api/profile/me"
+          : `/api/profile/${actualUserId}`;
         const fetchOptions: RequestInit = {
-          credentials: 'include',
+          credentials: "include",
         };
 
         if (isOwnProfile && sessionId) {
-          fetchOptions.headers = { 'x-session-id': sessionId };
+          fetchOptions.headers = { "x-session-id": sessionId };
         }
 
-        const response = await fetch(`${config.apiBaseUrl}${endpoint}`, fetchOptions);
+        const response = await fetch(
+          `${config.apiBaseUrl}${endpoint}`,
+          fetchOptions,
+        );
 
         if (!response.ok) {
           if (response.status === 404) {
-            setError('Profile not found');
+            setError("Profile not found");
           } else {
-            setError('Failed to load profile');
+            setError("Failed to load profile");
           }
           return;
         }
@@ -111,8 +118,8 @@ export default function UnifiedProfile() {
         const data = await response.json();
         setProfile(data.profile);
       } catch (error) {
-        console.error('Error fetching profile:', error);
-        setError('Failed to load profile');
+        console.error("Error fetching profile:", error);
+        setError("Failed to load profile");
       } finally {
         setProfileLoading(false);
       }
@@ -127,18 +134,21 @@ export default function UnifiedProfile() {
       if (!actualUserId) return;
 
       try {
-        const response = await fetch(`${config.apiBaseUrl}/api/posts/user/${actualUserId}`, {
-          credentials: 'include',
-        });
+        const response = await fetch(
+          `${config.apiBaseUrl}/api/posts/user/${actualUserId}`,
+          {
+            credentials: "include",
+          },
+        );
 
         if (response.ok) {
           const data = await response.json();
           setPosts(data.posts || []);
         } else {
-          console.error('Failed to fetch user posts');
+          console.error("Failed to fetch user posts");
         }
       } catch (error) {
-        console.error('Error fetching user posts:', error);
+        console.error("Error fetching user posts:", error);
       } finally {
         setPostsLoading(false);
       }
@@ -181,7 +191,7 @@ export default function UnifiedProfile() {
   };
 
   const handleEditProfile = () => {
-    navigate('/edit-profile');
+    navigate("/edit-profile");
   };
 
   const handleBanClick = () => {
@@ -195,15 +205,18 @@ export default function UnifiedProfile() {
       if (!actualUserId) return;
 
       try {
-        const response = await fetch(`${config.apiBaseUrl}/api/profile/${actualUserId}`, {
-          credentials: 'include',
-        });
+        const response = await fetch(
+          `${config.apiBaseUrl}/api/profile/${actualUserId}`,
+          {
+            credentials: "include",
+          },
+        );
         if (response.ok) {
           const data = await response.json();
           setProfile(data.profile);
         }
       } catch (error) {
-        console.error('Error refetching profile:', error);
+        console.error("Error refetching profile:", error);
       } finally {
         setProfileLoading(false);
       }
@@ -225,10 +238,11 @@ export default function UnifiedProfile() {
       <div className="max-w-2xl mx-auto p-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            {error || 'Profile not found'}
+            {error || "Profile not found"}
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            The profile you&apos;re looking for doesn&apos;t exist or couldn&apos;t be loaded.
+            The profile you&apos;re looking for doesn&apos;t exist or
+            couldn&apos;t be loaded.
           </p>
         </div>
       </div>
@@ -240,7 +254,7 @@ export default function UnifiedProfile() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {isOwnProfile ? 'My Profile' : 'Profile'}
+          {isOwnProfile ? "My Profile" : "Profile"}
         </h1>
       </div>
 
@@ -298,14 +312,17 @@ export default function UnifiedProfile() {
 
         {/* Session Info - Only for own profile, collapsible */}
         {isOwnProfile && (
-          <CollapsibleSection title="Session Information" defaultExpanded={false}>
+          <CollapsibleSection
+            title="Session Information"
+            defaultExpanded={false}
+          >
             <div className="space-y-3 pt-4">
               <div>
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
                   Session ID
                 </span>
                 <p className="text-gray-900 dark:text-white font-mono text-sm break-all">
-                  {sessionId || 'Not available'}
+                  {sessionId || "Not available"}
                 </p>
               </div>
 
@@ -329,21 +346,27 @@ export default function UnifiedProfile() {
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
                   Platform
                 </span>
-                <p className="text-gray-900 dark:text-white">{webApp.platform}</p>
+                <p className="text-gray-900 dark:text-white">
+                  {webApp.platform}
+                </p>
               </div>
 
               <div>
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
                   Version
                 </span>
-                <p className="text-gray-900 dark:text-white">{webApp.version}</p>
+                <p className="text-gray-900 dark:text-white">
+                  {webApp.version}
+                </p>
               </div>
 
               <div>
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
                   Theme
                 </span>
-                <p className="text-gray-900 dark:text-white capitalize">{webApp.colorScheme}</p>
+                <p className="text-gray-900 dark:text-white capitalize">
+                  {webApp.colorScheme}
+                </p>
               </div>
             </div>
           </CollapsibleSection>
@@ -352,13 +375,17 @@ export default function UnifiedProfile() {
         {/* Posts Section */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Posts</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Posts
+            </h3>
           </div>
 
           {postsLoading ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">Loading posts...</p>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">
+                Loading posts...
+              </p>
             </div>
           ) : posts.length > 0 ? (
             isOwnProfile ? (
@@ -385,7 +412,9 @@ export default function UnifiedProfile() {
           ) : (
             <div className="p-8 text-center">
               <p className="text-gray-500 dark:text-gray-400">
-                {isOwnProfile ? "You haven't posted anything yet." : 'No posts yet.'}
+                {isOwnProfile
+                  ? "You haven't posted anything yet."
+                  : "No posts yet."}
               </p>
             </div>
           )}

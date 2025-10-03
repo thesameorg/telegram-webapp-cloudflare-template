@@ -1,6 +1,6 @@
-import { useImageCache } from '../hooks/use-image-cache';
-import { formatFileSize } from '../utils/format';
-import { getImageUrl } from '../utils/image-url';
+import { useImageCache } from "../hooks/use-image-cache";
+import { formatFileSize } from "../utils/format";
+import { getImageUrl } from "../utils/image-url";
 
 interface ImageUrlData {
   id: number;
@@ -35,7 +35,9 @@ export default function GalleryImageItem({
   onDelete,
 }: GalleryImageItemProps) {
   const thumbnailUrl = getImageUrl(image.thumbnailKey);
-  const { isLoaded, hasError, onLoad, onError } = useImageCache({ src: thumbnailUrl });
+  const { isLoaded, hasError, onLoad, onError } = useImageCache({
+    src: thumbnailUrl,
+  });
 
   return (
     <div
@@ -45,7 +47,7 @@ export default function GalleryImageItem({
       className={`relative group cursor-pointer overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 ${imageClasses}`}
       onClick={onClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick();
         }
@@ -63,8 +65,18 @@ export default function GalleryImageItem({
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
           <div className="text-center text-gray-500 dark:text-gray-400">
-            <svg className="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.958-.833-2.728 0L4.086 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <svg
+              className="mx-auto h-8 w-8 mb-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.958-.833-2.728 0L4.086 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
             </svg>
             <p className="text-xs">Failed to load</p>
           </div>
@@ -94,8 +106,18 @@ export default function GalleryImageItem({
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
           {/* Zoom icon */}
           <div className="p-1.5 bg-black bg-opacity-50 rounded-full">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"
+              />
             </svg>
           </div>
 
@@ -110,8 +132,18 @@ export default function GalleryImageItem({
               className="p-1.5 bg-red-500 bg-opacity-80 hover:bg-opacity-100 rounded-full transition-colors"
               title="Delete image"
             >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             </button>
           )}

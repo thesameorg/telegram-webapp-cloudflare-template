@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
-import { ProfileAvatar } from './ProfileAvatar';
-import { ContactLinks } from './ContactLinks';
-import { getImageUrl } from '../../utils/image-url';
+import { useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import { ProfileAvatar } from "./ProfileAvatar";
+import { ContactLinks } from "./ContactLinks";
+import { getImageUrl } from "../../utils/image-url";
 
 interface ProfileData {
   telegram_id: number;
@@ -29,7 +29,14 @@ interface ProfileViewProps {
   isAdmin?: boolean;
 }
 
-export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanClick, postCount, isAdmin = false }: ProfileViewProps) {
+export function ProfileView({
+  profile,
+  isOwnProfile = false,
+  onEditClick,
+  onBanClick,
+  postCount,
+  isAdmin = false,
+}: ProfileViewProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const displayName = profile.display_name || `User ${profile.telegram_id}`;
   const isBanned = profile.is_banned === true;
@@ -83,10 +90,14 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanC
 
           <div className="mt-3 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
             {postCount !== undefined && (
-              <span>{postCount} {postCount === 1 ? 'post' : 'posts'}</span>
+              <span>
+                {postCount} {postCount === 1 ? "post" : "posts"}
+              </span>
             )}
             {!isBanned && profile.created_at && (
-              <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
+              <span>
+                Joined {new Date(profile.created_at).toLocaleDateString()}
+              </span>
             )}
           </div>
 
@@ -96,11 +107,11 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanC
               onClick={onBanClick}
               className={`mt-3 px-3 py-1.5 text-xs font-medium text-white rounded-lg ${
                 isBanned
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {isBanned ? 'Unban User' : 'Ban User'}
+              {isBanned ? "Unban User" : "Ban User"}
             </button>
           )}
         </div>
@@ -149,12 +160,12 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanC
             {
               src: getImageUrl(profile.profile_image_key),
               alt: displayName,
-            }
+            },
           ]}
           animation={{ fade: 300 }}
           controller={{ closeOnBackdropClick: true }}
           toolbar={{
-            buttons: ['close'],
+            buttons: ["close"],
           }}
           render={{
             slide: ({ slide }) => (
@@ -164,8 +175,8 @@ export function ProfileView({ profile, isOwnProfile = false, onEditClick, onBanC
                   alt={slide.alt}
                   className="max-w-full max-h-full object-contain"
                   style={{
-                    maxWidth: '90vw',
-                    maxHeight: '90vh',
+                    maxWidth: "90vw",
+                    maxHeight: "90vh",
                   }}
                 />
               </div>

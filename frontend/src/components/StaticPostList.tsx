@@ -1,5 +1,5 @@
-import PostItem from './PostItem';
-import { ImageUrlData } from './ImageGallery';
+import PostItem from "./PostItem";
+import { ImageUrlData } from "./ImageGallery";
 
 interface PostProfile {
   displayName?: string;
@@ -34,7 +34,7 @@ export default function StaticPostList({
   showActions,
   isAdmin,
   onEdit,
-  onDelete
+  onDelete,
 }: StaticPostListProps) {
   if (posts.length === 0) {
     return null;

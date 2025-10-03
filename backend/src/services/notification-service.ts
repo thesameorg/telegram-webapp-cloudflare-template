@@ -1,5 +1,5 @@
-import { Bot } from 'grammy';
-import type { Env } from '../types/env';
+import { Bot } from "grammy";
+import type { Env } from "../types/env";
 
 /**
  * Notification Service
@@ -17,16 +17,19 @@ import type { Env } from '../types/env';
 export async function sendPostDeletedNotification(
   telegramId: number,
   postId: number,
-  bot: Bot
+  bot: Bot,
 ): Promise<void> {
   try {
     await bot.api.sendMessage(
       telegramId,
-      `Admin has deleted your post (ID: ${postId}).`
+      `Admin has deleted your post (ID: ${postId}).`,
     );
   } catch (error) {
     // Log error but don't throw - notification failure shouldn't break deletion
-    console.error(`Failed to send deletion notification to user ${telegramId}:`, error);
+    console.error(
+      `Failed to send deletion notification to user ${telegramId}:`,
+      error,
+    );
   }
 }
 
@@ -40,18 +43,21 @@ export async function sendPostDeletedNotification(
 export async function sendBanNotification(
   env: Env,
   telegramId: number,
-  isBanned: boolean
+  isBanned: boolean,
 ): Promise<void> {
   try {
     const bot = getBotInstance(env);
     const message = isBanned
-      ? 'You have been banned. You cannot access the web app.'
-      : 'You have been unbanned. You can now access the web app again.';
+      ? "You have been banned. You cannot access the web app."
+      : "You have been unbanned. You can now access the web app again.";
 
     await bot.api.sendMessage(telegramId, message);
   } catch (error) {
     // Log error but don't throw - notification failure shouldn't break ban/unban action
-    console.error(`Failed to send ban notification to user ${telegramId}:`, error);
+    console.error(
+      `Failed to send ban notification to user ${telegramId}:`,
+      error,
+    );
   }
 }
 
@@ -77,16 +83,19 @@ export async function sendPaymentSuccessNotification(
   env: Env,
   telegramId: number,
   postId: number,
-  starCount: number
+  starCount: number,
 ): Promise<void> {
   try {
     const bot = getBotInstance(env);
     await bot.api.sendMessage(
       telegramId,
-      `✅ Payment successful! Your post (ID: ${postId}) is now premium with ${starCount} star${starCount > 1 ? 's' : ''} ⭐️`
+      `✅ Payment successful! Your post (ID: ${postId}) is now premium with ${starCount} star${starCount > 1 ? "s" : ""} ⭐️`,
     );
   } catch (error) {
-    console.error(`Failed to send payment success notification to user ${telegramId}:`, error);
+    console.error(
+      `Failed to send payment success notification to user ${telegramId}:`,
+      error,
+    );
   }
 }
 
@@ -100,16 +109,16 @@ export async function sendPaymentSuccessNotification(
 export async function sendPaymentFailureNotification(
   env: Env,
   telegramId: number,
-  reason: string
+  reason: string,
 ): Promise<void> {
   try {
     const bot = getBotInstance(env);
-    await bot.api.sendMessage(
-      telegramId,
-      `❌ Payment failed: ${reason}`
-    );
+    await bot.api.sendMessage(telegramId, `❌ Payment failed: ${reason}`);
   } catch (error) {
-    console.error(`Failed to send payment failure notification to user ${telegramId}:`, error);
+    console.error(
+      `Failed to send payment failure notification to user ${telegramId}:`,
+      error,
+    );
   }
 }
 
@@ -126,11 +135,11 @@ export async function sendAdminPaymentAlert(
     postId: number;
     starAmount: number;
     chargeId: string;
-  }
+  },
 ): Promise<void> {
   try {
     if (!env.TELEGRAM_ADMIN_ID) {
-      console.warn('TELEGRAM_ADMIN_ID not set, skipping admin payment alert');
+      console.warn("TELEGRAM_ADMIN_ID not set, skipping admin payment alert");
       return;
     }
 
@@ -138,10 +147,10 @@ export async function sendAdminPaymentAlert(
     await bot.api.sendMessage(
       env.TELEGRAM_ADMIN_ID,
       `💰 New payment received!\n\n` +
-      `User ID: ${details.userId}\n` +
-      `Post ID: ${details.postId}\n` +
-      `Stars: ${details.starAmount} ⭐️\n` +
-      `Charge ID: ${details.chargeId}`
+        `User ID: ${details.userId}\n` +
+        `Post ID: ${details.postId}\n` +
+        `Stars: ${details.starAmount} ⭐️\n` +
+        `Charge ID: ${details.chargeId}`,
     );
   } catch (error) {
     console.error(`Failed to send admin payment alert:`, error);
@@ -160,19 +169,22 @@ export async function sendPaymentRefundNotification(
   env: Env,
   telegramId: number,
   postId: number,
-  starAmount: number
+  starAmount: number,
 ): Promise<void> {
   try {
     const bot = getBotInstance(env);
     await bot.api.sendMessage(
       telegramId,
       `↩️ Your payment was reverted!\n\n` +
-      `Post ID: ${postId}\n` +
-      `Stars refunded: ${starAmount} ⭐️\n\n` +
-      `Your post is now a regular post (not starred).`
+        `Post ID: ${postId}\n` +
+        `Stars refunded: ${starAmount} ⭐️\n\n` +
+        `Your post is now a regular post (not starred).`,
     );
   } catch (error) {
-    console.error(`Failed to send refund notification to user ${telegramId}:`, error);
+    console.error(
+      `Failed to send refund notification to user ${telegramId}:`,
+      error,
+    );
   }
 }
 
@@ -189,11 +201,11 @@ export async function sendAdminRefundAlert(
     postId: number;
     starAmount: number;
     chargeId: string;
-  }
+  },
 ): Promise<void> {
   try {
     if (!env.TELEGRAM_ADMIN_ID) {
-      console.warn('TELEGRAM_ADMIN_ID not set, skipping admin refund alert');
+      console.warn("TELEGRAM_ADMIN_ID not set, skipping admin refund alert");
       return;
     }
 
@@ -201,10 +213,10 @@ export async function sendAdminRefundAlert(
     await bot.api.sendMessage(
       env.TELEGRAM_ADMIN_ID,
       `↩️ Refund processed!\n\n` +
-      `User ID: ${details.userId}\n` +
-      `Post ID: ${details.postId}\n` +
-      `Stars refunded: ${details.starAmount} ⭐️\n` +
-      `Charge ID: ${details.chargeId}`
+        `User ID: ${details.userId}\n` +
+        `Post ID: ${details.postId}\n` +
+        `Stars refunded: ${details.starAmount} ⭐️\n` +
+        `Charge ID: ${details.chargeId}`,
     );
   } catch (error) {
     console.error(`Failed to send admin refund alert:`, error);

@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
 
 jobs:
   deploy-pages:
@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: |
             package-lock.json
             frontend/package-lock.json
@@ -100,4 +100,3 @@ jobs:
           else
             echo "✅ Pages deployment verified"
           fi
-

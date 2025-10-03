@@ -1,4 +1,4 @@
-import PostFormModal from './PostFormModal';
+import PostFormModal from "./PostFormModal";
 
 interface Post {
   id: number;
@@ -16,7 +16,11 @@ interface EditPostProps {
   onPostUpdated?: () => void;
 }
 
-export default function EditPost({ post, onClose, onPostUpdated }: EditPostProps) {
+export default function EditPost({
+  post,
+  onClose,
+  onPostUpdated,
+}: EditPostProps) {
   return (
     <PostFormModal
       mode="edit"

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
-import imageCompression from 'browser-image-compression';
-import { useToast } from '../hooks/use-toast';
-import ImageCropQueue from './ImageCropQueue';
+import React, { useState, useRef, useCallback } from "react";
+import imageCompression from "browser-image-compression";
+import { useToast } from "../hooks/use-toast";
+import ImageCropQueue from "./ImageCropQueue";
 
 interface ImageData {
   id: string;
@@ -25,7 +25,7 @@ export default function ImageUpload({
   onImagesChange,
   existingImages = [],
   maxImages = 10,
-  disabled = false
+  disabled = false,
 }: ImageUploadProps) {
   const [images, setImages] = useState<ImageData[]>(existingImages);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -39,12 +39,14 @@ export default function ImageUpload({
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onerror = () => reject(new Error("Failed to read file"));
       reader.readAsDataURL(file);
     });
   };
 
-  const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+  const getImageDimensions = (
+    file: File,
+  ): Promise<{ width: number; height: number }> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -53,84 +55,95 @@ export default function ImageUpload({
       };
       img.onerror = () => {
         URL.revokeObjectURL(img.src); // Clean up
-        reject(new Error('Failed to load image dimensions'));
+        reject(new Error("Failed to load image dimensions"));
       };
       img.src = URL.createObjectURL(file);
     });
   };
 
-  const compressImage = async (file: File): Promise<{ compressed: File; thumbnail: File }> => {
-    // Get original dimensions
-    const dimensions = await getImageDimensions(file);
+  const compressImage = useCallback(
+    async (file: File): Promise<{ compressed: File; thumbnail: File }> => {
+      // Get original dimensions
+      const dimensions = await getImageDimensions(file);
 
-    // Calculate target so minimum side becomes target size
-    // For full size: min side = 1280px
-    const fullSizeScale = 1280 / Math.min(dimensions.width, dimensions.height);
-    const fullSizeMax = Math.max(
-      Math.round(dimensions.width * fullSizeScale),
-      Math.round(dimensions.height * fullSizeScale)
-    );
+      // Calculate target so minimum side becomes target size
+      // For full size: min side = 1280px
+      const fullSizeScale =
+        1280 / Math.min(dimensions.width, dimensions.height);
+      const fullSizeMax = Math.max(
+        Math.round(dimensions.width * fullSizeScale),
+        Math.round(dimensions.height * fullSizeScale),
+      );
 
-    // For thumbnail: min side = 500px
-    const thumbScale = 500 / Math.min(dimensions.width, dimensions.height);
-    const thumbMax = Math.max(
-      Math.round(dimensions.width * thumbScale),
-      Math.round(dimensions.height * thumbScale)
-    );
+      // For thumbnail: min side = 500px
+      const thumbScale = 500 / Math.min(dimensions.width, dimensions.height);
+      const thumbMax = Math.max(
+        Math.round(dimensions.width * thumbScale),
+        Math.round(dimensions.height * thumbScale),
+      );
 
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: fullSizeMax,
-      useWebWorker: true,
-      fileType: 'image/jpeg',
-    };
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: fullSizeMax,
+        useWebWorker: true,
+        fileType: "image/jpeg",
+      };
 
-    const thumbnailOptions = {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: thumbMax,
-      useWebWorker: true,
-      fileType: 'image/jpeg',
-    };
+      const thumbnailOptions = {
+        maxSizeMB: 0.1,
+        maxWidthOrHeight: thumbMax,
+        useWebWorker: true,
+        fileType: "image/jpeg",
+      };
 
-    try {
-      const [compressed, thumbnail] = await Promise.all([
-        imageCompression(file, options),
-        imageCompression(file, thumbnailOptions),
-      ]);
+      try {
+        const [compressed, thumbnail] = await Promise.all([
+          imageCompression(file, options),
+          imageCompression(file, thumbnailOptions),
+        ]);
 
-      return { compressed, thumbnail };
-    } catch (error) {
-      console.error('Image compression failed:', error);
-      throw new Error('Failed to compress image. Please try a different file.');
-    }
-  };
+        return { compressed, thumbnail };
+      } catch (error) {
+        console.error("Image compression failed:", error);
+        throw new Error(
+          "Failed to compress image. Please try a different file.",
+        );
+      }
+    },
+    [],
+  );
 
   const validateAndPrepareFiles = (files: FileList | File[]): File[] => {
     const fileArray = Array.from(files);
     const validFiles: File[] = [];
 
     if (images.length + fileArray.length > maxImages) {
-      showToast(`Maximum ${maxImages} images allowed`, 'error');
+      showToast(`Maximum ${maxImages} images allowed`, "error");
       return [];
     }
 
     for (const file of fileArray) {
       // Validate file type - block HEIC files
-      if (!file.type.startsWith('image/')) {
-        showToast(`${file.name} is not a valid image file`, 'error');
+      if (!file.type.startsWith("image/")) {
+        showToast(`${file.name} is not a valid image file`, "error");
         continue;
       }
 
       // Block HEIC files explicitly
-      const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      const isHeicFile =
+        file.name.toLowerCase().endsWith(".heic") ||
+        file.name.toLowerCase().endsWith(".heif");
       if (isHeicFile) {
-        showToast(`HEIC format not supported. Please convert ${file.name} to JPG or PNG first.`, 'error');
+        showToast(
+          `HEIC format not supported. Please convert ${file.name} to JPG or PNG first.`,
+          "error",
+        );
         continue;
       }
 
       // Validate file size (10MB limit before cropping/compression)
       if (file.size > 10 * 1024 * 1024) {
-        showToast(`${file.name} is too large (max 10MB)`, 'error');
+        showToast(`${file.name} is too large (max 10MB)`, "error");
         continue;
       }
 
@@ -140,53 +153,59 @@ export default function ImageUpload({
     return validFiles;
   };
 
-  const handleCroppedFiles = useCallback(async (croppedFiles: File[]) => {
-    setShowCropQueue(false);
-    setIsProcessing(true);
+  const handleCroppedFiles = useCallback(
+    async (croppedFiles: File[]) => {
+      setShowCropQueue(false);
+      setIsProcessing(true);
 
-    try {
-      const newImages: ImageData[] = [];
+      try {
+        const newImages: ImageData[] = [];
 
-      for (let i = 0; i < croppedFiles.length; i++) {
-        const file = croppedFiles[i];
+        for (let i = 0; i < croppedFiles.length; i++) {
+          const file = croppedFiles[i];
 
-        try {
-          const [preview, dimensions, { compressed, thumbnail }] = await Promise.all([
-            createImagePreview(file),
-            getImageDimensions(file),
-            compressImage(file),
-          ]);
+          try {
+            const [preview, dimensions, { compressed, thumbnail }] =
+              await Promise.all([
+                createImagePreview(file),
+                getImageDimensions(file),
+                compressImage(file),
+              ]);
 
-          const imageData: ImageData = {
-            id: `${Date.now()}-${i}`,
-            file,
-            preview,
-            compressedFile: compressed,
-            thumbnailFile: thumbnail,
-            width: dimensions.width,
-            height: dimensions.height,
-            uploadOrder: images.length + newImages.length + 1,
-          };
+            const imageData: ImageData = {
+              id: `${Date.now()}-${i}`,
+              file,
+              preview,
+              compressedFile: compressed,
+              thumbnailFile: thumbnail,
+              width: dimensions.width,
+              height: dimensions.height,
+              uploadOrder: images.length + newImages.length + 1,
+            };
 
-          newImages.push(imageData);
-        } catch (error) {
-          showToast(`Failed to process ${file.name}`, 'error');
-          console.error('Error processing image:', error);
+            newImages.push(imageData);
+          } catch (error) {
+            showToast(`Failed to process ${file.name}`, "error");
+            console.error("Error processing image:", error);
+          }
         }
-      }
 
-      const updatedImages = [...images, ...newImages];
-      setImages(updatedImages);
-      onImagesChange(updatedImages);
+        const updatedImages = [...images, ...newImages];
+        setImages(updatedImages);
+        onImagesChange(updatedImages);
 
-      if (newImages.length > 0) {
-        showToast(`${newImages.length} image(s) processed successfully`, 'success');
+        if (newImages.length > 0) {
+          showToast(
+            `${newImages.length} image(s) processed successfully`,
+            "success",
+          );
+        }
+      } finally {
+        setIsProcessing(false);
       }
-    } finally {
-      setIsProcessing(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [images, showToast, onImagesChange]);
+    },
+    [images, showToast, onImagesChange, compressImage],
+  );
 
   const processImages = useCallback((files: FileList | File[]) => {
     const validFiles = validateAndPrepareFiles(files);
@@ -202,7 +221,8 @@ export default function ImageUpload({
   }, []);
 
   const removeImage = (id: string) => {
-    const updatedImages = images.filter(img => img.id !== id)
+    const updatedImages = images
+      .filter((img) => img.id !== id)
       .map((img, index) => ({ ...img, uploadOrder: index + 1 }));
     setImages(updatedImages);
     onImagesChange(updatedImages);
@@ -226,25 +246,28 @@ export default function ImageUpload({
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
-    if (disabled || isProcessing) return;
+      if (disabled || isProcessing) return;
 
-    const { files } = e.dataTransfer;
-    if (files && files.length > 0) {
-      processImages(files);
-    }
-  }, [disabled, isProcessing, processImages]);
+      const { files } = e.dataTransfer;
+      if (files && files.length > 0) {
+        processImages(files);
+      }
+    },
+    [disabled, isProcessing, processImages],
+  );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target;
@@ -252,7 +275,7 @@ export default function ImageUpload({
       processImages(files);
     }
     // Reset input value to allow selecting the same file again
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const openFileDialog = () => {
@@ -295,13 +318,15 @@ export default function ImageUpload({
         tabIndex={0}
         className={`
           border-2 border-dashed rounded-lg p-6 text-center transition-colors
-          ${dragActive
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-gray-300 dark:border-gray-600'
+          ${
+            dragActive
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+              : "border-gray-300 dark:border-gray-600"
           }
-          ${disabled || isProcessing
-            ? 'opacity-50 cursor-not-allowed'
-            : 'cursor-pointer hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+          ${
+            disabled || isProcessing
+              ? "opacity-50 cursor-not-allowed"
+              : "cursor-pointer hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800"
           }
         `}
         onDragEnter={handleDrag}
@@ -310,7 +335,7 @@ export default function ImageUpload({
         onDrop={handleDrop}
         onClick={openFileDialog}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             openFileDialog();
           }
@@ -332,7 +357,9 @@ export default function ImageUpload({
           </svg>
           <div className="text-gray-600 dark:text-gray-400">
             <p className="text-lg font-medium">
-              {isProcessing ? 'Processing images...' : 'Drop images here or click to browse'}
+              {isProcessing
+                ? "Processing images..."
+                : "Drop images here or click to browse"}
             </p>
             <p className="text-sm">
               Support: JPG, PNG, WebP • Max {maxImages} images • Up to 10MB each
@@ -354,86 +381,117 @@ export default function ImageUpload({
           </h3>
           <div className="max-h-64 overflow-y-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {images.map((image, index) => (
-              <div
-                key={image.id}
-                className="relative group bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden"
-              >
-                <img
-                  src={image.preview}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-24 object-cover"
-                />
+              {images.map((image, index) => (
+                <div
+                  key={image.id}
+                  className="relative group bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden"
+                >
+                  <img
+                    src={image.preview}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-24 object-cover"
+                  />
 
-                {/* Overlay with controls */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                    {/* Move Left */}
-                    {index > 0 && (
+                  {/* Overlay with controls */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      {/* Move Left */}
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => reorderImages(index, index - 1)}
+                          className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                          title="Move left"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 19l-7-7 7-7"
+                            />
+                          </svg>
+                        </button>
+                      )}
+
+                      {/* Remove */}
                       <button
                         type="button"
-                        onClick={() => reorderImages(index, index - 1)}
-                        className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
-                        title="Move left"
+                        onClick={() => removeImage(image.id)}
+                        className="p-1 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600"
+                        title="Remove image"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
-                    )}
 
-                    {/* Remove */}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(image.id)}
-                      className="p-1 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600"
-                      title="Remove image"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      {/* Move Right */}
+                      {index < images.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => reorderImages(index, index + 1)}
+                          className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                          title="Move right"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                    {/* Move Right */}
-                    {index < images.length - 1 && (
-                      <button
-                        type="button"
-                        onClick={() => reorderImages(index, index + 1)}
-                        className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
-                        title="Move right"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    )}
+                  {/* Order indicator */}
+                  <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {image.uploadOrder}
+                  </div>
+
+                  {/* Processing indicator */}
+                  {isProcessing && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
+
+                  {/* Image info */}
+                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                    {image.width}×{image.height}
                   </div>
                 </div>
-
-                {/* Order indicator */}
-                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {image.uploadOrder}
-                </div>
-
-                {/* Processing indicator */}
-                {isProcessing && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                  </div>
-                )}
-
-                {/* Image info */}
-                <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                  {image.width}×{image.height}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           </div>
 
           {/* Summary */}
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Images will be compressed to 1280px minimum side with 500px thumbnails
+            Images will be compressed to 1280px minimum side with 500px
+            thumbnails
           </div>
         </div>
       )}

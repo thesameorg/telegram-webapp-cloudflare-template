@@ -1,4 +1,4 @@
-import { SkeletonCard, Skeleton } from './Skeleton';
+import { SkeletonCard, Skeleton } from "./Skeleton";
 
 export function AccountInfoSkeleton() {
   return (

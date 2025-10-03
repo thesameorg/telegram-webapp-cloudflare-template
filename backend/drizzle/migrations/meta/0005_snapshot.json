@@ -97,44 +97,32 @@
       "indexes": {
         "payments_invoice_payload_unique": {
           "name": "payments_invoice_payload_unique",
-          "columns": [
-            "invoice_payload"
-          ],
+          "columns": ["invoice_payload"],
           "isUnique": true
         },
         "payments_telegram_payment_charge_id_unique": {
           "name": "payments_telegram_payment_charge_id_unique",
-          "columns": [
-            "telegram_payment_charge_id"
-          ],
+          "columns": ["telegram_payment_charge_id"],
           "isUnique": true
         },
         "idx_payments_user_id": {
           "name": "idx_payments_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "idx_payments_post_id": {
           "name": "idx_payments_post_id",
-          "columns": [
-            "post_id"
-          ],
+          "columns": ["post_id"],
           "isUnique": false
         },
         "idx_payments_status": {
           "name": "idx_payments_status",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "idx_payments_created_at": {
           "name": "idx_payments_created_at",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -227,17 +215,12 @@
       "indexes": {
         "idx_post_images_post_id": {
           "name": "idx_post_images_post_id",
-          "columns": [
-            "post_id"
-          ],
+          "columns": ["post_id"],
           "isUnique": false
         },
         "idx_post_images_upload_order": {
           "name": "idx_post_images_upload_order",
-          "columns": [
-            "post_id",
-            "upload_order"
-          ],
+          "columns": ["post_id", "upload_order"],
           "isUnique": false
         }
       },
@@ -246,12 +229,8 @@
           "name": "post_images_post_id_posts_id_fk",
           "tableFrom": "post_images",
           "tableTo": "posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -340,16 +319,12 @@
       "indexes": {
         "idx_posts_created_at": {
           "name": "idx_posts_created_at",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         },
         "idx_posts_user_id": {
           "name": "idx_posts_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -358,12 +333,8 @@
           "name": "posts_payment_id_payments_id_fk",
           "tableFrom": "posts",
           "tableTo": "payments",
-          "columnsFrom": [
-            "payment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payment_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -458,30 +429,22 @@
       "indexes": {
         "user_profiles_telegram_id_unique": {
           "name": "user_profiles_telegram_id_unique",
-          "columns": [
-            "telegram_id"
-          ],
+          "columns": ["telegram_id"],
           "isUnique": true
         },
         "idx_user_profiles_telegram_id": {
           "name": "idx_user_profiles_telegram_id",
-          "columns": [
-            "telegram_id"
-          ],
+          "columns": ["telegram_id"],
           "isUnique": false
         },
         "idx_user_profiles_username": {
           "name": "idx_user_profiles_username",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": false
         },
         "idx_user_profiles_is_banned": {
           "name": "idx_user_profiles_is_banned",
-          "columns": [
-            "is_banned"
-          ],
+          "columns": ["is_banned"],
           "isUnique": false
         }
       },

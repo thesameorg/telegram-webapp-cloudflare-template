@@ -8,8 +8,6 @@ A production-ready template for building Telegram mini apps with payments and ri
 
 📖 **Ready to build? Start with [QUICKSTART.md](docs/QUICKSTART.md)**
 
-
-
 ## What's Inside
 
 I built this after getting tired of piecing together Telegram bot tutorials. Here's what you get:
@@ -39,6 +37,7 @@ Everything's typed, tested, and ready to customize.
 ## Architecture
 
 ### Monorepo Structure
+
 ```
 ├── backend/          # Cloudflare Worker (Hono)
 │   ├── api/         # Route handlers
@@ -66,6 +65,7 @@ npm run db:migrate:local # Apply DB migrations
 ```
 
 **Local webhook testing**:
+
 ```bash
 npm run tunnel:start     # Start ngrok
 npm run webhook:set      # Point Telegram to tunnel
@@ -74,6 +74,7 @@ npm run webhook:set      # Point Telegram to tunnel
 ## Environment Setup
 
 **Backend** (`backend/.env`):
+
 ```bash
 TELEGRAM_BOT_TOKEN=your_token
 TELEGRAM_ADMIN_ID=your_telegram_id
@@ -81,6 +82,7 @@ DEV_AUTH_BYPASS_ENABLED=true  # Optional: skip auth locally
 ```
 
 **Production** (Cloudflare Worker secrets):
+
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_ADMIN_ID`
 - `PAGES_URL` (optional CORS validation)
@@ -90,9 +92,11 @@ Bindings in `wrangler.toml`: `DB` (D1), `SESSIONS` (KV), `IMAGES` (R2)
 ## Deployment
 
 **Automated** (GitHub Actions):
+
 1. Push to main → Build → Tests → Deploy Worker → Deploy Pages → Set webhook
 
 **Manual**:
+
 ```bash
 cd backend && npx wrangler deploy
 cd ../frontend && npm run build && npx wrangler pages deploy dist
@@ -102,7 +106,7 @@ cd ../frontend && npm run build && npx wrangler pages deploy dist
 
 ```typescript
 Modify schema in `backend/src/db/schema.ts` → `npm run db:generate` → `npm run db:migrate:local`
-``` 
+```
 
 ## Common Issues
 
@@ -114,8 +118,6 @@ Modify schema in `backend/src/db/schema.ts` → `npm run db:generate` → `npm r
 
 **CORS errors**: Set `PAGES_URL` in Worker environment variables
 
-
-
 ## Security Notes
 
 - HMAC signature validation on all Telegram data
@@ -123,8 +125,6 @@ Modify schema in `backend/src/db/schema.ts` → `npm run db:generate` → `npm r
 - Admin role checked on protected endpoints
 - Drizzle ORM prevents SQL injection
 - Never commit `.env` files
-
-
 
 > [!IMPORTANT]
 > When adding a new endpoint, add it to Router.tsx!

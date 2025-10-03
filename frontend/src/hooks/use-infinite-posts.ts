@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { config } from '../config';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { config } from "../config";
 
 interface Post {
   id: number;
@@ -32,65 +32,68 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
   const [offset, setOffset] = useState(0);
   const isLoadingRef = useRef(false);
 
-  const fetchPosts = useCallback(async (currentOffset: number, isLoadingMore = false) => {
-    if (isLoadingRef.current) return;
+  const fetchPosts = useCallback(
+    async (currentOffset: number, isLoadingMore = false) => {
+      if (isLoadingRef.current) return;
 
-    try {
-      isLoadingRef.current = true;
+      try {
+        isLoadingRef.current = true;
 
-      if (isLoadingMore) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-
-      // If userId is explicitly requested but not available, don't fetch
-      if (userId !== undefined && (userId === null || isNaN(userId))) {
-        setPosts([]);
-        setHasMore(false);
-        return;
-      }
-
-      const url = userId
-        ? `${config.apiBaseUrl}/api/posts/user/${userId}?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`
-        : `${config.apiBaseUrl}/api/posts?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`;
-
-      const response = await fetch(url, {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+        if (isLoadingMore) {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
         }
-      });
+        setError(null);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch posts');
+        // If userId is explicitly requested but not available, don't fetch
+        if (userId !== undefined && (userId === null || isNaN(userId))) {
+          setPosts([]);
+          setHasMore(false);
+          return;
+        }
+
+        const url = userId
+          ? `${config.apiBaseUrl}/api/posts/user/${userId}?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`
+          : `${config.apiBaseUrl}/api/posts?limit=${POSTS_PER_PAGE}&offset=${currentOffset}`;
+
+        const response = await fetch(url, {
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch posts");
+        }
+
+        const data = await response.json();
+        const newPosts = data.posts || [];
+
+        if (isLoadingMore) {
+          setPosts((prev) => [...prev, ...newPosts]);
+        } else {
+          setPosts(newPosts);
+        }
+
+        setHasMore(data.pagination?.hasMore || false);
+        setOffset(currentOffset + newPosts.length);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        if (!isLoadingMore) {
+          setPosts([]);
+        }
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+        isLoadingRef.current = false;
       }
-
-      const data = await response.json();
-      const newPosts = data.posts || [];
-
-      if (isLoadingMore) {
-        setPosts(prev => [...prev, ...newPosts]);
-      } else {
-        setPosts(newPosts);
-      }
-
-      setHasMore(data.pagination?.hasMore || false);
-      setOffset(currentOffset + newPosts.length);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      if (!isLoadingMore) {
-        setPosts([]);
-      }
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-      isLoadingRef.current = false;
-    }
-  }, [userId]);
+    },
+    [userId],
+  );
 
   // Keep a ref to the latest fetchPosts
   const fetchPostsRef = useRef(fetchPosts);

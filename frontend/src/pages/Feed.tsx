@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react';
-import PostList from '../components/PostList';
-import CreatePostButton from '../components/CreatePostButton';
-import CreatePost from '../components/CreatePost';
-import EditPost from '../components/EditPost';
-import DeletePostConfirm from '../components/DeletePostConfirm';
-import MakePremiumModal from '../components/MakePremiumModal';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useRef } from "react";
+import PostList from "../components/PostList";
+import CreatePostButton from "../components/CreatePostButton";
+import CreatePost from "../components/CreatePost";
+import EditPost from "../components/EditPost";
+import DeletePostConfirm from "../components/DeletePostConfirm";
+import MakePremiumModal from "../components/MakePremiumModal";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Post {
   id: number;
@@ -24,7 +24,9 @@ export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
-  const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(null);
+  const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(
+    null,
+  );
   const refetchRef = useRef<(() => void) | null>(null);
   const { user, isAdmin } = useAuth();
 
@@ -71,7 +73,9 @@ export default function Feed() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Feed</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Feed
+          </h1>
           <CreatePostButton onClick={() => setShowCreatePost(true)} />
         </div>
       </div>
@@ -119,7 +123,9 @@ export default function Feed() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onMakePremium={handleMakePremium}
-        onRefetchReady={(refetch) => { refetchRef.current = refetch; }}
+        onRefetchReady={(refetch) => {
+          refetchRef.current = refetch;
+        }}
       />
     </div>
   );

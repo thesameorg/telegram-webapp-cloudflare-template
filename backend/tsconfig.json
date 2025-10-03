@@ -12,13 +12,7 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": [
-      "@cloudflare/workers-types",
-      "vitest/globals"
-    ]
+    "types": ["@cloudflare/workers-types", "vitest/globals"]
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*"
-  ]
+  "include": ["src/**/*", "tests/**/*"]
 }

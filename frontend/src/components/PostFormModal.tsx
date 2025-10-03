@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
-import { useCreatePost } from '../hooks/use-create-post';
-import ImageUpload, { ImageData } from './ImageUpload';
-import { useToast } from '../hooks/use-toast';
-import { config } from '../config';
+import { useState, useEffect } from "react";
+import type { FormEvent } from "react";
+import { useCreatePost } from "../hooks/use-create-post";
+import ImageUpload, { ImageData } from "./ImageUpload";
+import { useToast } from "../hooks/use-toast";
+import { config } from "../config";
 
 interface Post {
   id: number;
@@ -16,14 +16,21 @@ interface Post {
 }
 
 interface PostFormModalProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   post?: Post; // Required for edit mode
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFormModalProps) {
-  const [content, setContent] = useState(mode === 'edit' && post ? post.content : '');
+export default function PostFormModal({
+  mode,
+  post,
+  onClose,
+  onSuccess,
+}: PostFormModalProps) {
+  const [content, setContent] = useState(
+    mode === "edit" && post ? post.content : "",
+  );
   const [images, setImages] = useState<ImageData[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,12 +44,15 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
 
   // Initialize content for edit mode
   useEffect(() => {
-    if (mode === 'edit' && post) {
+    if (mode === "edit" && post) {
       setContent(post.content);
     }
   }, [mode, post]);
 
-  const uploadImages = async (postId: number, images: ImageData[]): Promise<boolean> => {
+  const uploadImages = async (
+    postId: number,
+    images: ImageData[],
+  ): Promise<boolean> => {
     if (images.length === 0) return true;
 
     setIsUploading(true);
@@ -51,71 +61,88 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
 
       images.forEach((image, index) => {
         if (image.compressedFile && image.thumbnailFile) {
-          formData.append(`image_${index}`, image.compressedFile, image.file.name);
-          formData.append(`thumbnail_${index}`, image.thumbnailFile, `thumb_${image.file.name}`);
+          formData.append(
+            `image_${index}`,
+            image.compressedFile,
+            image.file.name,
+          );
+          formData.append(
+            `thumbnail_${index}`,
+            image.thumbnailFile,
+            `thumb_${image.file.name}`,
+          );
           formData.append(`order_${index}`, image.uploadOrder.toString());
           formData.append(`width_${index}`, image.width.toString());
           formData.append(`height_${index}`, image.height.toString());
         }
       });
 
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
-      const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}/images`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${sessionId}`,
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/posts/${postId}/images`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sessionId}`,
+          },
+          body: formData,
+          credentials: "include",
         },
-        body: formData,
-        credentials: 'include',
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload images');
+        throw new Error(errorData.error || "Failed to upload images");
       }
 
       return true;
     } catch (error) {
-      console.error('Image upload failed:', error);
-      showToast(error instanceof Error ? error.message : 'Failed to upload images', 'error');
+      console.error("Image upload failed:", error);
+      showToast(
+        error instanceof Error ? error.message : "Failed to upload images",
+        "error",
+      );
       return false;
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleUpdatePost = async (postId: number, content: string): Promise<boolean> => {
+  const handleUpdatePost = async (
+    postId: number,
+    content: string,
+  ): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
       const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionId}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
         },
         body: JSON.stringify({ content }),
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update post');
+        throw new Error(errorData.error || "Failed to update post");
       }
 
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update post');
+      setError(err instanceof Error ? err.message : "Failed to update post");
       return false;
     } finally {
       setIsLoading(false);
@@ -125,59 +152,70 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (mode === 'create') {
+    if (mode === "create") {
       // Allow posts with only images (empty content) or content with images
-      const postContent = content.trim() || ' '; // Use space if no content but has images
+      const postContent = content.trim() || " "; // Use space if no content but has images
 
       // Create post first
       const postResult = await createPost({ content: postContent });
       if (postResult && postResult.post) {
         // Upload images if any
         if (images.length > 0) {
-          const imageUploadSuccess = await uploadImages(postResult.post.id, images);
+          const imageUploadSuccess = await uploadImages(
+            postResult.post.id,
+            images,
+          );
           if (!imageUploadSuccess) {
-            showToast('Post created but some images failed to upload', 'info');
+            showToast("Post created but some images failed to upload", "info");
           }
         }
 
-        showToast('Post created successfully!', 'success');
-        setContent('');
+        showToast("Post created successfully!", "success");
+        setContent("");
         setImages([]);
         onSuccess?.();
         onClose();
       }
-    } else if (mode === 'edit' && post) {
+    } else if (mode === "edit" && post) {
       // Edit mode
       const success = await handleUpdatePost(post.id, content);
       if (success) {
-        showToast('Post updated successfully!', 'success');
+        showToast("Post updated successfully!", "success");
         onSuccess?.();
         onClose();
       }
     }
   };
 
-  const isSubmitDisabled = mode === 'create'
-    ? (isProcessing || (!content.trim() && images.length === 0) || content.length > maxLength)
-    : (isProcessing || !content.trim() || content.length > maxLength || (post && content === post.content));
+  const isSubmitDisabled =
+    mode === "create"
+      ? isProcessing ||
+        (!content.trim() && images.length === 0) ||
+        content.length > maxLength
+      : isProcessing ||
+        !content.trim() ||
+        content.length > maxLength ||
+        (post && content === post.content);
 
   const getButtonText = () => {
-    if (mode === 'create') {
-      return isLoading ? 'Creating...' : isUploading ? 'Uploading...' : 'Post';
+    if (mode === "create") {
+      return isLoading ? "Creating..." : isUploading ? "Uploading..." : "Post";
     }
-    return isLoading ? 'Updating...' : 'Update';
+    return isLoading ? "Updating..." : "Update";
   };
 
   const getLoadingMessage = () => {
-    if (mode === 'create') {
-      return isLoading ? 'Creating post...' : 'Uploading images...';
+    if (mode === "create") {
+      return isLoading ? "Creating post..." : "Uploading images...";
     }
-    return 'Updating post...';
+    return "Updating post...";
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${mode === 'create' ? 'max-w-2xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto relative`}>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${mode === "create" ? "max-w-2xl" : "max-w-md"} max-h-[90vh] overflow-y-auto relative`}
+      >
         {/* Loading Overlay */}
         {isProcessing && (
           <div className="absolute inset-0 bg-white/90 dark:bg-gray-800/90 z-10 flex flex-col items-center justify-center rounded-lg">
@@ -201,7 +239,7 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {mode === 'create' ? 'Create Post' : 'Edit Post'}
+            {mode === "create" ? "Create Post" : "Edit Post"}
           </h2>
           <div className="flex items-center space-x-3">
             <button
@@ -217,8 +255,18 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
               disabled={isProcessing}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -237,7 +285,7 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
             />
             <div className="flex justify-between items-center mt-2">
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                <span className={charactersLeft < 20 ? 'text-red-500' : ''}>
+                <span className={charactersLeft < 20 ? "text-red-500" : ""}>
                   {charactersLeft} characters left
                 </span>
               </div>
@@ -245,7 +293,7 @@ export default function PostFormModal({ mode, post, onClose, onSuccess }: PostFo
           </div>
 
           {/* Image Upload - Only for create mode */}
-          {mode === 'create' && (
+          {mode === "create" && (
             <div className="mb-4">
               <ImageUpload
                 onImagesChange={setImages}

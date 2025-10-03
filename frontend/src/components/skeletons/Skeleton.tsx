@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface SkeletonProps {
   className?: string;
@@ -6,7 +6,7 @@ interface SkeletonProps {
   height?: string;
 }
 
-export function Skeleton({ className = '', width, height }: SkeletonProps) {
+export function Skeleton({ className = "", width, height }: SkeletonProps) {
   const style = {
     ...(width && { width }),
     ...(height && { height }),
@@ -20,13 +20,13 @@ export function Skeleton({ className = '', width, height }: SkeletonProps) {
   );
 }
 
-export function SkeletonAvatar({ size = 'w-10 h-10' }: { size?: string }) {
+export function SkeletonAvatar({ size = "w-10 h-10" }: { size?: string }) {
   return <Skeleton className={`${size} rounded-full`} />;
 }
 
 export function SkeletonText({
   lines = 1,
-  className = ''
+  className = "",
 }: {
   lines?: number;
   className?: string;
@@ -36,7 +36,7 @@ export function SkeletonText({
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
-          className={`h-4 ${i === lines - 1 ? 'w-3/4' : 'w-full'}`}
+          className={`h-4 ${i === lines - 1 ? "w-3/4" : "w-full"}`}
         />
       ))}
     </div>
@@ -44,14 +44,16 @@ export function SkeletonText({
 }
 
 export function SkeletonCard({
-  className = '',
-  children
+  className = "",
+  children,
 }: {
   className?: string;
   children?: React.ReactNode;
 }) {
   return (
-    <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${className}`}>
+    <div
+      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${className}`}
+    >
       {children || (
         <div className="space-y-4">
           <div className="flex items-center space-x-3">
@@ -69,48 +71,42 @@ export function SkeletonCard({
 }
 
 export function SkeletonImage({
-  className = '',
-  aspectRatio = 'aspect-square'
+  className = "",
+  aspectRatio = "aspect-square",
 }: {
   className?: string;
   aspectRatio?: string;
 }) {
-  return (
-    <Skeleton className={`${aspectRatio} rounded-lg ${className}`} />
-  );
+  return <Skeleton className={`${aspectRatio} rounded-lg ${className}`} />;
 }
 
 export function SkeletonImageGrid({
   count = 1,
-  className = ''
+  className = "",
 }: {
   count?: number;
   className?: string;
 }) {
   const getGridClasses = () => {
-    if (count === 1) return 'grid-cols-1';
-    if (count === 2) return 'grid-cols-2';
-    if (count === 3) return 'grid-cols-3';
-    return 'grid-cols-2';
+    if (count === 1) return "grid-cols-1";
+    if (count === 2) return "grid-cols-2";
+    if (count === 3) return "grid-cols-3";
+    return "grid-cols-2";
   };
 
   const getImageClasses = (index: number) => {
-    if (count === 1) return 'aspect-video';
-    if (count === 2) return 'aspect-square';
-    if (count === 3 && index === 0) return 'col-span-3 aspect-video';
-    if (count === 3) return 'aspect-square';
-    if (count === 4 && index === 0) return 'col-span-2 aspect-video';
-    return 'aspect-square';
+    if (count === 1) return "aspect-video";
+    if (count === 2) return "aspect-square";
+    if (count === 3 && index === 0) return "col-span-3 aspect-video";
+    if (count === 3) return "aspect-square";
+    if (count === 4 && index === 0) return "col-span-2 aspect-video";
+    return "aspect-square";
   };
 
   return (
     <div className={`grid gap-1 ${getGridClasses()} ${className}`}>
       {Array.from({ length: Math.min(count, 4) }).map((_, i) => (
-        <SkeletonImage
-          key={i}
-          className={getImageClasses(i)}
-          aspectRatio=""
-        />
+        <SkeletonImage key={i} className={getImageClasses(i)} aspectRatio="" />
       ))}
     </div>
   );

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export interface TelegramUser {
   id: number;
@@ -27,5 +27,7 @@ export function validateTelegramUser(data: unknown): TelegramUser {
 }
 
 export function getDisplayName(user: TelegramUser): string {
-  return user.last_name ? `${user.first_name} ${user.last_name}`.trim() : user.first_name;
+  return user.last_name
+    ? `${user.first_name} ${user.last_name}`.trim()
+    : user.first_name;
 }

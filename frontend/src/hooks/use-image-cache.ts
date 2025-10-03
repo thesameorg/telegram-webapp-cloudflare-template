@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { imageCache } from '../utils/image-cache';
+import { useState, useEffect, useCallback } from "react";
+import { imageCache } from "../utils/image-cache";
 
 interface UseImageCacheOptions {
   src: string;
@@ -14,7 +14,10 @@ interface UseImageCacheResult {
   onError: () => void;
 }
 
-export function useImageCache({ src, preload = false }: UseImageCacheOptions): UseImageCacheResult {
+export function useImageCache({
+  src,
+  preload = false,
+}: UseImageCacheOptions): UseImageCacheResult {
   const [isLoaded, setIsLoaded] = useState(() => imageCache.isLoaded(src));
   const [hasError, setHasError] = useState(() => imageCache.hasError(src));
   const [isLoading, setIsLoading] = useState(() => imageCache.isLoading(src));
@@ -57,6 +60,6 @@ export function useImageCache({ src, preload = false }: UseImageCacheOptions): U
     hasError,
     isLoading,
     onLoad,
-    onError
+    onError,
   };
 }

@@ -1,8 +1,8 @@
-import { Outlet } from 'react-router-dom';
-import BottomNavigation from './BottomNavigation';
-import AuthRequired from './AuthRequired';
-import LoadingSpinner from './LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
+import { Outlet } from "react-router-dom";
+import BottomNavigation from "./BottomNavigation";
+import AuthRequired from "./AuthRequired";
+import LoadingSpinner from "./LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Layout() {
   const { isAuthenticated, isLoading } = useAuth();

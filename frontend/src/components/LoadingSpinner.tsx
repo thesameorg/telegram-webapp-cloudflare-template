@@ -6,5 +6,5 @@ export default function LoadingSpinner() {
         <p>Authenticating...</p>
       </div>
     </div>
-  )
+  );
 }

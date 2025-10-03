@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { config } from '../config';
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { config } from "../config";
 
 interface Payment {
   id: string;
@@ -30,8 +30,14 @@ export default function Payments() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
   const [isReconciling, setIsReconciling] = useState(false);
-  const [refundingPaymentId, setRefundingPaymentId] = useState<string | null>(null);
-  const [confirmRefund, setConfirmRefund] = useState<{ id: string; starAmount: number; userId: number } | null>(null);
+  const [refundingPaymentId, setRefundingPaymentId] = useState<string | null>(
+    null,
+  );
+  const [confirmRefund, setConfirmRefund] = useState<{
+    id: string;
+    starAmount: number;
+    userId: number;
+  } | null>(null);
   const [limit] = useState(50);
   const [offset] = useState(0);
   const pollIntervalRef = useRef<number | null>(null);
@@ -46,7 +52,7 @@ export default function Payments() {
   // Redirect if not admin (but wait for auth to load first)
   useEffect(() => {
     if (!authLoading && !isAdmin) {
-      navigate('/');
+      navigate("/");
     }
   }, [authLoading, isAdmin, navigate]);
 
@@ -56,32 +62,35 @@ export default function Payments() {
 
     const fetchData = async () => {
       try {
-        const sessionId = localStorage.getItem('telegram_session_id');
+        const sessionId = localStorage.getItem("telegram_session_id");
         if (!sessionId) {
-          throw new Error('Not authenticated');
+          throw new Error("Not authenticated");
         }
 
         // Fetch payments
         const paymentsResponse = await fetch(
           `${config.apiBaseUrl}/api/payments?limit=${limit}&offset=${offset}`,
           {
-            headers: { 'Authorization': `Bearer ${sessionId}` },
-            credentials: 'include',
-          }
+            headers: { Authorization: `Bearer ${sessionId}` },
+            credentials: "include",
+          },
         );
 
         if (!paymentsResponse.ok) {
-          throw new Error('Failed to fetch payments');
+          throw new Error("Failed to fetch payments");
         }
 
         const paymentsData = await paymentsResponse.json();
         setPayments(paymentsData.payments);
 
         // Fetch balance
-        const balanceResponse = await fetch(`${config.apiBaseUrl}/api/payments/balance`, {
-          headers: { 'Authorization': `Bearer ${sessionId}` },
-          credentials: 'include',
-        });
+        const balanceResponse = await fetch(
+          `${config.apiBaseUrl}/api/payments/balance`,
+          {
+            headers: { Authorization: `Bearer ${sessionId}` },
+            credentials: "include",
+          },
+        );
 
         if (balanceResponse.ok) {
           const balanceData = await balanceResponse.json();
@@ -89,8 +98,8 @@ export default function Payments() {
         }
       } catch (error) {
         showToast(
-          error instanceof Error ? error.message : 'Failed to load payments',
-          'error'
+          error instanceof Error ? error.message : "Failed to load payments",
+          "error",
         );
       } finally {
         setIsLoading(false);
@@ -103,28 +112,31 @@ export default function Payments() {
   const handleRefreshBalance = async () => {
     setIsRefreshingBalance(true);
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
-      const response = await fetch(`${config.apiBaseUrl}/api/payments/refresh-balance`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${sessionId}` },
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/payments/refresh-balance`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sessionId}` },
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to refresh balance');
+        throw new Error("Failed to refresh balance");
       }
 
       const balanceData = await response.json();
       setBalance(balanceData);
-      showToast('Balance refreshed', 'success');
+      showToast("Balance refreshed", "success");
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : 'Failed to refresh balance',
-        'error'
+        error instanceof Error ? error.message : "Failed to refresh balance",
+        "error",
       );
     } finally {
       setIsRefreshingBalance(false);
@@ -134,19 +146,22 @@ export default function Payments() {
   const handleReconcile = async () => {
     setIsReconciling(true);
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
-      const response = await fetch(`${config.apiBaseUrl}/api/payments/reconcile`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${sessionId}` },
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/payments/reconcile`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sessionId}` },
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to reconcile payments');
+        throw new Error("Failed to reconcile payments");
       }
 
       const data = await response.json();
@@ -162,23 +177,25 @@ export default function Payments() {
       if (summary.updated > 0) {
         showToast(
           `Reconciled: ${summary.updated} updated, ${summary.unchanged} unchanged`,
-          'success'
+          "success",
         );
       } else {
-        showToast('All payments already in sync', 'success');
+        showToast("All payments already in sync", "success");
       }
 
       // Show warnings if any
       if (summary.notFoundInTelegram > 0) {
-        console.warn(`${summary.notFoundInTelegram} payments not found in Telegram`);
+        console.warn(
+          `${summary.notFoundInTelegram} payments not found in Telegram`,
+        );
       }
       if (summary.errors > 0) {
         console.error(`${summary.errors} errors during reconciliation`);
       }
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : 'Failed to reconcile payments',
-        'error'
+        error instanceof Error ? error.message : "Failed to reconcile payments",
+        "error",
       );
     } finally {
       setIsReconciling(false);
@@ -186,16 +203,16 @@ export default function Payments() {
   };
 
   const fetchPayments = async () => {
-    const sessionId = localStorage.getItem('telegram_session_id');
+    const sessionId = localStorage.getItem("telegram_session_id");
     if (!sessionId) return null;
 
     try {
       const response = await fetch(
         `${config.apiBaseUrl}/api/payments?limit=${limit}&offset=${offset}`,
         {
-          headers: { 'Authorization': `Bearer ${sessionId}` },
-          credentials: 'include',
-        }
+          headers: { Authorization: `Bearer ${sessionId}` },
+          credentials: "include",
+        },
       );
 
       if (!response.ok) return null;
@@ -203,7 +220,7 @@ export default function Payments() {
       const data = await response.json();
       return data.payments;
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      console.error("Error fetching payments:", error);
       return null;
     }
   };
@@ -217,15 +234,17 @@ export default function Payments() {
 
       const updatedPayments = await fetchPayments();
       if (updatedPayments) {
-        const refundedPayment = updatedPayments.find((p: Payment) => p.id === paymentId);
+        const refundedPayment = updatedPayments.find(
+          (p: Payment) => p.id === paymentId,
+        );
 
-        if (refundedPayment?.status === 'refunded') {
+        if (refundedPayment?.status === "refunded") {
           // Refund processed! Update UI
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setPayments(updatedPayments);
           setRefundingPaymentId(null);
           setConfirmRefund(null);
-          showToast('Refund completed successfully', 'success');
+          showToast("Refund completed successfully", "success");
           return;
         }
       }
@@ -245,30 +264,33 @@ export default function Payments() {
   const handleRefund = async (paymentId: string) => {
     setRefundingPaymentId(paymentId);
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
-      const response = await fetch(`${config.apiBaseUrl}/api/payments/${paymentId}/refund`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${sessionId}` },
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/payments/${paymentId}/refund`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sessionId}` },
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to refund payment');
+        throw new Error(data.error || "Failed to refund payment");
       }
 
-      showToast('Refund initiated, waiting for confirmation...', 'success');
+      showToast("Refund initiated, waiting for confirmation...", "success");
 
       // Start polling for refund status
       pollForRefundStatus(paymentId);
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : 'Failed to refund payment',
-        'error'
+        error instanceof Error ? error.message : "Failed to refund payment",
+        "error",
       );
       setRefundingPaymentId(null);
       setConfirmRefund(null);
@@ -277,7 +299,7 @@ export default function Payments() {
 
   const canRefund = (payment: Payment) => {
     // Can only refund succeeded payments
-    if (payment.status !== 'succeeded') return false;
+    if (payment.status !== "succeeded") return false;
 
     // Check 7-day (168 hours) window
     const paymentAge = Date.now() - new Date(payment.createdAt).getTime();
@@ -287,21 +309,25 @@ export default function Payments() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      succeeded: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      created: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      refunded: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+      succeeded:
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      pending:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+      created:
+        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+      failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      refunded:
+        "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
     };
 
     return (
@@ -339,7 +365,10 @@ export default function Payments() {
           <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div
+                key={i}
+                className="h-16 bg-gray-200 dark:bg-gray-700 rounded"
+              ></div>
             ))}
           </div>
         </div>
@@ -351,7 +380,9 @@ export default function Payments() {
     <div className="max-w-6xl mx-auto p-4">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 -mx-4 mb-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Payments</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          Payments
+        </h1>
       </div>
 
       {/* Bot Balance */}
@@ -386,7 +417,12 @@ export default function Payments() {
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -411,7 +447,12 @@ export default function Payments() {
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -460,20 +501,30 @@ export default function Payments() {
                 <div className="shrink-0">
                   {canRefund(payment) ? (
                     <button
-                      onClick={() => setConfirmRefund({ id: payment.id, starAmount: payment.starAmount, userId: payment.userId })}
+                      onClick={() =>
+                        setConfirmRefund({
+                          id: payment.id,
+                          starAmount: payment.starAmount,
+                          userId: payment.userId,
+                        })
+                      }
                       disabled={refundingPaymentId === payment.id}
                       className="px-2 py-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                       title="Refund payment"
                     >
                       {refundingPaymentId === payment.id ? (
                         <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-600 dark:border-orange-400"></div>
-                      ) : '↩️'}
+                      ) : (
+                        "↩️"
+                      )}
                     </button>
                   ) : (
                     <span className="text-xs text-gray-400 dark:text-gray-600 px-2">
-                      {payment.status === 'refunded' ? '✓' :
-                       payment.status !== 'succeeded' ? '-' :
-                       '✗'}
+                      {payment.status === "refunded"
+                        ? "✓"
+                        : payment.status !== "succeeded"
+                          ? "-"
+                          : "✗"}
                     </span>
                   )}
                 </div>
@@ -481,13 +532,18 @@ export default function Payments() {
 
               {/* Line 2: Date, Post ID, Charge ID, Status (mobile) */}
               <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="shrink-0">{formatDate(payment.createdAt)}</span>
+                <span className="shrink-0">
+                  {formatDate(payment.createdAt)}
+                </span>
                 <span>•</span>
-                <span className="shrink-0">Post {payment.postId || '-'}</span>
+                <span className="shrink-0">Post {payment.postId || "-"}</span>
                 {payment.telegramPaymentChargeId && (
                   <>
                     <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline font-mono truncate" title={payment.telegramPaymentChargeId}>
+                    <span
+                      className="hidden sm:inline font-mono truncate"
+                      title={payment.telegramPaymentChargeId}
+                    >
                       {payment.telegramPaymentChargeId.substring(0, 8)}...
                     </span>
                   </>
@@ -509,9 +565,16 @@ export default function Payments() {
               Confirm Refund
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to refund <strong>{confirmRefund.starAmount} star{confirmRefund.starAmount > 1 ? 's' : ''}</strong> to user <strong>{confirmRefund.userId}</strong>?
-              <br /><br />
-              This action will revert the post to a regular (not-starred) post and return the stars to the user.
+              Are you sure you want to refund{" "}
+              <strong>
+                {confirmRefund.starAmount} star
+                {confirmRefund.starAmount > 1 ? "s" : ""}
+              </strong>{" "}
+              to user <strong>{confirmRefund.userId}</strong>?
+              <br />
+              <br />
+              This action will revert the post to a regular (not-starred) post
+              and return the stars to the user.
             </p>
             <div className="flex space-x-3">
               <button
@@ -525,7 +588,7 @@ export default function Payments() {
                 disabled={refundingPaymentId !== null}
                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {refundingPaymentId ? 'Refunding...' : 'Confirm Refund'}
+                {refundingPaymentId ? "Refunding..." : "Confirm Refund"}
               </button>
             </div>
           </div>

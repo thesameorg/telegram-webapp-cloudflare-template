@@ -81,7 +81,7 @@ class ImageCache {
     return {
       loaded: this.loadedImages.size,
       errored: this.errorImages.size,
-      loading: this.loadingPromises.size
+      loading: this.loadingPromises.size,
     };
   }
 }

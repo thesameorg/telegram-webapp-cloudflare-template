@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useToast } from '../hooks/use-toast';
-import { config } from '../config';
+import { useState } from "react";
+import { useToast } from "../hooks/use-toast";
+import { config } from "../config";
 
 interface DeletePostConfirmProps {
   postId: number;
@@ -8,7 +8,11 @@ interface DeletePostConfirmProps {
   onPostDeleted?: () => void;
 }
 
-export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: DeletePostConfirmProps) {
+export default function DeletePostConfirm({
+  postId,
+  onClose,
+  onPostDeleted,
+}: DeletePostConfirmProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
@@ -18,29 +22,29 @@ export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: De
     setError(null);
 
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
       const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${sessionId}`,
+          Authorization: `Bearer ${sessionId}`,
         },
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete post');
+        throw new Error(errorData.error || "Failed to delete post");
       }
 
-      showToast('Post deleted successfully!', 'success');
+      showToast("Post deleted successfully!", "success");
       onPostDeleted?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete post');
+      setError(err instanceof Error ? err.message : "Failed to delete post");
     } finally {
       setIsLoading(false);
     }
@@ -59,8 +63,18 @@ export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: De
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -70,8 +84,18 @@ export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: De
           <div className="mb-4">
             <div className="flex items-center mb-3">
               <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg
+                  className="w-6 h-6 text-red-600 dark:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </div>
               <div>
@@ -79,7 +103,8 @@ export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: De
                   Delete this post?
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  This action cannot be undone. The post will be permanently deleted.
+                  This action cannot be undone. The post will be permanently
+                  deleted.
                 </p>
               </div>
             </div>
@@ -106,7 +131,7 @@ export default function DeletePostConfirm({ postId, onClose, onPostDeleted }: De
               disabled={isLoading}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
-              {isLoading ? 'Deleting...' : 'Delete'}
+              {isLoading ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>

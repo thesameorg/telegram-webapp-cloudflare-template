@@ -62,16 +62,12 @@
       "indexes": {
         "idx_posts_created_at": {
           "name": "idx_posts_created_at",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         },
         "idx_posts_user_id": {
           "name": "idx_posts_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },

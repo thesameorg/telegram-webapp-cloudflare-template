@@ -1,13 +1,13 @@
 interface User {
-  first_name: string
-  last_name?: string
-  username?: string
-  photo_url?: string
-  language_code?: string
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  language_code?: string;
 }
 
 interface UserInfoProps {
-  user: User
+  user: User;
 }
 
 export default function UserInfo({ user }: UserInfoProps) {
@@ -28,11 +28,19 @@ export default function UserInfo({ user }: UserInfoProps) {
           </div>
         )}
         <div>
-          <p><strong>User:</strong> {user.first_name} {user.last_name || ''}</p>
-          {user.username && <p><strong>Username:</strong> @{user.username}</p>}
+          <p>
+            <strong>User:</strong> {user.first_name} {user.last_name || ""}
+          </p>
+          {user.username && (
+            <p>
+              <strong>Username:</strong> @{user.username}
+            </p>
+          )}
         </div>
       </div>
-      <p><strong>Language:</strong> {user.language_code || 'Unknown'}</p>
+      <p>
+        <strong>Language:</strong> {user.language_code || "Unknown"}
+      </p>
     </div>
-  )
+  );
 }

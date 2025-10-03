@@ -1,7 +1,7 @@
-import type { SessionData, Env } from '../types/env';
-import type { TelegramUser } from '../models/telegram-user';
-import { getDisplayName } from '../models/telegram-user';
-import { getAdminRole } from './admin-auth';
+import type { SessionData, Env } from "../types/env";
+import type { TelegramUser } from "../models/telegram-user";
+import { getDisplayName } from "../models/telegram-user";
+import { getAdminRole } from "./admin-auth";
 
 export class SessionManager {
   private readonly kv: KVNamespace;
@@ -25,18 +25,16 @@ export class SessionManager {
       displayName: getDisplayName(user),
       profilePictureUrl: user.photo_url,
       createdAt: now,
-      expiresAt: now + (this.sessionTTL * 1000),
+      expiresAt: now + this.sessionTTL * 1000,
       isActive: true,
       role: getAdminRole(user.id, this.env),
       telegramId: user.id,
-      isPremium: user.is_premium
+      isPremium: user.is_premium,
     };
 
-    await this.kv.put(
-      `session:${sessionId}`,
-      JSON.stringify(sessionData),
-      { expirationTtl: this.sessionTTL }
-    );
+    await this.kv.put(`session:${sessionId}`, JSON.stringify(sessionData), {
+      expirationTtl: this.sessionTTL,
+    });
 
     return sessionData;
   }
@@ -61,14 +59,12 @@ export class SessionManager {
 
     const updatedSession: SessionData = {
       ...session,
-      expiresAt: Date.now() + (this.sessionTTL * 1000)
+      expiresAt: Date.now() + this.sessionTTL * 1000,
     };
 
-    await this.kv.put(
-      `session:${sessionId}`,
-      JSON.stringify(updatedSession),
-      { expirationTtl: this.sessionTTL }
-    );
+    await this.kv.put(`session:${sessionId}`, JSON.stringify(updatedSession), {
+      expirationTtl: this.sessionTTL,
+    });
 
     return updatedSession;
   }

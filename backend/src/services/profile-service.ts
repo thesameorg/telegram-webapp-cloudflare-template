@@ -1,9 +1,9 @@
-import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/d1';
-import { userProfiles } from '../db/schema';
-import type { UserProfile, NewUserProfile } from '../db/schema';
-import type { UpdateProfileInput, ContactLinks } from '../models/profile';
-import type { D1Database } from '@cloudflare/workers-types';
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { userProfiles } from "../db/schema";
+import type { UserProfile, NewUserProfile } from "../db/schema";
+import type { UpdateProfileInput, ContactLinks } from "../models/profile";
+import type { D1Database } from "@cloudflare/workers-types";
 
 export class ProfileService {
   private db: ReturnType<typeof drizzle>;
@@ -22,7 +22,11 @@ export class ProfileService {
     return result[0] || null;
   }
 
-  async createProfile(telegramId: number, username?: string, displayName?: string): Promise<UserProfile> {
+  async createProfile(
+    telegramId: number,
+    username?: string,
+    displayName?: string,
+  ): Promise<UserProfile> {
     // Prepare contact links with telegram username if provided
     const contactLinks: { telegram?: string } = {};
     if (username) {
@@ -33,7 +37,10 @@ export class ProfileService {
       telegramId,
       username: username ?? null,
       displayName: displayName ?? null,
-      contactLinks: Object.keys(contactLinks).length > 0 ? JSON.stringify(contactLinks) : null,
+      contactLinks:
+        Object.keys(contactLinks).length > 0
+          ? JSON.stringify(contactLinks)
+          : null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -46,7 +53,10 @@ export class ProfileService {
     return result[0];
   }
 
-  async updateProfile(telegramId: number, data: UpdateProfileInput): Promise<UserProfile> {
+  async updateProfile(
+    telegramId: number,
+    data: UpdateProfileInput,
+  ): Promise<UserProfile> {
     // First, ensure profile exists
     let profile = await this.getProfile(telegramId);
     if (!profile) {
@@ -79,7 +89,10 @@ export class ProfileService {
     return result[0];
   }
 
-  async uploadAvatar(telegramId: number, imageKey: string): Promise<UserProfile> {
+  async uploadAvatar(
+    telegramId: number,
+    imageKey: string,
+  ): Promise<UserProfile> {
     // First, ensure profile exists
     let profile = await this.getProfile(telegramId);
     if (!profile) {
@@ -110,7 +123,9 @@ export class ProfileService {
   }
 
   // Enhanced profile response with parsed contact links
-  formatProfile(profile: UserProfile): UserProfile & { parsedContactLinks: ContactLinks } {
+  formatProfile(
+    profile: UserProfile,
+  ): UserProfile & { parsedContactLinks: ContactLinks } {
     return {
       ...profile,
       parsedContactLinks: this.parseContactLinks(profile.contactLinks),

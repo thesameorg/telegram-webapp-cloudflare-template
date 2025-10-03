@@ -1,7 +1,7 @@
 const STORAGE_KEYS = {
-  SESSION_ID: 'telegram_session_id',
-  EXPIRES_AT: 'telegram_session_expires_at',
-  USER_DATA: 'telegram_user_data'
+  SESSION_ID: "telegram_session_id",
+  EXPIRES_AT: "telegram_session_expires_at",
+  USER_DATA: "telegram_user_data",
 } as const;
 
 export interface StoredUserData {
@@ -27,16 +27,16 @@ const safeStorage = {
     try {
       localStorage.setItem(key, value);
     } catch {
-      console.warn('Failed to store in localStorage');
+      console.warn("Failed to store in localStorage");
     }
   },
   remove: (key: string): void => {
     try {
       localStorage.removeItem(key);
     } catch {
-      console.warn('Failed to remove from localStorage');
+      console.warn("Failed to remove from localStorage");
     }
-  }
+  },
 };
 
 export const AuthStorage = {
@@ -84,12 +84,16 @@ export const AuthStorage = {
       sessionId: this.getSessionId(),
       expiresAt: this.getExpiresAt(),
       userData: this.getUserData(),
-      isValid: this.isSessionValid()
+      isValid: this.isSessionValid(),
     };
   },
 
-  setAuthState(sessionId: string, expiresAt: number, userData: StoredUserData): void {
+  setAuthState(
+    sessionId: string,
+    expiresAt: number,
+    userData: StoredUserData,
+  ): void {
     this.setSession(sessionId, expiresAt);
     this.setUserData(userData);
-  }
+  },
 };

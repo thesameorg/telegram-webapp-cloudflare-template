@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       worker_url:
-        description: 'Worker URL (optional - will be auto-detected if not provided)'
+        description: "Worker URL (optional - will be auto-detected if not provided)"
         required: false
         type: string
 
@@ -26,7 +26,6 @@ jobs:
             exit 1
           fi
           echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
-
 
       - name: Setup Telegram webhook
         id: webhook
@@ -97,4 +96,3 @@ jobs:
           echo "Note: This requires a valid chat ID to test properly"
           echo "Webhook is configured at: ${{ steps.webhook.outputs.webhook_url }}"
           echo "Bot can now receive updates from Telegram"
-

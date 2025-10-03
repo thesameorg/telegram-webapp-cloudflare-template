@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { config } from '../config';
+import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { config } from "../config";
 
 interface CreatePostData {
   content: string;
@@ -27,20 +27,22 @@ export function useCreatePost(): CreatePostResult {
   const [error, setError] = useState<string | null>(null);
   const { sessionId } = useAuth();
 
-  const createPost = async (data: CreatePostData): Promise<{ post: Post } | null> => {
+  const createPost = async (
+    data: CreatePostData,
+  ): Promise<{ post: Post } | null> => {
     if (!sessionId) {
-      setError('Authentication required');
+      setError("Authentication required");
       return null;
     }
 
     // Allow posts with just a space (for image-only posts)
-    if (!data.content.trim() && data.content !== ' ') {
-      setError('Post content cannot be empty');
+    if (!data.content.trim() && data.content !== " ") {
+      setError("Post content cannot be empty");
       return null;
     }
 
     if (data.content.length > 280) {
-      setError('Post cannot exceed 280 characters');
+      setError("Post cannot exceed 280 characters");
       return null;
     }
 
@@ -49,26 +51,26 @@ export function useCreatePost(): CreatePostResult {
 
     try {
       const response = await fetch(`${config.apiBaseUrl}/api/posts`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionId}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
         },
         body: JSON.stringify({
           content: data.content.trim(),
         }),
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create post');
+        throw new Error(errorData.error || "Failed to create post");
       }
 
       const result = await response.json();
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
       return null;
     } finally {
       setIsLoading(false);

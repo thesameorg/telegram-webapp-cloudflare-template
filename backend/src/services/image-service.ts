@@ -1,8 +1,8 @@
-import { eq, and } from 'drizzle-orm';
-import type { Database } from '../db';
-import { postImages } from '../db/schema';
-import type { PostImage } from '../db/schema';
-import type { Env } from '../types/env';
+import { eq, and } from "drizzle-orm";
+import type { Database } from "../db";
+import { postImages } from "../db/schema";
+import type { PostImage } from "../db/schema";
+import type { Env } from "../types/env";
 
 export interface ImageUploadData {
   originalName: string;
@@ -27,11 +27,11 @@ export interface ImageUrlData {
 }
 
 export class ImageService {
-  private r2: Env['IMAGES'];
+  private r2: Env["IMAGES"];
 
   constructor(
     private db: Database,
-    r2: Env['IMAGES']
+    r2: Env["IMAGES"],
   ) {
     this.r2 = r2;
   }
@@ -39,20 +39,26 @@ export class ImageService {
   private generateImageKey(postId: number, filename: string): string {
     const timestamp = Date.now();
     const uuid = crypto.randomUUID();
-    const ext = filename.split('.').pop()?.toLowerCase() || 'jpg';
+    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
     return `images/${postId}/full/${timestamp}_${uuid}.${ext}`;
   }
 
   private generateThumbnailKey(postId: number, filename: string): string {
     const timestamp = Date.now();
     const uuid = crypto.randomUUID();
-    const ext = filename.split('.').pop()?.toLowerCase() || 'jpg';
+    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
     return `images/${postId}/thumbs/${timestamp}_${uuid}.${ext}`;
   }
 
-  async uploadImage(postId: number, imageData: ImageUploadData): Promise<PostImage> {
+  async uploadImage(
+    postId: number,
+    imageData: ImageUploadData,
+  ): Promise<PostImage> {
     const imageKey = this.generateImageKey(postId, imageData.originalName);
-    const thumbnailKey = this.generateThumbnailKey(postId, imageData.originalName);
+    const thumbnailKey = this.generateThumbnailKey(
+      postId,
+      imageData.originalName,
+    );
 
     // Upload full image to R2
     await this.r2.put(imageKey, imageData.imageBuffer, {
@@ -64,7 +70,7 @@ export class ImageService {
         postId: postId.toString(),
         width: imageData.width.toString(),
         height: imageData.height.toString(),
-      }
+      },
     });
 
     // Upload thumbnail to R2
@@ -75,29 +81,35 @@ export class ImageService {
       customMetadata: {
         originalName: imageData.originalName,
         postId: postId.toString(),
-        type: 'thumbnail',
-      }
+        type: "thumbnail",
+      },
     });
 
     // Save metadata to database
     const now = new Date().toISOString();
-    const [newImage] = await this.db.insert(postImages).values({
-      postId,
-      originalName: imageData.originalName,
-      imageKey,
-      thumbnailKey,
-      mimeType: imageData.mimeType,
-      fileSize: imageData.fileSize,
-      width: imageData.width,
-      height: imageData.height,
-      uploadOrder: imageData.uploadOrder,
-      createdAt: now,
-    }).returning();
+    const [newImage] = await this.db
+      .insert(postImages)
+      .values({
+        postId,
+        originalName: imageData.originalName,
+        imageKey,
+        thumbnailKey,
+        mimeType: imageData.mimeType,
+        fileSize: imageData.fileSize,
+        width: imageData.width,
+        height: imageData.height,
+        uploadOrder: imageData.uploadOrder,
+        createdAt: now,
+      })
+      .returning();
 
     return newImage;
   }
 
-  async uploadImages(postId: number, imagesData: ImageUploadData[]): Promise<PostImage[]> {
+  async uploadImages(
+    postId: number,
+    imagesData: ImageUploadData[],
+  ): Promise<PostImage[]> {
     const results: PostImage[] = [];
 
     for (const imageData of imagesData) {
@@ -121,7 +133,7 @@ export class ImageService {
       .where(eq(postImages.postId, postId))
       .orderBy(postImages.uploadOrder);
 
-    return images.map(image => ({
+    return images.map((image) => ({
       id: image.id,
       imageKey: image.imageKey,
       thumbnailKey: image.thumbnailKey,
@@ -150,7 +162,7 @@ export class ImageService {
       await this.r2.delete(image.imageKey);
       await this.r2.delete(image.thumbnailKey);
     } catch (error) {
-      console.error('Failed to delete from R2:', error);
+      console.error("Failed to delete from R2:", error);
       // Continue to delete from database even if R2 deletion fails
     }
 
@@ -181,19 +193,20 @@ export class ImageService {
     }
 
     // Delete from database
-    await this.db
-      .delete(postImages)
-      .where(eq(postImages.postId, postId));
+    await this.db.delete(postImages).where(eq(postImages.postId, postId));
   }
 
-  async validateImageFile(buffer: ArrayBuffer, mimeType: string): Promise<boolean> {
+  async validateImageFile(
+    buffer: ArrayBuffer,
+    mimeType: string,
+  ): Promise<boolean> {
     // Check file size (1MB limit for full images)
     if (buffer.byteLength > 1024 * 1024) {
       return false;
     }
 
     // Check MIME type - only accept compressed formats (all files are converted to JPEG on frontend)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(mimeType)) {
       return false;
     }
@@ -227,9 +240,9 @@ export class ImageService {
       },
       customMetadata: {
         originalName: file.name,
-        type: 'profile_avatar',
+        type: "profile_avatar",
         uploadedAt: new Date().toISOString(),
-      }
+      },
     });
   }
 
@@ -241,7 +254,10 @@ export class ImageService {
     try {
       await this.r2.delete(profileImageKey);
     } catch (error) {
-      console.error(`Failed to delete profile image ${profileImageKey} from R2:`, error);
+      console.error(
+        `Failed to delete profile image ${profileImageKey} from R2:`,
+        error,
+      );
       // Don't throw - allow profile update to continue even if R2 deletion fails
     }
   }

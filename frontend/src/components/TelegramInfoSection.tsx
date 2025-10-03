@@ -12,7 +12,10 @@ interface TelegramInfoSectionProps {
   isAdmin?: boolean;
 }
 
-export function TelegramInfoSection({ user, isAdmin }: TelegramInfoSectionProps) {
+export function TelegramInfoSection({
+  user,
+  isAdmin,
+}: TelegramInfoSectionProps) {
   if (!user) return null;
 
   return (
@@ -23,26 +26,34 @@ export function TelegramInfoSection({ user, isAdmin }: TelegramInfoSectionProps)
 
       <div className="space-y-3">
         <div>
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">Name</span>
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
+            Name
+          </span>
           <p className="text-gray-900 dark:text-white">
-            {user.first_name} {user.last_name || ''}
+            {user.first_name} {user.last_name || ""}
           </p>
         </div>
 
         {user.username && (
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">Username</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
+              Username
+            </span>
             <p className="text-gray-900 dark:text-white">@{user.username}</p>
           </div>
         )}
 
         <div>
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">User ID</span>
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
+            User ID
+          </span>
           <p className="text-gray-900 dark:text-white">{user.id}</p>
         </div>
 
         <div>
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">Language</span>
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block">
+            Language
+          </span>
           <p className="text-gray-900 dark:text-white">{user.language_code}</p>
         </div>
 

@@ -3,7 +3,7 @@
  * Defines the bindings and environment variables available in the Worker context
  */
 
-import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
+import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
 
 export interface Env {
   // KV Namespaces
@@ -23,8 +23,6 @@ export interface Env {
   DEV_AUTH_BYPASS_ENABLED?: string;
 }
 
-
-
 /**
  * Session data structure stored in KV
  */
@@ -37,7 +35,7 @@ export interface SessionData {
   createdAt: number;
   expiresAt: number;
   isActive: boolean;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
   telegramId: number;
   isPremium?: boolean;
 }

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useToast } from '../hooks/use-toast';
+import { useState } from "react";
+import { useToast } from "../hooks/use-toast";
 
 interface BanUserConfirmProps {
   telegramId: number;
@@ -14,31 +14,31 @@ export default function BanUserConfirm({
   username,
   isBanned,
   onClose,
-  onActionCompleted
+  onActionCompleted,
 }: BanUserConfirmProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  const action = isBanned ? 'unban' : 'ban';
-  const actionTitle = isBanned ? 'Unban User' : 'Ban User';
-  const actionVerb = isBanned ? 'Unban' : 'Ban';
+  const action = isBanned ? "unban" : "ban";
+  const actionTitle = isBanned ? "Unban User" : "Ban User";
+  const actionVerb = isBanned ? "Unban" : "Ban";
 
   const handleAction = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const sessionId = localStorage.getItem('telegram_session_id');
+      const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {
-        throw new Error('Not authenticated');
+        throw new Error("Not authenticated");
       }
 
       const endpoint = `/api/admin/${action}/${telegramId}`;
       const response = await fetch(endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${sessionId}`,
+          Authorization: `Bearer ${sessionId}`,
         },
       });
 
@@ -47,7 +47,7 @@ export default function BanUserConfirm({
         throw new Error(errorData.error || `Failed to ${action} user`);
       }
 
-      showToast(`User ${action}ned successfully!`, 'success');
+      showToast(`User ${action}ned successfully!`, "success");
       onActionCompleted?.();
       onClose();
     } catch (err) {
@@ -70,8 +70,18 @@ export default function BanUserConfirm({
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -80,8 +90,13 @@ export default function BanUserConfirm({
         <div className="p-4">
           <div className="mb-4">
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-              Are you sure you want to {action}{' '}
-              {username ? <span className="font-medium">@{username}</span> : 'this user'}?
+              Are you sure you want to {action}{" "}
+              {username ? (
+                <span className="font-medium">@{username}</span>
+              ) : (
+                "this user"
+              )}
+              ?
             </p>
 
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
@@ -125,8 +140,8 @@ export default function BanUserConfirm({
               disabled={isLoading}
               className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
                 isBanned
-                  ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400'
-                  : 'bg-red-600 hover:bg-red-700 disabled:bg-gray-400'
+                  ? "bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                  : "bg-red-600 hover:bg-red-700 disabled:bg-gray-400"
               } disabled:cursor-not-allowed`}
             >
               {isLoading ? `${actionVerb}ning...` : `${actionVerb} User`}

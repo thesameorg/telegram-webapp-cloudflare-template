@@ -1,13 +1,13 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import Layout from './components/Layout';
-import Feed from './pages/Feed';
-import UnifiedProfile from './pages/UnifiedProfile';
-import EditProfile from './pages/EditProfile';
-import Payments from './pages/Payments';
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Layout from "./components/Layout";
+import Feed from "./pages/Feed";
+import UnifiedProfile from "./pages/UnifiedProfile";
+import EditProfile from "./pages/EditProfile";
+import Payments from "./pages/Payments";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
@@ -15,15 +15,15 @@ const router = createBrowserRouter([
         element: <Feed />,
       },
       {
-        path: 'edit-profile',
+        path: "edit-profile",
         element: <EditProfile />,
       },
       {
-        path: 'profile/:telegramId',
+        path: "profile/:telegramId",
         element: <UnifiedProfile />,
       },
       {
-        path: 'payments',
+        path: "payments",
         element: <Payments />,
       },
     ],

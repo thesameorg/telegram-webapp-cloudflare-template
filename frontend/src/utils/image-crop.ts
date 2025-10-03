@@ -1,4 +1,4 @@
-import { Area } from 'react-easy-crop';
+import { Area } from "react-easy-crop";
 
 /**
  * Creates a cropped image from the source image and crop area
@@ -10,17 +10,17 @@ import { Area } from 'react-easy-crop';
 export async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
-  originalFile: File
+  originalFile: File,
 ): Promise<File> {
   return new Promise((resolve, reject) => {
     const image = new Image();
 
     image.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
       if (!ctx) {
-        reject(new Error('Failed to get canvas context'));
+        reject(new Error("Failed to get canvas context"));
         return;
       }
 
@@ -38,14 +38,14 @@ export async function getCroppedImg(
         0,
         0,
         pixelCrop.width,
-        pixelCrop.height
+        pixelCrop.height,
       );
 
       // Convert canvas to blob
       canvas.toBlob(
         (blob) => {
           if (!blob) {
-            reject(new Error('Failed to create blob from canvas'));
+            reject(new Error("Failed to create blob from canvas"));
             return;
           }
 
@@ -58,12 +58,12 @@ export async function getCroppedImg(
           resolve(file);
         },
         originalFile.type,
-        1 // Maximum quality
+        1, // Maximum quality
       );
     };
 
     image.onerror = () => {
-      reject(new Error('Failed to load image'));
+      reject(new Error("Failed to load image"));
     };
 
     image.src = imageSrc;
@@ -82,10 +82,10 @@ export function createImagePreview(file: File): Promise<string> {
       if (e.target?.result) {
         resolve(e.target.result as string);
       } else {
-        reject(new Error('Failed to read file'));
+        reject(new Error("Failed to read file"));
       }
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }

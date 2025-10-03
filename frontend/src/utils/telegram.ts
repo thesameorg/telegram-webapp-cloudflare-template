@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { WebApp } from '@twa-dev/types';
+import { useState, useEffect } from "react";
+import { WebApp } from "@twa-dev/types";
 
 declare global {
   interface Window {
@@ -15,7 +15,7 @@ export function useTelegram() {
 
   useEffect(() => {
     const initializeTelegram = () => {
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      if (typeof window !== "undefined" && window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
         setWebApp(tg);
         tg.ready();
@@ -26,9 +26,10 @@ export function useTelegram() {
       }
     };
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeTelegram);
-      return () => document.removeEventListener('DOMContentLoaded', initializeTelegram);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initializeTelegram);
+      return () =>
+        document.removeEventListener("DOMContentLoaded", initializeTelegram);
     } else {
       initializeTelegram();
     }

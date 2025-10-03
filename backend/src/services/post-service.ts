@@ -1,29 +1,39 @@
-import { eq, desc, and } from 'drizzle-orm';
-import type { Database } from '../db';
-import { posts, postImages, userProfiles } from '../db/schema';
-import type { CreatePostInput, GetPostsInput, GetUserPostsInput } from '../models/post';
-import type { ImageUrlData } from './image-service';
-import type { Env } from '../types/env';
+import { eq, desc, and } from "drizzle-orm";
+import type { Database } from "../db";
+import { posts, postImages, userProfiles } from "../db/schema";
+import type {
+  CreatePostInput,
+  GetPostsInput,
+  GetUserPostsInput,
+} from "../models/post";
+import type { ImageUrlData } from "./image-service";
+import type { Env } from "../types/env";
 
 export class PostService {
-  constructor(private db: Database, private env: Env) {}
+  constructor(
+    private db: Database,
+    private env: Env,
+  ) {}
 
   async createPost(
     userId: number,
     username: string,
     displayName: string,
-    input: CreatePostInput
+    input: CreatePostInput,
   ) {
     const now = new Date().toISOString();
 
-    const [newPost] = await this.db.insert(posts).values({
-      userId,
-      username,
-      displayName,
-      content: input.content,
-      createdAt: now,
-      updatedAt: now,
-    }).returning();
+    const [newPost] = await this.db
+      .insert(posts)
+      .values({
+        userId,
+        username,
+        displayName,
+        content: input.content,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
 
     return newPost;
   }
@@ -58,9 +68,7 @@ export class PostService {
   }
 
   async getPostCount() {
-    const [result] = await this.db
-      .select({ count: posts.id })
-      .from(posts);
+    const [result] = await this.db.select({ count: posts.id }).from(posts);
 
     return result?.count || 0;
   }
@@ -81,7 +89,7 @@ export class PostService {
       .update(posts)
       .set({
         content,
-        updatedAt: now
+        updatedAt: now,
       })
       .where(and(eq(posts.id, id), eq(posts.userId, userId)))
       .returning();
@@ -114,7 +122,7 @@ export class PostService {
       .update(posts)
       .set({
         displayName: newDisplayName,
-        updatedAt: now
+        updatedAt: now,
       })
       .where(eq(posts.userId, userId));
 
@@ -163,14 +171,16 @@ export class PostService {
         return {
           ...post,
           displayName: effectiveDisplayName,
-          profile: profile ? {
-            displayName: profile.displayName,
-            bio: profile.bio,
-            profileImageKey: profile.profileImageKey,
-          } : null,
-          images
+          profile: profile
+            ? {
+                displayName: profile.displayName,
+                bio: profile.bio,
+                profileImageKey: profile.profileImageKey,
+              }
+            : null,
+          images,
         };
-      })
+      }),
     );
 
     return postsWithImages;
@@ -205,14 +215,16 @@ export class PostService {
         return {
           ...post,
           displayName: effectiveDisplayName,
-          profile: profile ? {
-            displayName: profile.displayName,
-            bio: profile.bio,
-            profileImageKey: profile.profileImageKey,
-          } : null,
-          images
+          profile: profile
+            ? {
+                displayName: profile.displayName,
+                bio: profile.bio,
+                profileImageKey: profile.profileImageKey,
+              }
+            : null,
+          images,
         };
-      })
+      }),
     );
 
     return postsWithImages;
@@ -246,12 +258,14 @@ export class PostService {
     return {
       ...post,
       displayName: effectiveDisplayName,
-      profile: profile ? {
-        displayName: profile.displayName,
-        bio: profile.bio,
-        profileImageKey: profile.profileImageKey,
-      } : null,
-      images
+      profile: profile
+        ? {
+            displayName: profile.displayName,
+            bio: profile.bio,
+            profileImageKey: profile.profileImageKey,
+          }
+        : null,
+      images,
     };
   }
 
@@ -262,7 +276,7 @@ export class PostService {
       .where(eq(postImages.postId, postId))
       .orderBy(postImages.uploadOrder);
 
-    return images.map(image => ({
+    return images.map((image) => ({
       id: image.id,
       imageKey: image.imageKey,
       thumbnailKey: image.thumbnailKey,

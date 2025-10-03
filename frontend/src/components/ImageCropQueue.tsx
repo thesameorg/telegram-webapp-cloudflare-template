@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import ImageCropModal from './ImageCropModal';
+import { useState } from "react";
+import ImageCropModal from "./ImageCropModal";
 
 interface ImageCropQueueProps {
   images: File[];
@@ -12,7 +12,7 @@ export default function ImageCropQueue({
   images,
   onAllCropped,
   onCancel,
-  aspectRatio = 1
+  aspectRatio = 1,
 }: ImageCropQueueProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [croppedFiles, setCroppedFiles] = useState<File[]>([]);
@@ -60,7 +60,9 @@ export default function ImageCropQueue({
             <div className="w-64 bg-gray-700 rounded-full h-2 mt-2">
               <div
                 className="bg-blue-500 h-2 rounded-full transition-all"
-                style={{ width: `${((currentIndex + 1) / totalImages) * 100}%` }}
+                style={{
+                  width: `${((currentIndex + 1) / totalImages) * 100}%`,
+                }}
               />
             </div>
           </div>

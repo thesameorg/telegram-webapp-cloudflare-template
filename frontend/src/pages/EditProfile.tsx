@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ProfileEditor } from '../components/profile/ProfileEditor';
-import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
-import { useToast } from '../hooks/use-toast';
-import { useAuth } from '../contexts/AuthContext';
-import { config } from '../config';
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { ProfileEditor } from "../components/profile/ProfileEditor";
+import { ProfileSkeleton } from "../components/profile/ProfileSkeleton";
+import { useToast } from "../hooks/use-toast";
+import { useAuth } from "../contexts/AuthContext";
+import { config } from "../config";
 
 interface ProfileData {
   telegram_id: number;
@@ -33,33 +33,33 @@ export default function EditProfile() {
   const fetchProfile = useCallback(async () => {
     try {
       if (!sessionId) {
-        navigate('/account');
+        navigate("/account");
         return;
       }
 
       setLoading(true);
       const response = await fetch(`${config.apiBaseUrl}/api/profile/me`, {
         headers: {
-          'x-session-id': sessionId,
+          "x-session-id": sessionId,
         },
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          navigate('/account');
+          navigate("/account");
           return;
         }
-        throw new Error('Failed to load profile');
+        throw new Error("Failed to load profile");
       }
 
       const data = await response.json();
       setProfile(data.profile);
       setError(null);
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setError('Failed to load profile');
-      showToast('Failed to load profile', 'error');
+      console.error("Error fetching profile:", error);
+      setError("Failed to load profile");
+      showToast("Failed to load profile", "error");
     } finally {
       setLoading(false);
     }
@@ -74,38 +74,40 @@ export default function EditProfile() {
     fetchProfile();
   }, [authLoading, fetchProfile]);
 
-
   const handleSave = async (updatedProfile: Partial<ProfileData>) => {
     setSaving(true);
     try {
       if (!sessionId) {
-        throw new Error('No session found');
+        throw new Error("No session found");
       }
 
       const response = await fetch(`${config.apiBaseUrl}/api/profile/me`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'x-session-id': sessionId,
+          "Content-Type": "application/json",
+          "x-session-id": sessionId,
         },
         body: JSON.stringify(updatedProfile),
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update profile');
+        throw new Error(errorData.error || "Failed to update profile");
       }
 
       const data = await response.json();
       setProfile(data.profile);
-      showToast('Profile updated successfully!', 'success');
+      showToast("Profile updated successfully!", "success");
 
       // Navigate back to the user's profile
       navigate(`/profile/${data.profile.telegram_id}`);
     } catch (error: unknown) {
-      console.error('Profile update failed:', error);
-      showToast(error instanceof Error ? error.message : 'Failed to update profile', 'error');
+      console.error("Profile update failed:", error);
+      showToast(
+        error instanceof Error ? error.message : "Failed to update profile",
+        "error",
+      );
     } finally {
       setSaving(false);
     }
@@ -115,7 +117,7 @@ export default function EditProfile() {
     if (profile) {
       navigate(`/profile/${profile.telegram_id}`);
     } else {
-      navigate('/account');
+      navigate("/account");
     }
   };
 
@@ -132,13 +134,13 @@ export default function EditProfile() {
       <div className="max-w-2xl mx-auto p-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            {error || 'Profile not found'}
+            {error || "Profile not found"}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Unable to load your profile for editing.
           </p>
           <button
-            onClick={() => navigate('/account')}
+            onClick={() => navigate("/account")}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Go to Account

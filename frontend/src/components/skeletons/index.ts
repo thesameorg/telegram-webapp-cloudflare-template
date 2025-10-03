@@ -1,3 +1,3 @@
-export * from './Skeleton';
-export * from './PostSkeleton';
-export * from './AccountSkeleton';
+export * from "./Skeleton";
+export * from "./PostSkeleton";
+export * from "./AccountSkeleton";

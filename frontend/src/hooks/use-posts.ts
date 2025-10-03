@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 interface Post {
   id: number;
@@ -34,26 +34,24 @@ export function usePosts(userId?: number): UsePostsResult {
         return;
       }
 
-      const url = userId
-        ? `/api/posts/user/${userId}`
-        : '/api/posts';
+      const url = userId ? `/api/posts/user/${userId}` : "/api/posts";
 
       const response = await fetch(url, {
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch posts');
+        throw new Error("Failed to fetch posts");
       }
 
       const data = await response.json();
       setPosts(data.posts || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
       setPosts([]);
     } finally {
       setLoading(false);

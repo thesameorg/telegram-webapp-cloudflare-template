@@ -3,6 +3,7 @@
 ## Prerequisites
 
 ### Required Software
+
 - **Node.js** (v20 or higher) - [Installation guide](https://nodejs.org/)
 - **Wrangler CLI** - Cloudflare's command-line tool
 - **ngrok** - For local development tunneling
@@ -12,11 +13,13 @@
 ### Initial Setup
 
 1. **Copy environment template:**
+
    ```bash
    cp .env.example .env
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install        # Root dependencies
    npm run install    # Backend & frontend dependencies
@@ -35,11 +38,13 @@
 Perfect for testing the app without setting up a bot.
 
 1. **Enable dev bypass mode in `.env`:**
+
    ```bash
    DEV_AUTH_BYPASS_ENABLED=true
    ```
 
 2. **Run verification and start dev servers:**
+
    ```bash
    npm run clean-check    # Should complete without errors
    npm run dev
@@ -79,6 +84,7 @@ Note the URL you receive (e.g., `https://1cd4689c783a.ngrok-free.app/`)
 ### 4. Configure Environment
 
 Edit `.env`:
+
 ```bash
 TELEGRAM_BOT_TOKEN=<your-bot-token>
 TELEGRAM_ADMIN_ID=<your-telegram-id>
@@ -109,11 +115,13 @@ npm run stop && npm run dev
 ### 1. Cloudflare Setup
 
 **Get your credentials:**
+
 ```bash
 wrangler whoami    # Get your Account ID
 ```
 
 Add to `.env` (recommended):
+
 ```bash
 CF_API_TOKEN=<your-api-token>
 CF_ACCOUNT_ID=<your-account-id>
@@ -122,9 +130,11 @@ CF_ACCOUNT_ID=<your-account-id>
 ### 2. Create Cloudflare Resources
 
 **D1 Database:**
+
 ```bash
 wrangler d1 create <your-database-name>
 ```
+
 - Copy `database_name` and `database_id` to `wrangler.toml`
 - Update `package.json` line 28:
   ```json
@@ -132,15 +142,19 @@ wrangler d1 create <your-database-name>
   ```
 
 **KV Namespace:**
+
 ```bash
 wrangler kv namespace create <your-kv-namespace-name>
 ```
+
 - Copy `binding` and `id` to `wrangler.toml` KV section
 
 **R2 Bucket:**
+
 ```bash
 wrangler r2 bucket create <bucket-name>
 ```
+
 - Copy `binding` and `bucket_name` to `wrangler.toml` R2 section
 - **Enable public access:**
   1. Go to Cloudflare Dashboard
@@ -156,12 +170,14 @@ Create a new bot with [@BotFather](https://t.me/botfather) for production use (s
 Go to your GitHub repository → Settings → Secrets and variables → Actions
 
 **Secrets:**
+
 - `CLOUDFLARE_ACCOUNT_ID` - From `wrangler whoami`
 - `CLOUDFLARE_API_TOKEN` - [Create API token](https://dash.cloudflare.com/profile/api-tokens)
 - `TELEGRAM_ADMIN_ID` - Your Telegram ID
 - `TELEGRAM_BOT_TOKEN` - Production bot token
 
 **Variables:**
+
 - `PAGES_URL` - Your Cloudflare Pages URL (see next step)
 - `WORKER_URL` - Your Cloudflare Worker URL
 - `R2_URL` - Your R2 bucket public URL (from step 2)
@@ -170,6 +186,7 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 ### 5. Deploy Infrastructure
 
 **Create Pages project:**
+
 ```bash
 wrangler pages project create <my-project>
 ```
@@ -177,9 +194,11 @@ wrangler pages project create <my-project>
 **Set project name in `wrangler.toml`** (line 1)
 
 **Deploy worker:**
+
 ```bash
 wrangler deploy
 ```
+
 Note the deployment URL for `WORKER_URL` variable.
 
 ### 6. Configure Bot
@@ -195,6 +214,7 @@ Update your production bot's menu button with `PAGES_URL` using [@BotFather](htt
 ### 8. Verify Deployment
 
 Test your production bot:
+
 - ✅ Send `/start` message
 - ✅ Open web app (should load)
 - ✅ Check "Payments" section (visible to admin)

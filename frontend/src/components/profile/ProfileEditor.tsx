@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { ProfileAvatar } from './ProfileAvatar';
-import { ContactLinks } from './ContactLinks';
-import { useToast } from '../../hooks/use-toast';
-import { config } from '../../config';
+import React, { useState } from "react";
+import { ProfileAvatar } from "./ProfileAvatar";
+import { ContactLinks } from "./ContactLinks";
+import { useToast } from "../../hooks/use-toast";
+import { config } from "../../config";
 
 interface ContactLinksData {
   website?: string;
@@ -29,26 +29,33 @@ interface ProfileEditorProps {
   sessionId?: string;
 }
 
-export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loading = false, sessionId }: ProfileEditorProps) {
+export function ProfileEditor({
+  profile,
+  onSave,
+  onCancel,
+  onAvatarUpdate,
+  loading = false,
+  sessionId,
+}: ProfileEditorProps) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
-    display_name: profile.display_name || '',
-    bio: profile.bio || '',
-    phone_number: profile.phone_number || '',
+    display_name: profile.display_name || "",
+    bio: profile.bio || "",
+    phone_number: profile.phone_number || "",
     contact_links: profile.contact_links || {},
   });
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
   const handleContactLinksChange = (links: ContactLinksData) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contact_links: links,
     }));
@@ -58,35 +65,38 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
     setUploadingAvatar(true);
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append("image", file);
 
       if (!sessionId) {
-        throw new Error('No session found');
+        throw new Error("No session found");
       }
 
-      const response = await fetch(`${config.apiBaseUrl}/api/profile/me/avatar`, {
-        method: 'POST',
-        headers: {
-          'x-session-id': sessionId,
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/profile/me/avatar`,
+        {
+          method: "POST",
+          headers: {
+            "x-session-id": sessionId,
+          },
+          body: formData,
+          credentials: "include",
         },
-        body: formData,
-        credentials: 'include',
-      });
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to upload avatar');
+        throw new Error("Failed to upload avatar");
       }
 
       await response.json();
-      showToast('Avatar updated successfully!', 'success');
+      showToast("Avatar updated successfully!", "success");
 
       // Refresh profile data to show the new avatar
       if (onAvatarUpdate) {
         await onAvatarUpdate();
       }
     } catch (error) {
-      console.error('Avatar upload failed:', error);
-      showToast('Failed to upload avatar', 'error');
+      console.error("Avatar upload failed:", error);
+      showToast("Failed to upload avatar", "error");
     } finally {
       setUploadingAvatar(false);
     }
@@ -96,7 +106,7 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
     e.preventDefault();
 
     if (!formData.display_name.trim()) {
-      showToast('Display name is required', 'error');
+      showToast("Display name is required", "error");
       return;
     }
 
@@ -105,10 +115,13 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
         display_name: formData.display_name.trim(),
         bio: formData.bio.trim() || undefined,
         phone_number: formData.phone_number.trim() || undefined,
-        contact_links: Object.keys(formData.contact_links).length > 0 ? formData.contact_links : undefined,
+        contact_links:
+          Object.keys(formData.contact_links).length > 0
+            ? formData.contact_links
+            : undefined,
       });
     } catch (error) {
-      console.error('Profile update failed:', error);
+      console.error("Profile update failed:", error);
     }
   };
 
@@ -122,8 +135,18 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
           onClick={onCancel}
           className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -153,14 +176,17 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
 
         {/* Display Name */}
         <div>
-          <label htmlFor="display_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="display_name"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Display Name *
           </label>
           <input
             id="display_name"
             type="text"
             value={formData.display_name}
-            onChange={(e) => handleInputChange('display_name', e.target.value)}
+            onChange={(e) => handleInputChange("display_name", e.target.value)}
             placeholder="Enter your display name"
             maxLength={50}
             required
@@ -173,13 +199,16 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
 
         {/* Bio */}
         <div>
-          <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="bio"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Bio
           </label>
           <textarea
             id="bio"
             value={formData.bio}
-            onChange={(e) => handleInputChange('bio', e.target.value)}
+            onChange={(e) => handleInputChange("bio", e.target.value)}
             placeholder="Tell people about yourself..."
             maxLength={160}
             rows={3}
@@ -192,14 +221,17 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
 
         {/* Phone Number */}
         <div>
-          <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="phone_number"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Phone Number
           </label>
           <input
             id="phone_number"
             type="tel"
             value={formData.phone_number}
-            onChange={(e) => handleInputChange('phone_number', e.target.value)}
+            onChange={(e) => handleInputChange("phone_number", e.target.value)}
             placeholder="+1 (555) 123-4567"
             maxLength={20}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -225,7 +257,7 @@ export function ProfileEditor({ profile, onSave, onCancel, onAvatarUpdate, loadi
             disabled={loading || uploadingAvatar}
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? "Saving..." : "Save Changes"}
           </button>
           <button
             type="button"
