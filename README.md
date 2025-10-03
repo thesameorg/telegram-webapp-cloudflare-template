@@ -19,7 +19,7 @@ This is a full-stack Telegram Web App + Bot template, including: ⭐️ payments
 - **Image Upload & Processing**: Multi-image posts with thumbnails & cropping
 
 ### Technical Stack
-- **Frontend**: Cloudflare Pages: React + TypeScript + Vite
+- **Frontend**: [Cloudflare Pages](https://developers.cloudflare.com/pages/): React + TypeScript + Vite
 - **Backend**: [Cloudflare Workers](https://developers.cloudflare.com/workers/) + [Hono Framework](https://hono.dev/)
 - **Database**: D1 SQLite with [Drizzle ORM](https://orm.drizzle.team/) & Migrations
 - **Storage**: R2 for images, KV for sessions
@@ -34,10 +34,15 @@ This is a full-stack Telegram Web App + Bot template, including: ⭐️ payments
 
 
 
+> [!IMPORTANT]
+> When adding a new endpoint, add it ot Router.tsx!
+
+--- 
+
 ## 📖 Learn More
 
 - [Telegram WebApps](https://core.telegram.org/bots/webapps)
-- 
+
 
 
 ## 📄 License
