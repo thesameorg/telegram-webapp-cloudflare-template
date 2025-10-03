@@ -36,19 +36,106 @@ Everything's typed, tested, and ready to customize.
 📖 **Technical deep-dives in [SOLUTIONS.md](docs/SOLUTIONS.md)**
 📖 **All commands in [COMMANDS.md](docs/COMMANDS.md)**
 
+## Architecture
+
+### Monorepo Structure
+```
+├── backend/          # Cloudflare Worker (Hono)
+│   ├── api/         # Route handlers
+│   ├── db/          # Schema & migrations (Drizzle)
+│   └── webhook.ts   # Telegram bot handler
+├── frontend/        # React SPA (Vite)
+└── docs/            # Documentation
+```
+
+### Key Flows
+
+**Authentication**: Telegram WebApp `initData` → Backend HMAC validation → Session in KV → httpOnly cookie
+
+**Payments**: Invoice creation → Pre-checkout validation → `successful_payment` webhook → Atomic DB update
+
+**Images**: Upload → Compression → Thumbnail generation → R2 storage → Public URLs
+
+## Development
+
+```bash
+npm run dev              # Start both servers (backend:8787, frontend:3000)
+npm run test             # Run all tests
+npm run check            # typecheck + lint + test
+npm run db:migrate:local # Apply DB migrations
+```
+
+**Local webhook testing**:
+```bash
+npm run tunnel:start     # Start ngrok
+npm run webhook:set      # Point Telegram to tunnel
+```
+
+## Environment Setup
+
+**Backend** (`backend/.env`):
+```bash
+TELEGRAM_BOT_TOKEN=your_token
+TELEGRAM_ADMIN_ID=your_telegram_id
+DEV_AUTH_BYPASS_ENABLED=true  # Optional: skip auth locally
+```
+
+**Production** (Cloudflare Worker secrets):
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_ADMIN_ID`
+- `PAGES_URL` (optional CORS validation)
+
+Bindings in `wrangler.toml`: `DB` (D1), `SESSIONS` (KV), `IMAGES` (R2)
+
+## Deployment
+
+**Automated** (GitHub Actions):
+1. Push to main → Build → Tests → Deploy Worker → Deploy Pages → Set webhook
+
+**Manual**:
+```bash
+cd backend && npx wrangler deploy
+cd ../frontend && npm run build && npx wrangler pages deploy dist
+```
+
+## Database Schema
+
+```typescript
+Modify schema in `backend/src/db/schema.ts` → `npm run db:generate` → `npm run db:migrate:local`
+``` 
+
+## Common Issues
+
+**Port in use**: `npm run stop && npm run dev`
+
+**Webhook not working**: Check `npm run webhook:status`, verify `TELEGRAM_BOT_TOKEN`
+
+**Auth fails locally**: Set `DEV_AUTH_BYPASS_ENABLED=true` in `backend/.env`
+
+**CORS errors**: Set `PAGES_URL` in Worker environment variables
+
+
+
+## Security Notes
+
+- HMAC signature validation on all Telegram data
+- httpOnly session cookies prevent XSS
+- Admin role checked on protected endpoints
+- Drizzle ORM prevents SQL injection
+- Never commit `.env` files
 
 
 
 > [!IMPORTANT]
-> When adding a new endpoint, add it ot Router.tsx!
-
---- 
+> When adding a new endpoint, add it to Router.tsx!
 
 ## 📖 Learn More
 
-- [Telegram WebApps](https://core.telegram.org/bots/webapps)
-
-
+- [Telegram WebApps Documentation](https://core.telegram.org/bots/webapps)
+- [Telegram Bot API](https://core.telegram.org/bots/api)
+- [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
+- [Hono Framework](https://hono.dev/)
+- [Drizzle ORM](https://orm.drizzle.team/)
 
 ## 📄 License
 
