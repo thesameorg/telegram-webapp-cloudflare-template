@@ -1,35 +1,40 @@
 # Telegram Web App + Bot Template
 
-This is a full-stack Telegram Web App + Bot template, including: ⭐️ payments and image handling. Deployed for free on Cloudflare Workers (backend) and Pages (frontend) with D1 database, KV sessions, and R2 storage. 
+A production-ready template for building Telegram mini apps with payments and rich media. Everything runs on Cloudflare's free tier—no servers, no headaches.
 
-
-**Example Bot**: [https://t.me/telefare_bot](https://t.me/telefare_bot)
+**Try it live**: [https://t.me/telefare_bot](https://t.me/telefare_bot)
 
 ![App Screenshot](docs/images/app_screenshot.jpg)
 
-📖 **To begin, go to [QUICKSTART.md](docs/QUICKSTART.md)**
+📖 **Ready to build? Start with [QUICKSTART.md](docs/QUICKSTART.md)**
 
 
 
-## 🚀 Features
+## What's Inside
 
-### Core Functionality
-- **Instagram-like App**: Example is an instagram-like app, go check it out!
-- **Telegram Stars Payments**: Uses telegram stars for paid posts 
-- **Image Upload & Processing**: Multi-image posts with thumbnails & cropping
+I built this after getting tired of piecing together Telegram bot tutorials. Here's what you get:
 
-### Technical Stack
-- **Frontend**: [Cloudflare Pages](https://developers.cloudflare.com/pages/): React + TypeScript + Vite
-- **Backend**: [Cloudflare Workers](https://developers.cloudflare.com/workers/) + [Hono Framework](https://hono.dev/)
-- **Database**: D1 SQLite with [Drizzle ORM](https://orm.drizzle.team/) & Migrations
+- **Real payments** — Telegram Stars integration that actually works (with webhooks, refunds, the whole deal)
+- **Image handling** — Upload, crop, compress. Stored in R2, served fast
+- **Example app** — Instagram-style feed to show you how it all fits together
+- **Full auth flow** — Sessions, admin roles, the security stuff you don't want to mess up
+- **Local dev that works** — Test webhooks locally with ngrok, no deploy-pray-debug cycles
+
+## Tech Stack
+
+Built with tools that scale without costing you money:
+
+- **Frontend**: React + TypeScript on [Cloudflare Pages](https://developers.cloudflare.com/pages/)
+- **Backend**: [Cloudflare Workers](https://developers.cloudflare.com/workers/) + [Hono](https://hono.dev/) (like Express but faster)
+- **Database**: D1 (SQLite) with [Drizzle ORM](https://orm.drizzle.team/)
 - **Storage**: R2 for images, KV for sessions
-- **CI/CD**: GitHub Actions deployment pipeline
-- **Testing**: Vitest for backend and frontend
-- **Multiple Environments**: local bypass, ngrok tunnel, deployed
+- **Deploy**: GitHub Actions (push to main = live in 2 minutes)
+- **Testing**: Vitest for both backend and frontend
 
+Everything's typed, tested, and ready to customize.
 
-📖 **Some technical solutions are described at [SOLUTIONS.md](docs/SOLUTIONS.md)**
-📖 **Commands are at [COMMANDS.md](docs/COMMANDS.md)**
+📖 **Technical deep-dives in [SOLUTIONS.md](docs/SOLUTIONS.md)**
+📖 **All commands in [COMMANDS.md](docs/COMMANDS.md)**
 
 
 
