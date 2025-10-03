@@ -2,123 +2,143 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Commands
+## Project Overview
 
-### Development
-```bash
-# Install all dependencies (backend + frontend)
-npm run install
+A full-stack Telegram Web App template with bot integration, deployed on Cloudflare Workers (backend) and Pages (frontend). Uses React + TypeScript frontend with Hono backend, D1 SQLite database, KV sessions, and R2 image storage.
 
-# Start development servers (backend on :8787, frontend on :3000)
-npm run dev &
-
-# Stop all development servers
-npm run stop
-```
-
-### Building & Testing
-```bash
-# Run full build (typecheck backend, build frontend)
-npm run build
-
-# Run all tests (backend + frontend)
-npm run test
-
-# Run type checking
-npm run typecheck
-
-# Run linting
-npm run lint
-
-# Complete verification pipeline
-npm run check  # typecheck + lint + test
-npm run clean-check  # clean + install + build + typecheck + lint + test
-```
-
-### Backend Development
-```bash
-cd backend
-npm run dev          # Start Wrangler dev server on :8787
-npm run deploy       # Deploy to Cloudflare Workers
-npm test             # Run Vitest tests
-npm run typecheck    # TypeScript checking
-```
-
-### Frontend Development
-```bash
-cd frontend
-npm run dev          # Start Vite dev server on :5173
-npm run build        # Build for production
-npm test             # Run Vitest tests
-npm run typecheck    # TypeScript checking
-```
-
-### Webhook Management
-```bash
-# Start local development tunnel (ngrok)
-npm run tunnel:start
-
-# Check webhook status
-npm run tunnel:status
-
-# Stop tunnels
-npm run tunnel:stop
-```
 ## Architecture
 
 ### Monorepo Structure
-- **Root level**: Shared scripts and configuration
-- **backend/**: Cloudflare Workers backend using Hono.js
-- **frontend/**: React web app with Vite build system
+- **Root**: Orchestration scripts and shared tooling
+- **Backend** (`backend/`): Cloudflare Worker (Hono framework)
+  - API endpoints (`src/api/`)
+  - Telegram webhook handler (`src/webhook.ts`)
+  - Database schema (`src/db/schema.ts` - Drizzle ORM)
+  - Service layer (`src/services/`)
+- **Frontend** (`frontend/`): React SPA
+  - Uses Vite dev proxy to backend (localhost:8787)
+  - Telegram WebApp SDK integration (`@twa-dev/sdk`)
+  - API client (`src/services/api.ts`)
 
-### Backend (Cloudflare Workers)
-- **Framework**: Hono.js for HTTP routing
-- **Bot Framework**: Grammy for Telegram bot functionality
-- **Validation**: Zod schemas for request validation
-- **Testing**: Vitest for contract tests
-- **Key Files**:
-  - `src/index.ts`: Main Hono app with route definitions
-  - `src/webhook.ts`: Telegram webhook handler with Grammy bot
-  - `src/api/`: API endpoint handlers (health, auth)
-  - `src/types/env.ts`: Environment variable type definitions
+### Key Flows
 
-### Frontend (React + Vite)
-- **Framework**: React 18 with TypeScript
-- **Styling**: Tailwind CSS with dark mode support
-- **Telegram Integration**: @twa-dev/sdk for Telegram Web App features
-- **Testing**: Vitest + React Testing Library
-- **Key Files**:
-  - `src/App.tsx`: Main app component with Telegram theme integration
-  - `src/utils/telegram.ts`: Telegram Web App SDK utilities
-  - `src/components/SimpleAuthWrapper.tsx`: Authentication wrapper
+**Authentication**:
+1. Telegram WebApp sends `initData` via `window.Telegram.WebApp.initData`
+2. Frontend POSTs to `/api/auth` with initData
+3. Backend validates HMAC signature using `TELEGRAM_BOT_TOKEN`
+4. Session stored in KV (SESSIONS binding), cookie returned
+5. Middleware (`telegram-auth.ts`, `admin-auth.ts`) validates subsequent requests
 
-### Environment Configuration
-- **Local**: Uses ngrok tunnels for webhook development
-- **Preview**: Deployed on PR creation with separate bot token
-- **Production**: Deployed on main branch merge
-- **Files**: `.env` (local), `wrangler.toml` (Workers config), GitHub Secrets (CI/CD)
+**Telegram Webhook** (`src/webhook.ts`):
+- Bot commands: `/start`, `/repo`
+- Telegram Payments: `pre_checkout_query` → validates payment → `successful_payment` → updates DB atomically → notifications
+- Refunds: `refunded_payment` → reverts post premium status
 
-### Cloudflare Services
-- **Workers**: Backend API and webhook handler
-- **Pages**: Frontend hosting + functions `[[path]]` as workaround for deployed backend url calls
-- **KV**: Session storage (binding: SESSIONS)
-- **D1**: Database storage (binding: DB)
+**Database** (D1 SQLite):
+- `posts` - user posts with optional star payments
+- `payments` - Telegram Stars payment records
+- `userProfiles` - user profiles with avatar & contact info
+- `postImages` - image metadata (R2 keys for originals + thumbnails)
 
-### Bot Functionality
-- **Commands**: `/start` command shows web app button
-- **Message Handling**: Non-command messages get helpful response
-- **Web App Integration**: Button launches React frontend
-- **Security**: Webhook signature validation, separate tokens per environment
+**Image Flow**:
+1. Frontend uploads to `/api/posts/:postId/images` or `/api/profile/me/avatar`
+2. Backend receives multipart form, uses `browser-image-compression` for thumbnails
+3. Stores in R2 bucket (IMAGES binding), saves keys to D1
+4. Local dev serves via `/r2/*` endpoint; production uses R2 public domain
 
-### Testing Strategy
-- **Contract Tests**: Backend API endpoints and webhook handling
-- **Component Tests**: React component rendering and behavior
-- **Integration Tests**: End-to-end workflow validation
-- **Environment Tests**: Configuration and deployment validation
+### Environment Strategy
 
-### Development Workflow
-1. Use tunneling scripts for local webhook testing
-2. Backend runs on :8787, frontend on :5173
-3. Environment variables loaded from `.env`
-4. Real bot tokens required for authentic testing
-5. Separate development and production bots recommended
+**Local Development**:
+- Backend: `wrangler dev --local --port 8787` (from `backend/`)
+- Frontend: `vite` on port 3000 (proxies API to 8787)
+- Database: `.wrangler/state/v3/d1` (local D1)
+- Auth bypass available: `DEV_AUTH_BYPASS_ENABLED=true` in `.env`
+
+**Production**:
+- Worker: Deployed via `wrangler deploy` (uses `wrangler.toml` bindings)
+- Pages: Built frontend deployed to Cloudflare Pages
+- Worker URL passed as `VITE_WORKER_URL` during frontend build
+- CORS validation uses `PAGES_URL` env var
+
+## Common Commands
+
+### Development
+```bash
+npm run dev              # Start both backend (8787) and frontend (3000)
+npm run dev:backend      # Backend only
+npm run dev:frontend     # Frontend only
+npm run stop             # Kill all dev servers
+```
+
+### Testing & Quality
+```bash
+npm run test             # Run all tests (backend + frontend)
+npm test:backend         # Backend tests only (vitest)
+npm test:frontend        # Frontend tests only (vitest)
+npm run typecheck        # TypeScript check (both)
+npm run lint             # ESLint (both)
+npm run check            # typecheck + lint + test
+npm run clean-check      # clean + install + build + check
+```
+
+### Database
+```bash
+npm run db:migrate:local      # Apply migrations to local D1
+cd backend && npm run db:generate  # Generate migration from schema changes
+cd backend && npm run db:studio    # Open Drizzle Studio
+```
+
+### Local Telegram Integration
+```bash
+npm run tunnel:start     # Start ngrok tunnel (requires ngrok auth)
+npm run tunnel:status    # Check tunnel status
+npm run tunnel:stop      # Stop tunnel
+npm run webhook:set      # Set Telegram webhook to tunnel URL
+npm run webhook:status   # Check webhook status
+npm run webhook:clear    # Clear webhook
+```
+
+### Deployment
+See `.github/workflows/` for CI/CD pipeline:
+1. `1-build-test.yml` - Validation
+2. `2-deploy-worker.yml` - Deploy backend
+3. `3-deploy-pages.yml` - Deploy frontend
+4. `4-setup-webhook.yml` - Configure webhook
+
+## Important Notes
+
+### Authentication
+- All API endpoints (except `/api/health`) require authentication
+- Session cookies are httpOnly, validated against KV store
+- Admin endpoints check `role === 'admin'` (set when `telegramId === TELEGRAM_ADMIN_ID`)
+- Dev bypass: Creates mock user when `DEV_AUTH_BYPASS_ENABLED=true`
+
+### Payment Flow
+- Uses Telegram Stars API
+- Atomic updates via `db.batch()` to ensure post + payment consistency
+- Idempotency via `telegram_payment_charge_id`
+- Webhook handlers MUST be registered before generic message handler in `webhook.ts`
+
+### Image Handling
+- Max 10 images per post
+- Frontend crops images before upload (`react-easy-crop`)
+- Backend generates thumbnails (max 800x800)
+- R2 keys: `{userId}/{uuid}.{ext}` and `{userId}/thumb_{uuid}.{ext}`
+
+### Frontend Routing
+- React Router v6 with client-side routing
+- Main routes: `/` (Feed), `/profile` (UnifiedProfile), `/edit-profile`, `/payments`
+- AuthRequired wrapper protects routes
+- Bottom navigation for mobile UX
+
+### Environment Variables
+Required in `.env` (local) or Worker secrets (production):
+- `TELEGRAM_BOT_TOKEN` - Bot API token
+- `TELEGRAM_ADMIN_ID` - Admin user Telegram ID
+- `PAGES_URL` - Frontend URL for CORS (optional, defaults to wildcard)
+- `DEV_AUTH_BYPASS_ENABLED` - Enable mock auth (local only)
+
+Wrangler bindings in `wrangler.toml`:
+- `SESSIONS` (KV) - Session storage
+- `DB` (D1) - Main database
+- `IMAGES` (R2) - Image storage
