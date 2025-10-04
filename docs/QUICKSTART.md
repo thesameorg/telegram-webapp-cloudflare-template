@@ -156,20 +156,18 @@ wrangler r2 bucket create <bucket-name>
 ```
 
 **Pages Deployment:**
+
 ```bash
 wrangler pages project create <my-project>
 ```
-- Set this project name in `wrangler.toml` (line 1)
 
+- Set this project name in `wrangler.toml` (line 1)
 
 **Deploy worker:**
 
 ```bash
 wrangler deploy
 ```
-
-
-
 
 - Copy `binding` and `bucket_name` to `wrangler.toml` R2 section
 - **Enable public access:**
@@ -200,8 +198,6 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 - `PAGES_PROJECT_NAME` - Your Pages project name
 
 ### 5. Deploy Infrastructure
-
-
 
 Note the deployment URL for `WORKER_URL` variable.
 
