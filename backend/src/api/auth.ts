@@ -39,27 +39,19 @@ async function handleAuthentication(
 
   // DEV-ONLY: Auth bypass for local development
   if (c.env.DEV_AUTH_BYPASS_ENABLED === "true") {
-    const mockUser = {
-      ...devMockUser,
-      role:
-        devMockUser.id.toString() === c.env.TELEGRAM_ADMIN_ID
-          ? "admin"
-          : "user",
-    };
-
-    const session = await sessionManager.createSession(mockUser as any);
+    const session = await sessionManager.createSession(devMockUser);
 
     return c.json({
       authenticated: true,
       sessionId: session!.sessionId,
       user: {
-        id: mockUser.id,
-        first_name: mockUser.first_name,
-        last_name: mockUser.last_name,
-        username: mockUser.username,
-        language_code: mockUser.language_code,
-        is_premium: mockUser.is_premium,
-        photo_url: mockUser.photo_url,
+        id: devMockUser.id,
+        first_name: devMockUser.first_name,
+        last_name: devMockUser.last_name,
+        username: devMockUser.username,
+        language_code: devMockUser.language_code,
+        is_premium: devMockUser.is_premium,
+        photo_url: devMockUser.photo_url,
       },
       expiresAt: session!.expiresAt,
       role: session!.role,

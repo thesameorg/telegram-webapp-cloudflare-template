@@ -159,6 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
  * useAuth - Hook to access centralized auth state
  * Replaces the old useSimpleAuth hook
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthState {
   const context = useContext(AuthContext);
   if (context === null) {

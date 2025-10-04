@@ -299,7 +299,7 @@ export class PaymentService {
     // Call Telegram API with retry logic
     const bot = new Bot(this.env.TELEGRAM_BOT_TOKEN);
     const maxRetries = 3;
-    let lastError: Error | null = null;
+    let lastError: unknown = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -314,18 +314,26 @@ export class PaymentService {
 
         console.log(`[Refund] Success for payment ${paymentId}`);
         return { success: true };
-      } catch (error: any) {
+      } catch (error) {
         lastError = error;
         console.error(`[Refund] Attempt ${attempt} failed:`, error);
 
         // Check if error is permanent (don't retry)
-        const errorMessage = error.message || String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const errorCode =
+          typeof error === "object" &&
+          error !== null &&
+          "error_code" in error
+            ? (error.error_code as number)
+            : undefined;
+
         const isPermanentError =
           errorMessage.includes("payment not found") ||
           errorMessage.includes("already refunded") ||
           errorMessage.includes("PAYMENT_NOT_FOUND") ||
           errorMessage.includes("PAYMENT_ALREADY_REFUNDED") ||
-          (error.error_code && error.error_code === 400);
+          errorCode === 400;
 
         if (isPermanentError) {
           console.error(
@@ -341,8 +349,7 @@ export class PaymentService {
           errorMessage.includes("network") ||
           errorMessage.includes("ETIMEDOUT") ||
           errorMessage.includes("ECONNRESET") ||
-          (error.error_code &&
-            (error.error_code === 429 || error.error_code >= 500));
+          (errorCode && (errorCode === 429 || errorCode >= 500));
 
         if (!isTransientError && attempt === maxRetries) {
           // Unknown error, exhausted retries
@@ -361,7 +368,10 @@ export class PaymentService {
     // All retries exhausted
     return {
       success: false,
-      error: lastError?.message || "Refund failed after all retries",
+      error:
+        lastError instanceof Error
+          ? lastError.message
+          : "Refund failed after all retries",
     };
   }
 
@@ -382,7 +392,12 @@ export class PaymentService {
 
       // Fetch star transactions from Telegram (last 30 days worth)
       // We'll fetch in batches since API has pagination
-      const allTransactions: any[] = [];
+      const allTransactions: Array<{
+        id: string;
+        amount: number;
+        source?: unknown;
+        receiver?: unknown;
+      }> = [];
       let offset = 0;
       const limit = 100; // Max per request
       const maxPages = 10; // Safety limit (1000 transactions max)
@@ -430,7 +445,10 @@ export class PaymentService {
       // Build a map of Telegram transactions by charge ID
       // Note: Telegram transactions have an 'id' field which is the transaction ID
       // We need to match this with our telegramPaymentChargeId
-      const telegramTxMap = new Map<string, any>();
+      const telegramTxMap = new Map<
+        string,
+        { id: string; amount: number; source?: unknown; receiver?: unknown }
+      >();
 
       for (const tx of allTransactions) {
         // Star transactions can be incoming (payments) or outgoing (refunds)
@@ -511,14 +529,14 @@ export class PaymentService {
           } else {
             result.unchanged++;
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error(
             `[Reconcile] Error processing payment ${payment.id}:`,
             error,
           );
           result.errors.push({
             paymentId: payment.id,
-            error: error.message || String(error),
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -531,10 +549,10 @@ export class PaymentService {
       });
 
       return result;
-    } catch (error: any) {
+    } catch (error) {
       console.error("[Reconcile] Fatal error:", error);
       throw new Error(
-        `Reconciliation failed: ${error.message || String(error)}`,
+        `Reconciliation failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

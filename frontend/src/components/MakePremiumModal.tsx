@@ -52,7 +52,10 @@ export default function MakePremiumModal({
       if (!response.ok) return false;
 
       const data = await response.json();
-      const updatedPost = data.posts?.find((p: any) => p.id === postId);
+      const updatedPost = data.posts?.find(
+        (p: { id: number; starCount: number; isPaymentPending: number }) =>
+          p.id === postId,
+      );
 
       // Check if payment has been processed (starCount > 0 or no longer pending)
       if (
