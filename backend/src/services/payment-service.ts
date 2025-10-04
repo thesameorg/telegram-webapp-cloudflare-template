@@ -322,9 +322,7 @@ export class PaymentService {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         const errorCode =
-          typeof error === "object" &&
-          error !== null &&
-          "error_code" in error
+          typeof error === "object" && error !== null && "error_code" in error
             ? (error.error_code as number)
             : undefined;
 

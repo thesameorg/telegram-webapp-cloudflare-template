@@ -218,7 +218,7 @@ export default function ImageUpload({
     // Show crop queue for valid files
     setFilesToCrop(validFiles);
     setShowCropQueue(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const removeImage = (id: string) => {
