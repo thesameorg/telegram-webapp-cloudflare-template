@@ -10,7 +10,6 @@ SCRIPT_DIR="$(dirname "$0")"
 source "$SCRIPT_DIR/load-env.sh"
 
 # Constants
-NGROK_PID_FILE="pids/ngrok.pid"
 NGROK_LOG_FILE="logs/ngrok.log"
 
 # Functions
@@ -31,19 +30,12 @@ start_tunnel() {
     fi
 
     # Check if tunnel is already running
-    if [ -f "$NGROK_PID_FILE" ] && kill -0 $(cat "$NGROK_PID_FILE") 2>/dev/null; then
-        echo "⚠️  Tunnel already running (PID: $(cat "$NGROK_PID_FILE"))"
-        EXISTING_URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | jq -r '.tunnels[0].public_url' 2>/dev/null)
-        if [ -n "$EXISTING_URL" ] && [ "$EXISTING_URL" != "null" ]; then
-            echo "🌐 URL: $EXISTING_URL"
-        else
-            echo "⚠️  Can't fetch URL (ngrok API not responding)"
-        fi
+    EXISTING_URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | jq -r '.tunnels[0].public_url' 2>/dev/null)
+    if [ -n "$EXISTING_URL" ] && [ "$EXISTING_URL" != "null" ]; then
+        echo "⚠️  Tunnel already running"
+        echo "🌐 URL: $EXISTING_URL"
         return 0
     fi
-
-    # Clean up stale PID file
-    rm -f "$NGROK_PID_FILE"
 
     # Start ngrok tunnel
     ngrok http $PORT --host-header=localhost:$PORT --log=stdout > "$NGROK_LOG_FILE" 2>&1 &
@@ -65,13 +57,9 @@ start_tunnel() {
         exit 1
     fi
 
-    # Save PID
-    echo "$NGROK_PID" > "$NGROK_PID_FILE"
-
     echo ""
     echo "✅ Tunnel started!"
     echo "🌐 URL: $TUNNEL_URL"
-    echo "🔄 PID: $NGROK_PID"
     echo ""
     echo "💡 Next: npm run webhook:set"
 }
@@ -79,34 +67,20 @@ start_tunnel() {
 stop_tunnel() {
     echo "🛑 Stopping ngrok tunnel..."
 
-    local STOPPED=false
-
-    # Try PID file first
-    if [ -f "$NGROK_PID_FILE" ]; then
-        TUNNEL_PID=$(cat "$NGROK_PID_FILE")
-        if kill $TUNNEL_PID 2>/dev/null; then
-            echo "✅ Stopped tunnel (PID: $TUNNEL_PID)"
-            STOPPED=true
-        fi
-    fi
-
-    # If PID file method failed, find and kill ngrok process directly
-    if [ "$STOPPED" = false ]; then
-        NGROK_PIDS=$(pgrep -f "ngrok http" || true)
-        if [ -n "$NGROK_PIDS" ]; then
-            echo "$NGROK_PIDS" | while read -r pid; do
-                if kill $pid 2>/dev/null; then
-                    echo "✅ Stopped tunnel (PID: $pid)"
-                    STOPPED=true
-                fi
-            done
-        else
-            echo "⚠️  No running ngrok process found"
-        fi
+    # Find and kill ngrok process
+    NGROK_PIDS=$(pgrep -f "ngrok http" || true)
+    if [ -n "$NGROK_PIDS" ]; then
+        echo "$NGROK_PIDS" | while read -r pid; do
+            if kill $pid 2>/dev/null; then
+                echo "✅ Stopped tunnel (PID: $pid)"
+            fi
+        done
+    else
+        echo "⚠️  No running ngrok process found"
     fi
 
     # Clean up
-    rm -f "$NGROK_PID_FILE" "$NGROK_LOG_FILE"
+    rm -f "$NGROK_LOG_FILE"
     echo ""
     echo "💡 Next: npm run webhook:clear"
 }
@@ -128,7 +102,6 @@ status_tunnel() {
         echo "❌ Can't reach ngrok API (tunnel not running or ngrok not responding)"
         echo ""
         echo "💡 Start: npm run tunnel:start"
-        rm -f "$NGROK_PID_FILE"
         return 1
     fi
 
@@ -138,7 +111,6 @@ status_tunnel() {
         echo "❌ Tunnel not running"
         echo ""
         echo "💡 Start: npm run tunnel:start"
-        rm -f "$NGROK_PID_FILE"
         return 1
     fi
 

@@ -16,7 +16,7 @@ load_env() {
 }
 
 # Ensure directories exist
-mkdir -p pids logs
+mkdir -p logs
 
 # Auto-load when sourced
 load_env
