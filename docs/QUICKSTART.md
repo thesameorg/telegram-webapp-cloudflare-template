@@ -155,6 +155,22 @@ wrangler kv namespace create <your-kv-namespace-name>
 wrangler r2 bucket create <bucket-name>
 ```
 
+**Pages Deployment:**
+```bash
+wrangler pages project create <my-project>
+```
+- Set this project name in `wrangler.toml` (line 1)
+
+
+**Deploy worker:**
+
+```bash
+wrangler deploy
+```
+
+
+
+
 - Copy `binding` and `bucket_name` to `wrangler.toml` R2 section
 - **Enable public access:**
   1. Go to Cloudflare Dashboard
@@ -185,19 +201,7 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 
 ### 5. Deploy Infrastructure
 
-**Create Pages project:**
 
-```bash
-wrangler pages project create <my-project>
-```
-
-**Set project name in `wrangler.toml`** (line 1)
-
-**Deploy worker:**
-
-```bash
-wrangler deploy
-```
 
 Note the deployment URL for `WORKER_URL` variable.
 
