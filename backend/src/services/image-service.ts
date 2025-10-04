@@ -215,8 +215,12 @@ export class ImageService {
   }
 
   async validateThumbnailFile(buffer: ArrayBuffer): Promise<boolean> {
-    // Check file size (100KB limit for thumbnails)
-    return buffer.byteLength <= 100 * 1024;
+    // Check minimum file size (at least 1KB to ensure valid image)
+    if (buffer.byteLength < 1024) {
+      return false;
+    }
+    // Check maximum file size (150KB limit for thumbnails - compression isn't always exact)
+    return buffer.byteLength <= 150 * 1024;
   }
 
   async getImageCount(postId: number): Promise<number> {

@@ -90,10 +90,11 @@ export default function ImageUpload({
       };
 
       const thumbnailOptions = {
-        maxSizeMB: 0.1,
+        maxSizeMB: 0.095, // Set to 95KB to ensure we stay under 100KB limit
         maxWidthOrHeight: thumbMax,
         useWebWorker: true,
         fileType: "image/jpeg",
+        initialQuality: 0.8, // Start with lower quality for thumbnails
       };
 
       try {

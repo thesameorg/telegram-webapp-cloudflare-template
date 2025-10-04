@@ -58,7 +58,7 @@ export async function getCroppedImg(
           resolve(file);
         },
         originalFile.type,
-        1, // Maximum quality
+        0.95,
       );
     };
 
