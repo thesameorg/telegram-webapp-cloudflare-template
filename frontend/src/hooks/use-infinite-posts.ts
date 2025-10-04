@@ -112,7 +112,7 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
 
   useEffect(() => {
     refetch();
-  }, [userId]);  
+  }, [userId]);
 
   return {
     posts,

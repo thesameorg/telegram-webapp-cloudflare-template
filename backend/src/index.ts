@@ -129,7 +129,7 @@ app.get("/r2/*", async (c) => {
     );
     headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
 
-    return new Response(object.body as ReadableStream, {
+    return new Response(object.body as unknown as ReadableStream, {
       headers: headers,
     });
   } catch (error) {

@@ -218,7 +218,6 @@ export default function ImageUpload({
     // Show crop queue for valid files
     setFilesToCrop(validFiles);
     setShowCropQueue(true);
-     
   }, []);
 
   const removeImage = (id: string) => {

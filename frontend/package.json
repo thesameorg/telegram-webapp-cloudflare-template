@@ -14,10 +14,10 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives"
   },
   "dependencies": {
-    "@twa-dev/sdk": "^7.10.1",
+    "@twa-dev/sdk": "^8.0.2",
     "@types/react-router-dom": "^5.3.3",
     "browser-image-compression": "^2.0.2",
-    "react": "^18.3.1",
+    "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-easy-crop": "^5.5.3",
     "react-router-dom": "^7.9.3",
@@ -27,7 +27,7 @@
     "@eslint/js": "^9.37.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.0.0",
-    "@types/react": "^18.3.3",
+    "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
