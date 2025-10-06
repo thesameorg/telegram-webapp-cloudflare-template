@@ -6,6 +6,7 @@ import { healthHandler } from "./api/health";
 import { authHandler } from "./api/auth";
 import {
   getAllPosts,
+  getPostById,
   getUserPosts,
   createPost,
   updatePost,
@@ -76,6 +77,7 @@ app.post("/api/auth", authHandler);
 
 // Post endpoints
 app.get("/api/posts", getAllPosts);
+app.get("/api/posts/:postId", getPostById);
 app.get("/api/posts/user/:userId", getUserPosts);
 app.post("/api/posts", createPost);
 app.put("/api/posts/:postId", updatePost);

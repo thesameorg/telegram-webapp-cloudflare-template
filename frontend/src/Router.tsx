@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./components/Layout";
 import Feed from "./pages/Feed";
+import PostPage from "./pages/PostPage";
 import UnifiedProfile from "./pages/UnifiedProfile";
 import EditProfile from "./pages/EditProfile";
 import Payments from "./pages/Payments";
@@ -13,6 +14,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Feed />,
+      },
+      {
+        path: "post/:postId",
+        element: <PostPage />,
       },
       {
         path: "edit-profile",
