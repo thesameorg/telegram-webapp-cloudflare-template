@@ -57,6 +57,17 @@ export const api = {
     return handleResponse(response);
   },
 
+  // Fetch a single post by ID
+  async getPostById(postId: number): Promise<{ post: Post }> {
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/posts/${postId}`,
+      {
+        credentials: "include",
+      },
+    );
+    return handleResponse(response);
+  },
+
   // Fetch posts by user ID
   async getUserPosts(
     userId: number,

@@ -97,6 +97,49 @@ export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
+export const getPostById = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const postIdResult = parsePostId(c);
+    if (postIdResult.error) {
+      return c.json(
+        { error: postIdResult.error.message },
+        postIdResult.error.status,
+      );
+    }
+
+    const db = createDatabase(c.env.DB);
+    const postService = new PostService(db, c.env);
+
+    const post = await postService.getPostByIdWithImages(postIdResult.postId);
+
+    if (!post) {
+      return c.json({ error: "Post not found" }, 404);
+    }
+
+    // Check if post author is banned
+    const { ProfileService } = await import("../services/profile-service");
+    const profileService = new ProfileService(c.env.DB);
+    const authorProfile = await profileService.getProfile(post.userId);
+
+    if (authorProfile && authorProfile.isBanned === 1) {
+      // Check if viewer is admin
+      const auth = await authenticateUser(c);
+      const isViewerAdmin =
+        "session" in auth && auth.session && auth.session.role === "admin";
+
+      // If author is banned and viewer is not admin, return 404
+      if (!isViewerAdmin) {
+        return c.json({ error: "Post not found" }, 404);
+      }
+    }
+
+    return c.json({ post });
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    return c.json({ error: "Failed to fetch post" }, 500);
+  }
+};
+
 export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userIdParam = c.req.param("userId");
