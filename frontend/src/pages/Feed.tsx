@@ -14,6 +14,7 @@ interface Post {
   displayName: string;
   content: string;
   starCount?: number;
+  commentCount?: number;
   paymentId?: string | null;
   isPaymentPending?: number;
   createdAt: string;

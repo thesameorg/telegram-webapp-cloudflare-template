@@ -139,6 +139,7 @@ export class PostService {
         displayName: posts.displayName,
         content: posts.content,
         starCount: posts.starCount,
+        commentCount: posts.commentCount,
         paymentId: posts.paymentId,
         isPaymentPending: posts.isPaymentPending,
         createdAt: posts.createdAt,

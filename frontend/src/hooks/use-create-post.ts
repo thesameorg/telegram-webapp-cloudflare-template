@@ -12,6 +12,10 @@ interface Post {
   username: string;
   displayName: string;
   content: string;
+  starCount?: number;
+  commentCount?: number;
+  paymentId?: string | null;
+  isPaymentPending?: number;
   createdAt: string;
   updatedAt: string;
 }
