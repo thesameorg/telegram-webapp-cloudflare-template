@@ -131,7 +131,7 @@ export default function PostPage() {
               Post not found
             </h2>
             <p className="text-gray-500 dark:text-gray-400">
-              This post may have been deleted or doesn't exist.
+              This post may have been deleted or doesn&apos;t exist.
             </p>
           </div>
         </div>
