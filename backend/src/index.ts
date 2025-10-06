@@ -15,6 +15,14 @@ import {
   deletePostImage,
 } from "./api/posts";
 import {
+  getCommentsByPostId,
+  createComment,
+  updateComment,
+  deleteComment,
+  hideComment,
+  unhideComment,
+} from "./api/comments";
+import {
   getProfile,
   getMyProfile,
   updateMyProfile,
@@ -86,6 +94,14 @@ app.delete("/api/posts/:postId", deletePost);
 // Image endpoints
 app.post("/api/posts/:postId/images", uploadPostImages);
 app.delete("/api/posts/:postId/images/:imageId", deletePostImage);
+
+// Comment endpoints
+app.get("/api/posts/:postId/comments", getCommentsByPostId);
+app.post("/api/posts/:postId/comments", createComment);
+app.put("/api/comments/:commentId", updateComment);
+app.delete("/api/comments/:commentId", deleteComment);
+app.post("/api/comments/:commentId/hide", hideComment);
+app.post("/api/comments/:commentId/unhide", unhideComment);
 
 // Profile endpoints
 app.get("/api/profile/me", getMyProfile);

@@ -23,6 +23,42 @@ interface PostsResponse {
   };
 }
 
+interface CommentProfile {
+  displayName?: string;
+  bio?: string;
+  profileImageKey?: string;
+}
+
+interface Comment {
+  id: number;
+  postId: number;
+  userId: number;
+  username: string;
+  displayName: string;
+  content: string;
+  isHidden: number;
+  createdAt: string;
+  updatedAt: string;
+  profile?: CommentProfile | null;
+}
+
+interface CreateCommentData {
+  content: string;
+}
+
+interface UpdateCommentData {
+  content: string;
+}
+
+interface CommentsResponse {
+  comments: Comment[];
+  pagination: {
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -105,7 +141,123 @@ export const api = {
 
     return handleResponse(response);
   },
+
+  // Comment endpoints
+  async getCommentsByPostId(
+    postId: number,
+    limit = 50,
+    offset = 0,
+  ): Promise<CommentsResponse> {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+    });
+
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/posts/${postId}/comments?${params}`,
+      {
+        credentials: "include",
+      },
+    );
+    return handleResponse(response);
+  },
+
+  async createComment(
+    postId: number,
+    data: CreateCommentData,
+    sessionId: string,
+  ): Promise<{ comment: Comment }> {
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/posts/${postId}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
+      },
+    );
+
+    return handleResponse(response);
+  },
+
+  async updateComment(
+    commentId: number,
+    data: UpdateCommentData,
+    sessionId: string,
+  ): Promise<{ comment: Comment }> {
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/comments/${commentId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
+      },
+    );
+
+    return handleResponse(response);
+  },
+
+  async deleteComment(
+    commentId: number,
+    sessionId: string,
+  ): Promise<{ message: string }> {
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/comments/${commentId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${sessionId}`,
+        },
+        credentials: "include",
+      },
+    );
+
+    return handleResponse(response);
+  },
+
+  async hideComment(
+    commentId: number,
+    sessionId: string,
+  ): Promise<{ comment: Comment }> {
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/comments/${commentId}/hide`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionId}`,
+        },
+        credentials: "include",
+      },
+    );
+
+    return handleResponse(response);
+  },
+
+  async unhideComment(
+    commentId: number,
+    sessionId: string,
+  ): Promise<{ comment: Comment }> {
+    const response = await fetch(
+      `${config.apiBaseUrl}/api/comments/${commentId}/unhide`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionId}`,
+        },
+        credentials: "include",
+      },
+    );
+
+    return handleResponse(response);
+  },
 };
 
-export type { Post, CreatePostData, PostsResponse };
+export type { Post, CreatePostData, PostsResponse, Comment, CreateCommentData, UpdateCommentData, CommentsResponse };
 export { ApiError };

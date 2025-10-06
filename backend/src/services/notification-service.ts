@@ -222,3 +222,38 @@ export async function sendAdminRefundAlert(
     console.error(`Failed to send admin refund alert:`, error);
   }
 }
+
+/**
+ * Send notification to post author when someone comments on their post
+ *
+ * @param env - Environment variables containing bot token
+ * @param postAuthorTelegramId - The telegram ID of the post author
+ * @param postId - The ID of the post that was commented on
+ * @param commenterDisplayName - Display name of the user who commented
+ * @param commentContent - The content of the comment (truncated if too long)
+ */
+export async function sendNewCommentNotification(
+  env: Env,
+  postAuthorTelegramId: number,
+  postId: number,
+  commenterDisplayName: string,
+  commentContent: string,
+): Promise<void> {
+  try {
+    const bot = getBotInstance(env);
+    const truncatedContent =
+      commentContent.length > 50
+        ? commentContent.substring(0, 50) + "..."
+        : commentContent;
+
+    await bot.api.sendMessage(
+      postAuthorTelegramId,
+      `💬 ${commenterDisplayName} commented on your post (ID: ${postId}):\n\n"${truncatedContent}"`,
+    );
+  } catch (error) {
+    console.error(
+      `Failed to send comment notification to user ${postAuthorTelegramId}:`,
+      error,
+    );
+  }
+}

@@ -4,6 +4,7 @@ import PostItem from "../components/PostItem";
 import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
 import MakePremiumModal from "../components/MakePremiumModal";
+import CommentList from "../components/CommentList";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 
@@ -206,6 +207,9 @@ export default function PostPage() {
         onDelete={handleDelete}
         onMakePremium={handleMakePremium}
       />
+
+      {/* Comments Section */}
+      <CommentList postId={post.id} postAuthorId={post.userId} />
     </div>
   );
 }

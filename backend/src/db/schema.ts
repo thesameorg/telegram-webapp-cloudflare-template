@@ -38,6 +38,7 @@ export const posts = sqliteTable(
     displayName: text("display_name").notNull(),
     content: text("content").notNull(),
     starCount: integer("star_count").default(0).notNull(),
+    commentCount: integer("comment_count").default(0).notNull(),
     paymentId: text("payment_id").references(() => payments.id),
     isPaymentPending: integer("is_payment_pending").default(0).notNull(), // 0 or 1
     createdAt: text("created_at")
@@ -107,6 +108,32 @@ export const postImages = sqliteTable(
   }),
 );
 
+export const comments = sqliteTable(
+  "comments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull(), // Telegram ID
+    username: text("username").notNull(),
+    displayName: text("display_name").notNull(),
+    content: text("content").notNull(),
+    isHidden: integer("is_hidden").default(0).notNull(), // 0 or 1
+    createdAt: text("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => ({
+    postIdIdx: index("idx_comments_post_id").on(table.postId),
+    userIdIdx: index("idx_comments_user_id").on(table.userId),
+    createdAtIdx: index("idx_comments_created_at").on(table.createdAt),
+  }),
+);
+
 export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
 export type Post = typeof posts.$inferSelect;
@@ -115,3 +142,5 @@ export type PostImage = typeof postImages.$inferSelect;
 export type NewPostImage = typeof postImages.$inferInsert;
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type NewUserProfile = typeof userProfiles.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
