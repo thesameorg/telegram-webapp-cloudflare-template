@@ -6,7 +6,7 @@ interface CommentFormProps {
   isSubmitting?: boolean;
 }
 
-export default function CommentForm({ postId, onSubmit, isSubmitting }: CommentFormProps) {
+export default function CommentForm({ onSubmit, isSubmitting }: CommentFormProps) {
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
