@@ -243,7 +243,8 @@ export default function PostItem({
               />
             </svg>
             <span>
-              {post.commentCount} {post.commentCount === 1 ? "comment" : "comments"}
+              {post.commentCount}{" "}
+              {post.commentCount === 1 ? "comment" : "comments"}
             </span>
           </div>
         )}

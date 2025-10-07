@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useToast } from "../hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { config } from "../config";
+import { apiRequest } from "../services/api";
+import { toastService } from "../services/toast-service";
 
 interface Payment {
   id: string;
@@ -23,7 +23,6 @@ interface BalanceData {
 
 export default function Payments() {
   const { isAdmin, isLoading: authLoading } = useAuth();
-  const { showToast } = useToast();
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [balance, setBalance] = useState<BalanceData | null>(null);
@@ -62,82 +61,44 @@ export default function Payments() {
 
     const fetchData = async () => {
       try {
-        const sessionId = localStorage.getItem("telegram_session_id");
-        if (!sessionId) {
-          throw new Error("Not authenticated");
-        }
-
         // Fetch payments
-        const paymentsResponse = await fetch(
-          `${config.apiBaseUrl}/api/payments?limit=${limit}&offset=${offset}`,
-          {
-            headers: { Authorization: `Bearer ${sessionId}` },
-            credentials: "include",
-          },
+        const paymentsData = await apiRequest<{ payments: Payment[] }>(
+          `/api/payments?limit=${limit}&offset=${offset}`,
+          { requiresAuth: true },
         );
-
-        if (!paymentsResponse.ok) {
-          throw new Error("Failed to fetch payments");
-        }
-
-        const paymentsData = await paymentsResponse.json();
         setPayments(paymentsData.payments);
 
         // Fetch balance
-        const balanceResponse = await fetch(
-          `${config.apiBaseUrl}/api/payments/balance`,
-          {
-            headers: { Authorization: `Bearer ${sessionId}` },
-            credentials: "include",
-          },
+        const balanceData = await apiRequest<BalanceData>(
+          `/api/payments/balance`,
+          { requiresAuth: true },
         );
-
-        if (balanceResponse.ok) {
-          const balanceData = await balanceResponse.json();
-          setBalance(balanceData);
-        }
-      } catch (error) {
-        showToast(
-          error instanceof Error ? error.message : "Failed to load payments",
-          "error",
-        );
+        setBalance(balanceData);
+      } catch {
+        // Error toast shown automatically by apiRequest
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [isAdmin, limit, offset, showToast]);
+  }, [isAdmin, limit, offset]);
 
   const handleRefreshBalance = async () => {
     setIsRefreshingBalance(true);
     try {
-      const sessionId = localStorage.getItem("telegram_session_id");
-      if (!sessionId) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await fetch(
-        `${config.apiBaseUrl}/api/payments/refresh-balance`,
+      const balanceData = await apiRequest<BalanceData>(
+        `/api/payments/refresh-balance`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${sessionId}` },
-          credentials: "include",
+          requiresAuth: true,
+          showSuccessToast: true,
+          successMessage: "Balance refreshed",
         },
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to refresh balance");
-      }
-
-      const balanceData = await response.json();
       setBalance(balanceData);
-      showToast("Balance refreshed", "success");
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Failed to refresh balance",
-        "error",
-      );
+    } catch {
+      // Error toast shown automatically
     } finally {
       setIsRefreshingBalance(false);
     }
@@ -146,25 +107,14 @@ export default function Payments() {
   const handleReconcile = async () => {
     setIsReconciling(true);
     try {
-      const sessionId = localStorage.getItem("telegram_session_id");
-      if (!sessionId) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await fetch(
-        `${config.apiBaseUrl}/api/payments/reconcile`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${sessionId}` },
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to reconcile payments");
-      }
-
-      const data = await response.json();
+      const data = await apiRequest<{
+        summary: {
+          updated: number;
+          unchanged: number;
+          notFoundInTelegram: number;
+          errors: number;
+        };
+      }>(`/api/payments/reconcile`, { method: "POST", requiresAuth: true });
 
       // Refresh payments list
       const updatedPayments = await fetchPayments();
@@ -175,12 +125,11 @@ export default function Payments() {
       // Show success message with summary
       const { summary } = data;
       if (summary.updated > 0) {
-        showToast(
+        toastService.success(
           `Reconciled: ${summary.updated} updated, ${summary.unchanged} unchanged`,
-          "success",
         );
       } else {
-        showToast("All payments already in sync", "success");
+        toastService.success("All payments already in sync");
       }
 
       // Show warnings if any
@@ -192,32 +141,19 @@ export default function Payments() {
       if (summary.errors > 0) {
         console.error(`${summary.errors} errors during reconciliation`);
       }
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Failed to reconcile payments",
-        "error",
-      );
+    } catch {
+      // Error toast shown automatically
     } finally {
       setIsReconciling(false);
     }
   };
 
   const fetchPayments = async () => {
-    const sessionId = localStorage.getItem("telegram_session_id");
-    if (!sessionId) return null;
-
     try {
-      const response = await fetch(
-        `${config.apiBaseUrl}/api/payments?limit=${limit}&offset=${offset}`,
-        {
-          headers: { Authorization: `Bearer ${sessionId}` },
-          credentials: "include",
-        },
+      const data = await apiRequest<{ payments: Payment[] }>(
+        `/api/payments?limit=${limit}&offset=${offset}`,
+        { requiresAuth: true, showErrorToast: false },
       );
-
-      if (!response.ok) return null;
-
-      const data = await response.json();
       return data.payments;
     } catch (error) {
       console.error("Error fetching payments:", error);
@@ -244,7 +180,7 @@ export default function Payments() {
           setPayments(updatedPayments);
           setRefundingPaymentId(null);
           setConfirmRefund(null);
-          showToast("Refund completed successfully", "success");
+          toastService.success("Refund completed successfully");
           return;
         }
       }
@@ -264,34 +200,17 @@ export default function Payments() {
   const handleRefund = async (paymentId: string) => {
     setRefundingPaymentId(paymentId);
     try {
-      const sessionId = localStorage.getItem("telegram_session_id");
-      if (!sessionId) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await fetch(
-        `${config.apiBaseUrl}/api/payments/${paymentId}/refund`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${sessionId}` },
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to refund payment");
-      }
-
-      showToast("Refund initiated, waiting for confirmation...", "success");
+      await apiRequest(`/api/payments/${paymentId}/refund`, {
+        method: "POST",
+        requiresAuth: true,
+        showSuccessToast: true,
+        successMessage: "Refund initiated, waiting for confirmation...",
+      });
 
       // Start polling for refund status
       pollForRefundStatus(paymentId);
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Failed to refund payment",
-        "error",
-      );
+    } catch {
+      // Error toast shown automatically
       setRefundingPaymentId(null);
       setConfirmRefund(null);
     }

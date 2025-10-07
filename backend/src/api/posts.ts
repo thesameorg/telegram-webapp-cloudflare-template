@@ -1,5 +1,4 @@
 import { Context } from "hono";
-import { createDatabase } from "../db";
 import { PostService } from "../services/post-service";
 import { ImageService } from "../services/image-service";
 import { createPostSchema, updatePostSchema } from "../models/post";
@@ -9,12 +8,21 @@ import {
   getBotInstance,
   sendPostDeletedNotification,
 } from "../services/notification-service";
-import { parsePagination, parsePostId, createPaginationResponse } from "../utils/request-helpers";
+import {
+  parsePagination,
+  parsePostId,
+  createPaginationResponse,
+} from "../utils/request-helpers";
 import type { AuthContext } from "../middleware/auth-middleware";
 import { SessionManager } from "../services/session-manager";
+import { asyncHandler } from "../utils/error-handler";
+import { validateBody } from "../utils/validation-handler";
+import type { DBContext } from "../middleware/db-middleware";
 
 // Helper: Check if viewer is admin (for public endpoints)
-async function isViewerAdmin(c: Context<{ Bindings: Env }>): Promise<boolean> {
+async function isViewerAdmin(
+  c: Context<DBContext> | Context<{ Bindings: Env }>,
+): Promise<boolean> {
   try {
     const authHeader = c.req.header("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -31,143 +39,128 @@ async function isViewerAdmin(c: Context<{ Bindings: Env }>): Promise<boolean> {
   }
 }
 
-export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
-  try {
-    const { limit, offset } = parsePagination(c);
+export const getAllPosts = asyncHandler(async (c: Context<DBContext>) => {
+  const { limit, offset } = parsePagination(c);
 
-    const db = createDatabase(c.env.DB);
-    const postService = new PostService(db, c.env);
-    const posts = await postService.getPostsWithImages({ limit, offset });
+  const db = c.get("db");
+  const postService = new PostService(db, c.env);
+  const posts = await postService.getPostsWithImages({ limit, offset });
 
-    const responseData = createPaginationResponse(posts, limit, offset);
+  const responseData = createPaginationResponse(posts, limit, offset);
 
-    return c.json({ posts: responseData.items, pagination: responseData.pagination });
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    return c.json({ error: "Failed to fetch posts" }, 500);
+  return c.json({
+    posts: responseData.items,
+    pagination: responseData.pagination,
+  });
+});
+
+export const getPostById = asyncHandler(async (c: Context<DBContext>) => {
+  const postIdResult = parsePostId(c);
+  if (postIdResult.error) {
+    return c.json(
+      { error: postIdResult.error.message },
+      postIdResult.error.status,
+    );
   }
-};
 
-export const getPostById = async (c: Context<{ Bindings: Env }>) => {
-  try {
-    const postIdResult = parsePostId(c);
-    if (postIdResult.error) {
-      return c.json(
-        { error: postIdResult.error.message },
-        postIdResult.error.status,
-      );
-    }
+  const db = c.get("db");
+  const postService = new PostService(db, c.env);
 
-    const db = createDatabase(c.env.DB);
-    const postService = new PostService(db, c.env);
+  const post = await postService.getPostByIdWithImages(postIdResult.postId);
 
-    const post = await postService.getPostByIdWithImages(postIdResult.postId);
+  if (!post) {
+    return c.json({ error: "Post not found" }, 404);
+  }
 
-    if (!post) {
+  // Check if post author is banned
+  const { ProfileService } = await import("../services/profile-service");
+  const profileService = new ProfileService(c.env.DB);
+  const authorProfile = await profileService.getProfile(post.userId);
+
+  if (authorProfile && authorProfile.isBanned === 1) {
+    // Check if viewer is admin (only admins can see banned users' posts)
+    const viewerIsAdmin = await isViewerAdmin(c);
+
+    // If author is banned and viewer is not admin, return 404
+    if (!viewerIsAdmin) {
       return c.json({ error: "Post not found" }, 404);
     }
-
-    // Check if post author is banned
-    const { ProfileService } = await import("../services/profile-service");
-    const profileService = new ProfileService(c.env.DB);
-    const authorProfile = await profileService.getProfile(post.userId);
-
-    if (authorProfile && authorProfile.isBanned === 1) {
-      // Check if viewer is admin (only admins can see banned users' posts)
-      const viewerIsAdmin = await isViewerAdmin(c);
-
-      // If author is banned and viewer is not admin, return 404
-      if (!viewerIsAdmin) {
-        return c.json({ error: "Post not found" }, 404);
-      }
-    }
-
-    return c.json({ post });
-  } catch (error) {
-    console.error("Error fetching post:", error);
-    return c.json({ error: "Failed to fetch post" }, 500);
   }
-};
 
-export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
-  try {
-    const userIdParam = c.req.param("userId");
-    if (!userIdParam || userIdParam === "undefined" || userIdParam === "null") {
-      return c.json({ error: "User ID is required" }, 400);
-    }
+  return c.json({ post });
+});
 
-    const userId = parseInt(userIdParam, 10);
-    if (isNaN(userId)) {
-      return c.json({ error: "Invalid user ID" }, 400);
-    }
-
-    const { limit, offset } = parsePagination(c);
-
-    const db = createDatabase(c.env.DB);
-    const postService = new PostService(db, c.env);
-
-    // Check if target user is banned
-    const { ProfileService } = await import("../services/profile-service");
-    const profileService = new ProfileService(c.env.DB);
-    const targetProfile = await profileService.getProfile(userId);
-
-    if (targetProfile && targetProfile.isBanned === 1) {
-      // Check if viewer is admin (only admins can see banned users' posts)
-      const viewerIsAdmin = await isViewerAdmin(c);
-
-      // If user is banned and viewer is not admin, return empty array
-      if (!viewerIsAdmin) {
-        const responseData = createPaginationResponse([], limit, offset);
-        return c.json({ posts: responseData.items, pagination: responseData.pagination });
-      }
-    }
-
-    const posts = await postService.getUserPostsWithImages({
-      userId,
-      limit,
-      offset,
-    });
-
-    const responseData = createPaginationResponse(posts, limit, offset);
-    return c.json({ posts: responseData.items, pagination: responseData.pagination });
-  } catch (error) {
-    console.error("Error fetching user posts:", error);
-    return c.json({ error: "Failed to fetch user posts" }, 500);
+export const getUserPosts = asyncHandler(async (c: Context<DBContext>) => {
+  const userIdParam = c.req.param("userId");
+  if (!userIdParam || userIdParam === "undefined" || userIdParam === "null") {
+    return c.json({ error: "User ID is required" }, 400);
   }
-};
 
-export const createPost = async (c: Context<AuthContext>) => {
-  try {
+  const userId = parseInt(userIdParam, 10);
+  if (isNaN(userId)) {
+    return c.json({ error: "Invalid user ID" }, 400);
+  }
+
+  const { limit, offset } = parsePagination(c);
+
+  const db = c.get("db");
+  const postService = new PostService(db, c.env);
+
+  // Check if target user is banned
+  const { ProfileService } = await import("../services/profile-service");
+  const profileService = new ProfileService(c.env.DB);
+  const targetProfile = await profileService.getProfile(userId);
+
+  if (targetProfile && targetProfile.isBanned === 1) {
+    // Check if viewer is admin (only admins can see banned users' posts)
+    const viewerIsAdmin = await isViewerAdmin(c);
+
+    // If user is banned and viewer is not admin, return empty array
+    if (!viewerIsAdmin) {
+      const responseData = createPaginationResponse([], limit, offset);
+      return c.json({
+        posts: responseData.items,
+        pagination: responseData.pagination,
+      });
+    }
+  }
+
+  const posts = await postService.getUserPostsWithImages({
+    userId,
+    limit,
+    offset,
+  });
+
+  const responseData = createPaginationResponse(posts, limit, offset);
+  return c.json({
+    posts: responseData.items,
+    pagination: responseData.pagination,
+  });
+});
+
+export const createPost = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
-    const body = await c.req.json();
-    const result = createPostSchema.safeParse(body);
-    if (!result.success) {
-      return c.json(
-        { error: "Invalid post data", details: result.error.issues },
-        400,
-      );
-    }
+    const validation = await validateBody(c, createPostSchema);
+    if ("error" in validation) return validation.error;
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const postService = new PostService(db, c.env);
 
     const newPost = await postService.createPost(
       session.userId,
       session.username || `user_${session.userId}`,
       session.displayName,
-      { content: result.data.content },
+      { content: validation.data.content },
     );
 
     return c.json({ post: newPost }, 201);
-  } catch (error) {
-    console.error("Error creating post:", error);
-    return c.json({ error: "Failed to create post" }, 500);
-  }
-};
+  },
+);
 
-export const updatePost = async (c: Context<AuthContext>) => {
-  try {
+export const updatePost = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const postIdResult = parsePostId(c);
@@ -178,16 +171,10 @@ export const updatePost = async (c: Context<AuthContext>) => {
       );
     }
 
-    const body = await c.req.json();
-    const result = updatePostSchema.safeParse(body);
-    if (!result.success) {
-      return c.json(
-        { error: "Invalid post data", details: result.error.issues },
-        400,
-      );
-    }
+    const validation = await validateBody(c, updatePostSchema);
+    if ("error" in validation) return validation.error;
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const postService = new PostService(db, c.env);
 
     // Check ownership
@@ -202,7 +189,7 @@ export const updatePost = async (c: Context<AuthContext>) => {
     const updatedPost = await postService.updatePost(
       postIdResult.postId,
       session.userId,
-      result.data.content,
+      validation.data.content,
     );
 
     if (!updatedPost) {
@@ -210,14 +197,11 @@ export const updatePost = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ post: updatedPost });
-  } catch (error) {
-    console.error("Error updating post:", error);
-    return c.json({ error: "Failed to update post" }, 500);
-  }
-};
+  },
+);
 
-export const deletePost = async (c: Context<AuthContext>) => {
-  try {
+export const deletePost = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const postIdResult = parsePostId(c);
@@ -228,9 +212,11 @@ export const deletePost = async (c: Context<AuthContext>) => {
       );
     }
 
-    console.log(`[DELETE POST] User ${session.userId} deleting post ${postIdResult.postId}`);
+    console.log(
+      `[DELETE POST] User ${session.userId} deleting post ${postIdResult.postId}`,
+    );
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const postService = new PostService(db, c.env);
     const imageService = new ImageService(db, c.env.IMAGES);
 
@@ -266,10 +252,7 @@ export const deletePost = async (c: Context<AuthContext>) => {
     const deletedPost =
       isAdmin && !isOwner
         ? await postService.deletePostByIdOnly(postIdResult.postId)
-        : await postService.deletePost(
-            postIdResult.postId,
-            session.userId,
-          );
+        : await postService.deletePost(postIdResult.postId, session.userId);
 
     if (!deletedPost) {
       return c.json({ error: "Failed to delete post" }, 500);
@@ -286,14 +269,11 @@ export const deletePost = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ message: "Post deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting post:", error);
-    return c.json({ error: "Failed to delete post" }, 500);
-  }
-};
+  },
+);
 
-export const uploadPostImages = async (c: Context<AuthContext>) => {
-  try {
+export const uploadPostImages = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const postIdResult = parsePostId(c);
@@ -304,7 +284,7 @@ export const uploadPostImages = async (c: Context<AuthContext>) => {
       );
     }
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const postService = new PostService(db, c.env);
     const imageService = new ImageService(db, c.env.IMAGES);
 
@@ -409,14 +389,11 @@ export const uploadPostImages = async (c: Context<AuthContext>) => {
       },
       201,
     );
-  } catch (error) {
-    console.error("Error uploading images:", error);
-    return c.json({ error: "Failed to upload images" }, 500);
-  }
-};
+  },
+);
 
-export const deletePostImage = async (c: Context<AuthContext>) => {
-  try {
+export const deletePostImage = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const postIdResult = parsePostId(c);
@@ -432,7 +409,7 @@ export const deletePostImage = async (c: Context<AuthContext>) => {
       return c.json({ error: "Invalid image ID" }, 400);
     }
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const postService = new PostService(db, c.env);
     const imageService = new ImageService(db, c.env.IMAGES);
 
@@ -457,8 +434,5 @@ export const deletePostImage = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ message: "Image deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting image:", error);
-    return c.json({ error: "Failed to delete image" }, 500);
-  }
-};
+  },
+);

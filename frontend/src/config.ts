@@ -19,5 +19,7 @@ if (import.meta.env.PROD && !config.apiBaseUrl) {
 
 // Warning: Log if VITE_TELEGRAM_BOT_USERNAME is missing
 if (!config.telegramBotUsername) {
-  console.warn("VITE_TELEGRAM_BOT_USERNAME not set - sharing functionality will not work");
+  console.warn(
+    "VITE_TELEGRAM_BOT_USERNAME not set - sharing functionality will not work",
+  );
 }

@@ -1,5 +1,6 @@
 import { config } from "../config";
 import type { Post } from "../types/post";
+import { toastService } from "./toast-service";
 
 interface CreatePostData {
   content: string;
@@ -70,6 +71,70 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
+/**
+ * Generic API request helper
+ * Automatically handles authentication, headers, error handling, and toast notifications
+ */
+export const apiRequest = async <T = unknown>(
+  endpoint: string,
+  options?: RequestInit & {
+    requiresAuth?: boolean;
+    showErrorToast?: boolean;
+    showSuccessToast?: boolean;
+    successMessage?: string;
+  },
+): Promise<T> => {
+  const {
+    requiresAuth = false,
+    showErrorToast = true,
+    showSuccessToast = false,
+    successMessage,
+    headers,
+    ...fetchOptions
+  } = options || {};
+
+  const requestHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(headers as Record<string, string>),
+  };
+
+  // Add auth header if required
+  if (requiresAuth) {
+    const sessionId = localStorage.getItem("telegram_session_id");
+    if (!sessionId) {
+      const error = new ApiError(401, "Not authenticated");
+      if (showErrorToast) {
+        toastService.error(error.message);
+      }
+      throw error;
+    }
+    requestHeaders.Authorization = `Bearer ${sessionId}`;
+  }
+
+  try {
+    const response = await fetch(`${config.apiBaseUrl}${endpoint}`, {
+      ...fetchOptions,
+      headers: requestHeaders,
+      credentials: "include",
+    });
+
+    const data = await handleResponse(response);
+
+    // Show success toast if requested
+    if (showSuccessToast && successMessage) {
+      toastService.success(successMessage);
+    }
+
+    return data;
+  } catch (error) {
+    // Show error toast automatically
+    if (showErrorToast && error instanceof ApiError) {
+      toastService.error(error.message);
+    }
+    throw error;
+  }
+};
+
 export const api = {
   // Fetch all posts
   async getAllPosts(limit = 50, offset = 0): Promise<PostsResponse> {
@@ -86,12 +151,9 @@ export const api = {
 
   // Fetch a single post by ID
   async getPostById(postId: number): Promise<{ post: Post }> {
-    const response = await fetch(
-      `${config.apiBaseUrl}/api/posts/${postId}`,
-      {
-        credentials: "include",
-      },
-    );
+    const response = await fetch(`${config.apiBaseUrl}/api/posts/${postId}`, {
+      credentials: "include",
+    });
     return handleResponse(response);
   },
 
@@ -250,5 +312,13 @@ export const api = {
   },
 };
 
-export type { Post, CreatePostData, PostsResponse, Comment, CreateCommentData, UpdateCommentData, CommentsResponse };
+export type {
+  Post,
+  CreatePostData,
+  PostsResponse,
+  Comment,
+  CreateCommentData,
+  UpdateCommentData,
+  CommentsResponse,
+};
 export { ApiError };

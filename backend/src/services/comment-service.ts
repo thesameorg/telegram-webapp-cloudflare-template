@@ -21,15 +21,18 @@ export class CommentService {
 
     // Create comment and increment post comment count in a transaction
     const result = await this.db.batch([
-      this.db.insert(comments).values({
-        postId,
-        userId,
-        username,
-        displayName,
-        content: input.content,
-        createdAt: now,
-        updatedAt: now,
-      }).returning(),
+      this.db
+        .insert(comments)
+        .values({
+          postId,
+          userId,
+          username,
+          displayName,
+          content: input.content,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning(),
       this.db
         .update(posts)
         .set({
@@ -64,7 +67,8 @@ export class CommentService {
         const profile = profileResult[0] || null;
 
         // Use profile display name if available, otherwise use comment's display name
-        const effectiveDisplayName = profile?.displayName || comment.displayName;
+        const effectiveDisplayName =
+          profile?.displayName || comment.displayName;
 
         return {
           ...comment,

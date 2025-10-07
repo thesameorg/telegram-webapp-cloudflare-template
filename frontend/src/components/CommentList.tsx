@@ -9,7 +9,10 @@ interface CommentListProps {
   postAuthorId: number;
 }
 
-export default function CommentList({ postId, postAuthorId }: CommentListProps) {
+export default function CommentList({
+  postId,
+  postAuthorId,
+}: CommentListProps) {
   const { sessionId, user, isAdmin } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +69,7 @@ export default function CommentList({ postId, postAuthorId }: CommentListProps) 
       await api.updateComment(commentId, { content }, sessionId);
       // Update the comment in the list
       setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, content } : c))
+        prev.map((c) => (c.id === commentId ? { ...c, content } : c)),
       );
     } catch (err) {
       console.error("Failed to update comment:", err);
@@ -93,7 +96,7 @@ export default function CommentList({ postId, postAuthorId }: CommentListProps) 
       await api.hideComment(commentId, sessionId);
       // Update the comment in the list
       setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, isHidden: 1 } : c))
+        prev.map((c) => (c.id === commentId ? { ...c, isHidden: 1 } : c)),
       );
     } catch (err) {
       console.error("Failed to hide comment:", err);
@@ -107,7 +110,7 @@ export default function CommentList({ postId, postAuthorId }: CommentListProps) 
       await api.unhideComment(commentId, sessionId);
       // Update the comment in the list
       setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, isHidden: 0 } : c))
+        prev.map((c) => (c.id === commentId ? { ...c, isHidden: 0 } : c)),
       );
     } catch (err) {
       console.error("Failed to unhide comment:", err);

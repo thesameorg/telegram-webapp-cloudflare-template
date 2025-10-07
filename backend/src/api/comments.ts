@@ -1,16 +1,14 @@
 import { Context } from "hono";
-import { createDatabase } from "../db";
 import { CommentService } from "../services/comment-service";
 import { PostService } from "../services/post-service";
 import { ProfileService } from "../services/profile-service";
-import {
-  createCommentSchema,
-  updateCommentSchema,
-} from "../models/comment";
+import { createCommentSchema, updateCommentSchema } from "../models/comment";
 import { sendNewCommentNotification } from "../services/notification-service";
 import { parsePagination, parsePostId } from "../utils/request-helpers";
-import type { Env } from "../types/env";
 import type { AuthContext } from "../middleware/auth-middleware";
+import { asyncHandler } from "../utils/error-handler";
+import { validateBody } from "../utils/validation-handler";
+import type { DBContext } from "../middleware/db-middleware";
 
 // Helper: Parse and validate comment ID
 function parseCommentId(c: Context) {
@@ -21,8 +19,8 @@ function parseCommentId(c: Context) {
   return { commentId };
 }
 
-export const getCommentsByPostId = async (c: Context<{ Bindings: Env }>) => {
-  try {
+export const getCommentsByPostId = asyncHandler(
+  async (c: Context<DBContext>) => {
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
       return c.json(
@@ -33,7 +31,7 @@ export const getCommentsByPostId = async (c: Context<{ Bindings: Env }>) => {
 
     const { limit, offset } = parsePagination(c);
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const commentService = new CommentService(db);
 
     const comments = await commentService.getCommentsByPostId(
@@ -49,14 +47,11 @@ export const getCommentsByPostId = async (c: Context<{ Bindings: Env }>) => {
         hasMore: comments.length === limit,
       },
     });
-  } catch (error) {
-    console.error("Error fetching comments:", error);
-    return c.json({ error: "Failed to fetch comments" }, 500);
-  }
-};
+  },
+);
 
-export const createComment = async (c: Context<AuthContext>) => {
-  try {
+export const createComment = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const postIdResult = parsePostId(c);
@@ -67,16 +62,10 @@ export const createComment = async (c: Context<AuthContext>) => {
       );
     }
 
-    const body = await c.req.json();
-    const result = createCommentSchema.safeParse(body);
-    if (!result.success) {
-      return c.json(
-        { error: "Invalid comment data", details: result.error.issues },
-        400,
-      );
-    }
+    const validation = await validateBody(c, createCommentSchema);
+    if ("error" in validation) return validation.error;
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const commentService = new CommentService(db);
     const postService = new PostService(db, c.env);
 
@@ -91,7 +80,7 @@ export const createComment = async (c: Context<AuthContext>) => {
       session.userId,
       session.username || `user_${session.userId}`,
       session.displayName,
-      result.data,
+      validation.data,
     );
 
     // Send notification to post author (if commenter is not the author)
@@ -107,20 +96,17 @@ export const createComment = async (c: Context<AuthContext>) => {
           postAuthorTelegramId,
           postIdResult.postId,
           session.displayName,
-          result.data.content,
+          validation.data.content,
         );
       }
     }
 
     return c.json({ comment: newComment }, 201);
-  } catch (error) {
-    console.error("Error creating comment:", error);
-    return c.json({ error: "Failed to create comment" }, 500);
-  }
-};
+  },
+);
 
-export const updateComment = async (c: Context<AuthContext>) => {
-  try {
+export const updateComment = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
@@ -131,16 +117,10 @@ export const updateComment = async (c: Context<AuthContext>) => {
       );
     }
 
-    const body = await c.req.json();
-    const result = updateCommentSchema.safeParse(body);
-    if (!result.success) {
-      return c.json(
-        { error: "Invalid comment data", details: result.error.issues },
-        400,
-      );
-    }
+    const validation = await validateBody(c, updateCommentSchema);
+    if ("error" in validation) return validation.error;
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const commentService = new CommentService(db);
 
     // Check ownership
@@ -157,7 +137,7 @@ export const updateComment = async (c: Context<AuthContext>) => {
     const updatedComment = await commentService.updateComment(
       commentIdResult.commentId,
       session.userId,
-      result.data,
+      validation.data,
     );
 
     if (!updatedComment) {
@@ -165,14 +145,11 @@ export const updateComment = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ comment: updatedComment });
-  } catch (error) {
-    console.error("Error updating comment:", error);
-    return c.json({ error: "Failed to update comment" }, 500);
-  }
-};
+  },
+);
 
-export const deleteComment = async (c: Context<AuthContext>) => {
-  try {
+export const deleteComment = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
@@ -183,7 +160,7 @@ export const deleteComment = async (c: Context<AuthContext>) => {
       );
     }
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const commentService = new CommentService(db);
 
     // Check ownership or admin status
@@ -215,14 +192,11 @@ export const deleteComment = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ message: "Comment deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-    return c.json({ error: "Failed to delete comment" }, 500);
-  }
-};
+  },
+);
 
-export const hideComment = async (c: Context<AuthContext>) => {
-  try {
+export const hideComment = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
@@ -233,7 +207,7 @@ export const hideComment = async (c: Context<AuthContext>) => {
       );
     }
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const commentService = new CommentService(db);
 
     // hideComment method verifies the post belongs to the user
@@ -250,14 +224,11 @@ export const hideComment = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ comment: hiddenComment });
-  } catch (error) {
-    console.error("Error hiding comment:", error);
-    return c.json({ error: "Failed to hide comment" }, 500);
-  }
-};
+  },
+);
 
-export const unhideComment = async (c: Context<AuthContext>) => {
-  try {
+export const unhideComment = asyncHandler(
+  async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
@@ -268,7 +239,7 @@ export const unhideComment = async (c: Context<AuthContext>) => {
       );
     }
 
-    const db = createDatabase(c.env.DB);
+    const db = c.get("db");
     const commentService = new CommentService(db);
 
     // unhideComment method verifies the post belongs to the user
@@ -287,8 +258,5 @@ export const unhideComment = async (c: Context<AuthContext>) => {
     }
 
     return c.json({ comment: unhiddenComment });
-  } catch (error) {
-    console.error("Error unhiding comment:", error);
-    return c.json({ error: "Failed to unhide comment" }, 500);
-  }
-};
+  },
+);

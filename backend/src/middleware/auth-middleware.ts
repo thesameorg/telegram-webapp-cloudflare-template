@@ -78,7 +78,10 @@ export async function adminMiddleware(c: Context<AuthContext>, next: Next) {
   const session = c.get("session");
 
   if (!session) {
-    return c.json({ error: "Session not found - use authMiddleware first" }, 500);
+    return c.json(
+      { error: "Session not found - use authMiddleware first" },
+      500,
+    );
   }
 
   if (!isAdmin(session.telegramId, c.env)) {

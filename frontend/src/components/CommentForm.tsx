@@ -6,7 +6,10 @@ interface CommentFormProps {
   isSubmitting?: boolean;
 }
 
-export default function CommentForm({ onSubmit, isSubmitting }: CommentFormProps) {
+export default function CommentForm({
+  onSubmit,
+  isSubmitting,
+}: CommentFormProps) {
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +48,10 @@ export default function CommentForm({ onSubmit, isSubmitting }: CommentFormProps
   const isOverLimit = characterCount > 280;
 
   return (
-    <form onSubmit={handleSubmit} className="border-b border-gray-200 dark:border-gray-700 p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="border-b border-gray-200 dark:border-gray-700 p-4"
+    >
       <div className="space-y-3">
         <textarea
           value={content}

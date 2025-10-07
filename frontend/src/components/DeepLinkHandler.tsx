@@ -43,7 +43,10 @@ export default function DeepLinkHandler() {
     // Mark as processed to prevent re-running
     deepLinkProcessedRef.current = true;
 
-    console.log("[DeepLinkHandler] Processing deep link after auth:", startParam);
+    console.log(
+      "[DeepLinkHandler] Processing deep link after auth:",
+      startParam,
+    );
 
     // Parse the start parameter
     // Expected format: post_123
@@ -57,7 +60,9 @@ export default function DeepLinkHandler() {
       navigate(`/post/${postId}`);
     } else {
       // Invalid format - show error and stay on home
-      console.warn(`[DeepLinkHandler] Invalid start parameter format: ${startParam}`);
+      console.warn(
+        `[DeepLinkHandler] Invalid start parameter format: ${startParam}`,
+      );
       showToast(`tgStartParam=${startParam} Not found`, "error", 4000);
     }
   }, [

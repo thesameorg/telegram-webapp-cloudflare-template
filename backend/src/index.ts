@@ -39,12 +39,16 @@ import {
   reconcilePayments,
 } from "./api/payments";
 import { authMiddleware, adminMiddleware } from "./middleware/auth-middleware";
+import { dbMiddleware } from "./middleware/db-middleware";
 import type { Env } from "./types/env";
 
 const app = new Hono<{ Bindings: Env }>();
 
 // Simple middleware
 app.use("*", prettyJSON());
+
+// Database middleware - inject db into context for all routes
+app.use("*", dbMiddleware);
 
 // CORS middleware for API endpoints
 app.use(
@@ -95,14 +99,28 @@ app.delete("/api/posts/:postId", authMiddleware, deletePost);
 
 // Image endpoints (auth required)
 app.post("/api/posts/:postId/images", authMiddleware, uploadPostImages);
-app.delete("/api/posts/:postId/images/:imageId", authMiddleware, deletePostImage);
+app.delete(
+  "/api/posts/:postId/images/:imageId",
+  authMiddleware,
+  deletePostImage,
+);
 
 // Comment endpoints (auth required for write operations)
 app.post("/api/posts/:postId/comments", authMiddleware, createComment);
 app.put("/api/comments/:commentId", authMiddleware, updateComment);
 app.delete("/api/comments/:commentId", authMiddleware, deleteComment);
-app.post("/api/comments/:commentId/hide", authMiddleware, adminMiddleware, hideComment);
-app.post("/api/comments/:commentId/unhide", authMiddleware, adminMiddleware, unhideComment);
+app.post(
+  "/api/comments/:commentId/hide",
+  authMiddleware,
+  adminMiddleware,
+  hideComment,
+);
+app.post(
+  "/api/comments/:commentId/unhide",
+  authMiddleware,
+  adminMiddleware,
+  unhideComment,
+);
 
 // Profile endpoints (specific routes first, then dynamic routes)
 app.get("/api/profile/me", authMiddleware, getMyProfile);
@@ -111,17 +129,42 @@ app.post("/api/profile/me/avatar", authMiddleware, uploadProfileAvatar);
 app.get("/api/profile/:telegramId", getProfile);
 
 // Admin endpoints (auth + admin required)
-app.post("/api/admin/ban/:telegramId", authMiddleware, adminMiddleware, banUser);
-app.post("/api/admin/unban/:telegramId", authMiddleware, adminMiddleware, unbanUser);
+app.post(
+  "/api/admin/ban/:telegramId",
+  authMiddleware,
+  adminMiddleware,
+  banUser,
+);
+app.post(
+  "/api/admin/unban/:telegramId",
+  authMiddleware,
+  adminMiddleware,
+  unbanUser,
+);
 
 // Payment endpoints (auth required, some admin-only)
 app.post("/api/posts/:postId/make-premium", authMiddleware, makePremium);
 app.post("/api/posts/:postId/clear-pending", authMiddleware, clearPending);
 app.get("/api/payments", authMiddleware, adminMiddleware, getAllPayments);
 app.get("/api/payments/balance", authMiddleware, adminMiddleware, getBalance);
-app.post("/api/payments/refresh-balance", authMiddleware, adminMiddleware, refreshBalance);
-app.post("/api/payments/reconcile", authMiddleware, adminMiddleware, reconcilePayments);
-app.post("/api/payments/:paymentId/refund", authMiddleware, adminMiddleware, refundPayment);
+app.post(
+  "/api/payments/refresh-balance",
+  authMiddleware,
+  adminMiddleware,
+  refreshBalance,
+);
+app.post(
+  "/api/payments/reconcile",
+  authMiddleware,
+  adminMiddleware,
+  reconcilePayments,
+);
+app.post(
+  "/api/payments/:paymentId/refund",
+  authMiddleware,
+  adminMiddleware,
+  refundPayment,
+);
 
 // R2 image serving for local development
 app.get("/r2/*", async (c) => {

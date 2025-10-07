@@ -3,9 +3,11 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 import Toast, { ToastType } from "../components/Toast";
+import { toastService } from "../services/toast-service";
 
 interface ToastItem {
   id: string;
@@ -36,6 +38,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
+
+  // Connect to global toast service
+  useEffect(() => {
+    const unsubscribe = toastService.subscribe(showToast);
+    return () => {
+      unsubscribe();
+    };
+  }, [showToast]);
 
   return (
     <ToastContext.Provider value={{ showToast }}>

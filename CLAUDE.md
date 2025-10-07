@@ -169,8 +169,7 @@ Wrangler bindings in `wrangler.toml`:
 
 ## Critical Implementation Details
 
--  Run & fix `npm run check` to find possible lint, type, test flaws
-
+- Run & fix `npm run check` to find possible lint, type, test flaws
 
 ### Adding New API Endpoints
 

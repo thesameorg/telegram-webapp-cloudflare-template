@@ -13,7 +13,11 @@ interface ShareButtonProps {
  * Share button component that creates a deep link for a post
  * Format: https://t.me/BOT_USERNAME?startapp=post_123
  */
-export default function ShareButton({ postId, className = "", title = "Share post" }: ShareButtonProps) {
+export default function ShareButton({
+  postId,
+  className = "",
+  title = "Share post",
+}: ShareButtonProps) {
   const { webApp } = useTelegram();
   const { showToast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
