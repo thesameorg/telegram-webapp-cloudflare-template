@@ -18,23 +18,28 @@ export interface StoredUserData {
 const safeStorage = {
   get: (key: string): string | null => {
     try {
-      return localStorage.getItem(key);
-    } catch {
+      const value = localStorage.getItem(key);
+      console.log(`[AuthStorage] GET ${key}:`, value);
+      return value;
+    } catch (error) {
+      console.error(`[AuthStorage] Failed to get ${key}:`, error);
       return null;
     }
   },
   set: (key: string, value: string): void => {
     try {
       localStorage.setItem(key, value);
-    } catch {
-      console.warn("Failed to store in localStorage");
+      console.log(`[AuthStorage] SET ${key}:`, value);
+    } catch (error) {
+      console.error(`[AuthStorage] Failed to store ${key}:`, error);
     }
   },
   remove: (key: string): void => {
     try {
       localStorage.removeItem(key);
-    } catch {
-      console.warn("Failed to remove from localStorage");
+      console.log(`[AuthStorage] REMOVE ${key}`);
+    } catch (error) {
+      console.error(`[AuthStorage] Failed to remove ${key}:`, error);
     }
   },
 };

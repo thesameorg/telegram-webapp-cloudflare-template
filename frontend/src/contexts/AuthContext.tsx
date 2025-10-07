@@ -89,9 +89,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (response.ok) {
           const authData = await response.json();
+          console.log("[AuthContext] Auth response:", authData);
 
           if (authData.authenticated) {
             // Store auth state
+            console.log("[AuthContext] Storing auth state to localStorage");
             AuthStorage.setAuthState(
               authData.sessionId,
               authData.expiresAt,
@@ -99,6 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             );
 
             if (mounted) {
+              console.log("[AuthContext] Setting auth state in context");
               setAuthState({
                 isAuthenticated: true,
                 isLoading: false,

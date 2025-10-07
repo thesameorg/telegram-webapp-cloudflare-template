@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PostItem from "../components/PostItem";
 import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
@@ -7,7 +7,6 @@ import MakePremiumModal from "../components/MakePremiumModal";
 import CommentList from "../components/CommentList";
 import ShareButton from "../components/ShareButton";
 import { useAuth } from "../contexts/AuthContext";
-import { useToast } from "../hooks/use-toast";
 import { api } from "../services/api";
 
 interface Post {
@@ -27,9 +26,7 @@ interface Post {
 export default function PostPage() {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const { showToast } = useToast();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,21 +62,6 @@ export default function PostPage() {
   useEffect(() => {
     fetchPost();
   }, [postId]);
-
-  // Show toast and redirect to home if post not found (e.g., from deep link)
-  useEffect(() => {
-    if (!loading && (error || !post)) {
-      // Show error toast
-      showToast(`tgStartParam=post_${postId} Not found`, "error", 4000);
-
-      // Redirect to home after a brief delay
-      const timer = setTimeout(() => {
-        navigate("/");
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [loading, error, post, postId, showToast, navigate]);
 
   const handleEdit = (post: Post) => {
     setEditingPost(post);
