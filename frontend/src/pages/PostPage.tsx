@@ -8,6 +8,7 @@ import CommentList from "../components/CommentList";
 import ShareButton from "../components/ShareButton";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
+import { useTelegramBackButton } from "../hooks/use-telegram-back-button";
 import type { Post } from "../types/post";
 
 export default function PostPage() {
@@ -22,6 +23,9 @@ export default function PostPage() {
   const [makingPremiumPostId, setMakingPremiumPostId] = useState<number | null>(
     null,
   );
+
+  // Use Telegram BackButton instead of custom button
+  useTelegramBackButton(() => navigate(-1));
 
   const fetchPost = async () => {
     if (!postId) {
@@ -90,30 +94,9 @@ export default function PostPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-              title="Go back"
-            >
-              <svg
-                className="w-5 h-5 text-gray-900 dark:text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              Post
-            </h1>
-          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Post
+          </h1>
         </div>
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
@@ -131,33 +114,12 @@ export default function PostPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header with back button */}
+      {/* Header */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-              title="Go back"
-            >
-              <svg
-                className="w-5 h-5 text-gray-900 dark:text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              Post
-            </h1>
-          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Post
+          </h1>
           {post && <ShareButton postId={post.id} />}
         </div>
       </div>

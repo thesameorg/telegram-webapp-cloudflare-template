@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useCreatePost } from "../hooks/use-create-post";
 import ImageUpload, { ImageData } from "./ImageUpload";
 import { useToast } from "../hooks/use-toast";
+import { useTelegramMainButton } from "../hooks/use-telegram-main-button";
 import { config } from "../config";
 import type { Post } from "../types/post";
 
@@ -202,6 +203,21 @@ export default function PostFormModal({
     return "Updating post...";
   };
 
+  // Use Telegram MainButton
+  useTelegramMainButton(
+    !isSubmitDisabled
+      ? {
+          text: getButtonText(),
+          onClick: () => {
+            const form = document.getElementById("post-form") as HTMLFormElement;
+            form?.requestSubmit();
+          },
+          disabled: isSubmitDisabled,
+          loading: isProcessing,
+        }
+      : null,
+  );
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div
@@ -232,35 +248,25 @@ export default function PostFormModal({
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {mode === "create" ? "Create Post" : "Edit Post"}
           </h2>
-          <div className="flex items-center space-x-3">
-            <button
-              type="submit"
-              form="post-form"
-              disabled={isSubmitDisabled}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+          <button
+            onClick={onClose}
+            disabled={isProcessing}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {getButtonText()}
-            </button>
-            <button
-              onClick={onClose}
-              disabled={isProcessing}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
 
         {/* Content */}

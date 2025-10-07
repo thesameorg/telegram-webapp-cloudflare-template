@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ContactLinks } from "./ContactLinks";
 import { useToast } from "../../hooks/use-toast";
+import { useTelegramMainButton } from "../../hooks/use-telegram-main-button";
 import { config } from "../../config";
 
 interface ContactLinksData {
@@ -125,6 +126,31 @@ export function ProfileEditor({
     }
   };
 
+  const isFormValid = formData.display_name.trim() !== "";
+  const isFormChanged =
+    formData.display_name !== (profile.display_name || "") ||
+    formData.bio !== (profile.bio || "") ||
+    formData.phone_number !== (profile.phone_number || "") ||
+    JSON.stringify(formData.contact_links) !==
+      JSON.stringify(profile.contact_links || {});
+
+  // Use Telegram MainButton
+  useTelegramMainButton(
+    isFormValid && isFormChanged && !loading && !uploadingAvatar
+      ? {
+          text: loading ? "Saving..." : "Save Changes",
+          onClick: () => {
+            const form = document.getElementById(
+              "profile-form",
+            ) as HTMLFormElement;
+            form?.requestSubmit();
+          },
+          disabled: loading || uploadingAvatar,
+          loading: loading,
+        }
+      : null,
+  );
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
@@ -151,7 +177,7 @@ export function ProfileEditor({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="profile-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Avatar Section */}
         <div className="flex items-center space-x-4">
           <ProfileAvatar
@@ -250,15 +276,8 @@ export function ProfileEditor({
           />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="submit"
-            disabled={loading || uploadingAvatar}
-            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Saving..." : "Save Changes"}
-          </button>
+        {/* Cancel Button */}
+        <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={onCancel}

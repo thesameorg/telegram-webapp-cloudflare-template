@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTelegramMainButton } from "../hooks/use-telegram-main-button";
 
 interface CommentFormProps {
   postId: number;
@@ -46,9 +47,28 @@ export default function CommentForm({
 
   const characterCount = content.length;
   const isOverLimit = characterCount > 280;
+  const canSubmit = !isSubmitting && content.trim() && !isOverLimit;
+
+  // Use Telegram MainButton
+  useTelegramMainButton(
+    canSubmit
+      ? {
+          text: isSubmitting ? "Posting..." : "Post Comment",
+          onClick: () => {
+            const form = document.getElementById(
+              "comment-form",
+            ) as HTMLFormElement;
+            form?.requestSubmit();
+          },
+          disabled: !canSubmit,
+          loading: isSubmitting,
+        }
+      : null,
+  );
 
   return (
     <form
+      id="comment-form"
       onSubmit={handleSubmit}
       className="border-b border-gray-200 dark:border-gray-700 p-4"
     >
@@ -62,26 +82,16 @@ export default function CommentForm({
           disabled={isSubmitting}
         />
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <span
-              className={`text-sm ${
-                isOverLimit
-                  ? "text-red-500 dark:text-red-400 font-semibold"
-                  : "text-gray-500 dark:text-gray-400"
-              }`}
-            >
-              {characterCount}/280
-            </span>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || !content.trim() || isOverLimit}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        <div className="flex items-center justify-end">
+          <span
+            className={`text-sm ${
+              isOverLimit
+                ? "text-red-500 dark:text-red-400 font-semibold"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
-            {isSubmitting ? "Posting..." : "Post Comment"}
-          </button>
+            {characterCount}/280
+          </span>
         </div>
 
         {error && (
