@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  envDir: "../", // Load .env from root directory
   server: {
     port: 3000,
     host: true,
