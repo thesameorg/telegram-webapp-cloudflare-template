@@ -3,11 +3,11 @@ import { createDatabase } from "../db";
 import { ProfileService } from "../services/profile-service";
 import { PostService } from "../services/post-service";
 import { updateProfileSchema, getProfileSchema } from "../models/profile";
-import { SessionManager } from "../services/session-manager";
 import { ImageService } from "../services/image-service";
 import type { Env } from "../types/env";
+import type { AuthContext } from "../middleware/auth-middleware";
 
-// Get public profile by telegram ID
+// Get public profile by telegram ID (no auth required)
 export const getProfile = async (c: Context<{ Bindings: Env }>) => {
   try {
     const { telegramId } = getProfileSchema.parse({
@@ -57,19 +57,9 @@ export const getProfile = async (c: Context<{ Bindings: Env }>) => {
 };
 
 // Get current user's profile
-export const getMyProfile = async (c: Context<{ Bindings: Env }>) => {
+export const getMyProfile = async (c: Context<AuthContext>) => {
   try {
-    const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-    const sessionId = c.req.header("x-session-id");
-
-    if (!sessionId) {
-      return c.json({ error: "Session ID required" }, 401);
-    }
-
-    const session = await sessionManager.validateSession(sessionId);
-    if (!session) {
-      return c.json({ error: "Invalid session" }, 401);
-    }
+    const session = c.get("session");
 
     const profileService = new ProfileService(c.env.DB);
     let profile = await profileService.getProfile(session.userId);
@@ -110,19 +100,9 @@ export const getMyProfile = async (c: Context<{ Bindings: Env }>) => {
 };
 
 // Update current user's profile
-export const updateMyProfile = async (c: Context<{ Bindings: Env }>) => {
+export const updateMyProfile = async (c: Context<AuthContext>) => {
   try {
-    const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-    const sessionId = c.req.header("x-session-id");
-
-    if (!sessionId) {
-      return c.json({ error: "Session ID required" }, 401);
-    }
-
-    const session = await sessionManager.validateSession(sessionId);
-    if (!session) {
-      return c.json({ error: "Invalid session" }, 401);
-    }
+    const session = c.get("session");
 
     const body = await c.req.json();
     const updateData = updateProfileSchema.parse(body);
@@ -172,19 +152,9 @@ export const updateMyProfile = async (c: Context<{ Bindings: Env }>) => {
 };
 
 // Upload profile avatar
-export const uploadProfileAvatar = async (c: Context<{ Bindings: Env }>) => {
+export const uploadProfileAvatar = async (c: Context<AuthContext>) => {
   try {
-    const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-    const sessionId = c.req.header("x-session-id");
-
-    if (!sessionId) {
-      return c.json({ error: "Session ID required" }, 401);
-    }
-
-    const session = await sessionManager.validateSession(sessionId);
-    if (!session) {
-      return c.json({ error: "Invalid session" }, 401);
-    }
+    const session = c.get("session");
 
     const formData = await c.req.formData();
     const file = formData.get("image") as File;

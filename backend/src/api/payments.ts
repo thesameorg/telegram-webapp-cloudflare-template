@@ -2,63 +2,19 @@ import { Context } from "hono";
 import { createDatabase } from "../db";
 import { PaymentService } from "../services/payment-service";
 import { PostService } from "../services/post-service";
-import { SessionManager } from "../services/session-manager";
 import { isAdmin } from "../services/admin-auth";
-import type { Env } from "../types/env";
+import type { AuthContext } from "../middleware/auth-middleware";
 import { eq } from "drizzle-orm";
 import { posts } from "../db/schema";
 import { parsePagination } from "../utils/request-helpers";
-
-// Helper: Extract and validate session
-async function authenticateUser(c: Context<{ Bindings: Env }>) {
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  let sessionId: string;
-  if (authHeader.startsWith("Bearer ")) {
-    sessionId = authHeader.substring(7).trim();
-  } else if (authHeader.startsWith("Session ")) {
-    sessionId = authHeader.substring(8).trim();
-  } else {
-    sessionId = authHeader.trim();
-  }
-
-  if (!sessionId) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-  const session = await sessionManager.validateSession(sessionId);
-  if (!session) {
-    return {
-      error: { message: "Invalid or expired session", status: 401 as const },
-    };
-  }
-
-  return { session };
-}
 
 /**
  * POST /api/posts/:postId/make-premium
  * Create payment and get invoice URL
  */
-export const makePremium = async (c: Context<{ Bindings: Env }>) => {
+export const makePremium = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Parse post ID
     const postId = parseInt(c.req.param("postId"), 10);
@@ -124,17 +80,9 @@ export const makePremium = async (c: Context<{ Bindings: Env }>) => {
  * POST /api/posts/:postId/clear-pending
  * Clear payment pending flag (called when payment cancelled/failed)
  */
-export const clearPending = async (c: Context<{ Bindings: Env }>) => {
+export const clearPending = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Parse post ID
     const postId = parseInt(c.req.param("postId"), 10);
@@ -176,17 +124,9 @@ export const clearPending = async (c: Context<{ Bindings: Env }>) => {
  * GET /api/payments
  * Get all payments (admin only)
  */
-export const getAllPayments = async (c: Context<{ Bindings: Env }>) => {
+export const getAllPayments = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Check admin
     if (!isAdmin(session.telegramId, c.env)) {
@@ -217,17 +157,9 @@ export const getAllPayments = async (c: Context<{ Bindings: Env }>) => {
  * GET /api/payments/balance
  * Get bot star balance (admin only, cached)
  */
-export const getBalance = async (c: Context<{ Bindings: Env }>) => {
+export const getBalance = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Check admin
     if (!isAdmin(session.telegramId, c.env)) {
@@ -254,17 +186,9 @@ export const getBalance = async (c: Context<{ Bindings: Env }>) => {
  * POST /api/payments/refresh-balance
  * Refresh bot star balance cache (admin only)
  */
-export const refreshBalance = async (c: Context<{ Bindings: Env }>) => {
+export const refreshBalance = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Check admin
     if (!isAdmin(session.telegramId, c.env)) {
@@ -293,17 +217,9 @@ export const refreshBalance = async (c: Context<{ Bindings: Env }>) => {
  * POST /api/payments/:paymentId/refund
  * Refund a payment (admin only)
  */
-export const refundPayment = async (c: Context<{ Bindings: Env }>) => {
+export const refundPayment = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Check admin
     if (!isAdmin(session.telegramId, c.env)) {
@@ -337,17 +253,9 @@ export const refundPayment = async (c: Context<{ Bindings: Env }>) => {
  * POST /api/payments/reconcile
  * Reconcile payments with Telegram Star transactions (admin only)
  */
-export const reconcilePayments = async (c: Context<{ Bindings: Env }>) => {
+export const reconcilePayments = async (c: Context<AuthContext>) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(c);
-    if ("error" in authResult && authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
-    const { session } = authResult;
+    const session = c.get("session");
 
     // Check admin
     if (!isAdmin(session.telegramId, c.env)) {

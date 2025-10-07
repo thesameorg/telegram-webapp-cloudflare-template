@@ -7,45 +7,10 @@ import {
   createCommentSchema,
   updateCommentSchema,
 } from "../models/comment";
-import { SessionManager } from "../services/session-manager";
-import type { Env } from "../types/env";
 import { sendNewCommentNotification } from "../services/notification-service";
 import { parsePagination, parsePostId } from "../utils/request-helpers";
-
-// Helper: Extract and validate session
-async function authenticateUser(c: Context<{ Bindings: Env }>) {
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  let sessionId: string;
-  if (authHeader.startsWith("Bearer ")) {
-    sessionId = authHeader.substring(7).trim();
-  } else if (authHeader.startsWith("Session ")) {
-    sessionId = authHeader.substring(8).trim();
-  } else {
-    sessionId = authHeader.trim();
-  }
-
-  if (!sessionId) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-  const session = await sessionManager.validateSession(sessionId);
-  if (!session) {
-    return {
-      error: { message: "Invalid or expired session", status: 401 as const },
-    };
-  }
-
-  return { session };
-}
+import type { Env } from "../types/env";
+import type { AuthContext } from "../middleware/auth-middleware";
 
 // Helper: Parse and validate comment ID
 function parseCommentId(c: Context) {
@@ -90,15 +55,9 @@ export const getCommentsByPostId = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const createComment = async (c: Context<{ Bindings: Env }>) => {
+export const createComment = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
@@ -129,14 +88,14 @@ export const createComment = async (c: Context<{ Bindings: Env }>) => {
 
     const newComment = await commentService.createComment(
       postIdResult.postId,
-      authResult.session.userId,
-      authResult.session.username || `user_${authResult.session.userId}`,
-      authResult.session.displayName,
+      session.userId,
+      session.username || `user_${session.userId}`,
+      session.displayName,
       result.data,
     );
 
     // Send notification to post author (if commenter is not the author)
-    if (post.userId !== authResult.session.userId) {
+    if (post.userId !== session.userId) {
       // Get post author's telegram ID
       const profileService = new ProfileService(c.env.DB);
       const profile = await profileService.getProfile(post.userId);
@@ -147,7 +106,7 @@ export const createComment = async (c: Context<{ Bindings: Env }>) => {
           c.env,
           postAuthorTelegramId,
           postIdResult.postId,
-          authResult.session.displayName,
+          session.displayName,
           result.data.content,
         );
       }
@@ -160,15 +119,9 @@ export const createComment = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const updateComment = async (c: Context<{ Bindings: Env }>) => {
+export const updateComment = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
     if (commentIdResult.error) {
@@ -197,13 +150,13 @@ export const updateComment = async (c: Context<{ Bindings: Env }>) => {
     if (!existingComment) {
       return c.json({ error: "Comment not found" }, 404);
     }
-    if (existingComment.userId !== authResult.session.userId) {
+    if (existingComment.userId !== session.userId) {
       return c.json({ error: "Not authorized to update this comment" }, 403);
     }
 
     const updatedComment = await commentService.updateComment(
       commentIdResult.commentId,
-      authResult.session.userId,
+      session.userId,
       result.data,
     );
 
@@ -218,15 +171,9 @@ export const updateComment = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const deleteComment = async (c: Context<{ Bindings: Env }>) => {
+export const deleteComment = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
     if (commentIdResult.error) {
@@ -247,8 +194,8 @@ export const deleteComment = async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: "Comment not found" }, 404);
     }
 
-    const isOwner = existingComment.userId === authResult.session.userId;
-    const isAdmin = authResult.session.role === "admin";
+    const isOwner = existingComment.userId === session.userId;
+    const isAdmin = session.role === "admin";
 
     if (!isOwner && !isAdmin) {
       return c.json({ error: "Not authorized to delete this comment" }, 403);
@@ -260,7 +207,7 @@ export const deleteComment = async (c: Context<{ Bindings: Env }>) => {
         ? await commentService.deleteCommentByIdOnly(commentIdResult.commentId)
         : await commentService.deleteComment(
             commentIdResult.commentId,
-            authResult.session.userId,
+            session.userId,
           );
 
     if (!deletedComment) {
@@ -274,15 +221,9 @@ export const deleteComment = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const hideComment = async (c: Context<{ Bindings: Env }>) => {
+export const hideComment = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
     if (commentIdResult.error) {
@@ -298,7 +239,7 @@ export const hideComment = async (c: Context<{ Bindings: Env }>) => {
     // hideComment method verifies the post belongs to the user
     const hiddenComment = await commentService.hideComment(
       commentIdResult.commentId,
-      authResult.session.userId,
+      session.userId,
     );
 
     if (!hiddenComment) {
@@ -315,15 +256,9 @@ export const hideComment = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const unhideComment = async (c: Context<{ Bindings: Env }>) => {
+export const unhideComment = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const commentIdResult = parseCommentId(c);
     if (commentIdResult.error) {
@@ -339,7 +274,7 @@ export const unhideComment = async (c: Context<{ Bindings: Env }>) => {
     // unhideComment method verifies the post belongs to the user
     const unhiddenComment = await commentService.unhideComment(
       commentIdResult.commentId,
-      authResult.session.userId,
+      session.userId,
     );
 
     if (!unhiddenComment) {

@@ -3,7 +3,6 @@ import { createDatabase } from "../db";
 import { PostService } from "../services/post-service";
 import { ImageService } from "../services/image-service";
 import { createPostSchema, updatePostSchema } from "../models/post";
-import { SessionManager } from "../services/session-manager";
 import type { Env } from "../types/env";
 import type { ImageUploadData } from "../services/image-service";
 import {
@@ -11,40 +10,25 @@ import {
   sendPostDeletedNotification,
 } from "../services/notification-service";
 import { parsePagination, parsePostId, createPaginationResponse } from "../utils/request-helpers";
+import type { AuthContext } from "../middleware/auth-middleware";
+import { SessionManager } from "../services/session-manager";
 
-// Helper: Extract and validate session
-async function authenticateUser(c: Context<{ Bindings: Env }>) {
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
+// Helper: Check if viewer is admin (for public endpoints)
+async function isViewerAdmin(c: Context<{ Bindings: Env }>): Promise<boolean> {
+  try {
+    const authHeader = c.req.header("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return false;
+    }
+
+    const sessionId = authHeader.substring(7);
+    const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
+    const session = await sessionManager.validateSession(sessionId);
+
+    return session?.role === "admin";
+  } catch {
+    return false;
   }
-
-  let sessionId: string;
-  if (authHeader.startsWith("Bearer ")) {
-    sessionId = authHeader.substring(7).trim();
-  } else if (authHeader.startsWith("Session ")) {
-    sessionId = authHeader.substring(8).trim();
-  } else {
-    sessionId = authHeader.trim();
-  }
-
-  if (!sessionId) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-  const session = await sessionManager.validateSession(sessionId);
-  if (!session) {
-    return {
-      error: { message: "Invalid or expired session", status: 401 as const },
-    };
-  }
-
-  return { session };
 }
 
 export const getAllPosts = async (c: Context<{ Bindings: Env }>) => {
@@ -89,13 +73,11 @@ export const getPostById = async (c: Context<{ Bindings: Env }>) => {
     const authorProfile = await profileService.getProfile(post.userId);
 
     if (authorProfile && authorProfile.isBanned === 1) {
-      // Check if viewer is admin
-      const auth = await authenticateUser(c);
-      const isViewerAdmin =
-        "session" in auth && auth.session && auth.session.role === "admin";
+      // Check if viewer is admin (only admins can see banned users' posts)
+      const viewerIsAdmin = await isViewerAdmin(c);
 
       // If author is banned and viewer is not admin, return 404
-      if (!isViewerAdmin) {
+      if (!viewerIsAdmin) {
         return c.json({ error: "Post not found" }, 404);
       }
     }
@@ -130,13 +112,11 @@ export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
     const targetProfile = await profileService.getProfile(userId);
 
     if (targetProfile && targetProfile.isBanned === 1) {
-      // Check if viewer is admin
-      const auth = await authenticateUser(c);
-      const isViewerAdmin =
-        "session" in auth && auth.session && auth.session.role === "admin";
+      // Check if viewer is admin (only admins can see banned users' posts)
+      const viewerIsAdmin = await isViewerAdmin(c);
 
       // If user is banned and viewer is not admin, return empty array
-      if (!isViewerAdmin) {
+      if (!viewerIsAdmin) {
         const responseData = createPaginationResponse([], limit, offset);
         return c.json({ posts: responseData.items, pagination: responseData.pagination });
       }
@@ -156,15 +136,9 @@ export const getUserPosts = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const createPost = async (c: Context<{ Bindings: Env }>) => {
+export const createPost = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const body = await c.req.json();
     const result = createPostSchema.safeParse(body);
@@ -179,9 +153,9 @@ export const createPost = async (c: Context<{ Bindings: Env }>) => {
     const postService = new PostService(db, c.env);
 
     const newPost = await postService.createPost(
-      authResult.session.userId,
-      authResult.session.username || `user_${authResult.session.userId}`,
-      authResult.session.displayName,
+      session.userId,
+      session.username || `user_${session.userId}`,
+      session.displayName,
       { content: result.data.content },
     );
 
@@ -192,15 +166,9 @@ export const createPost = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const updatePost = async (c: Context<{ Bindings: Env }>) => {
+export const updatePost = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
@@ -227,13 +195,13 @@ export const updatePost = async (c: Context<{ Bindings: Env }>) => {
     if (!existingPost) {
       return c.json({ error: "Post not found" }, 404);
     }
-    if (existingPost.userId !== authResult.session.userId) {
+    if (existingPost.userId !== session.userId) {
       return c.json({ error: "Not authorized to update this post" }, 403);
     }
 
     const updatedPost = await postService.updatePost(
       postIdResult.postId,
-      authResult.session.userId,
+      session.userId,
       result.data.content,
     );
 
@@ -248,15 +216,9 @@ export const updatePost = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const deletePost = async (c: Context<{ Bindings: Env }>) => {
+export const deletePost = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
@@ -266,7 +228,7 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
       );
     }
 
-    console.log(`[DELETE POST] User ${authResult.session.userId} deleting post ${postIdResult.postId}`);
+    console.log(`[DELETE POST] User ${session.userId} deleting post ${postIdResult.postId}`);
 
     const db = createDatabase(c.env.DB);
     const postService = new PostService(db, c.env);
@@ -278,8 +240,8 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: "Post not found" }, 404);
     }
 
-    const isOwner = existingPost.userId === authResult.session.userId;
-    const isAdmin = authResult.session.role === "admin";
+    const isOwner = existingPost.userId === session.userId;
+    const isAdmin = session.role === "admin";
 
     if (!isOwner && !isAdmin) {
       return c.json({ error: "Not authorized to delete this post" }, 403);
@@ -306,7 +268,7 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
         ? await postService.deletePostByIdOnly(postIdResult.postId)
         : await postService.deletePost(
             postIdResult.postId,
-            authResult.session.userId,
+            session.userId,
           );
 
     if (!deletedPost) {
@@ -330,15 +292,9 @@ export const deletePost = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const uploadPostImages = async (c: Context<{ Bindings: Env }>) => {
+export const uploadPostImages = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
@@ -357,7 +313,7 @@ export const uploadPostImages = async (c: Context<{ Bindings: Env }>) => {
     if (!existingPost) {
       return c.json({ error: "Post not found" }, 404);
     }
-    if (existingPost.userId !== authResult.session.userId) {
+    if (existingPost.userId !== session.userId) {
       return c.json(
         { error: "Not authorized to upload images to this post" },
         403,
@@ -459,15 +415,9 @@ export const uploadPostImages = async (c: Context<{ Bindings: Env }>) => {
   }
 };
 
-export const deletePostImage = async (c: Context<{ Bindings: Env }>) => {
+export const deletePostImage = async (c: Context<AuthContext>) => {
   try {
-    const authResult = await authenticateUser(c);
-    if (authResult.error) {
-      return c.json(
-        { error: authResult.error.message },
-        authResult.error.status,
-      );
-    }
+    const session = c.get("session");
 
     const postIdResult = parsePostId(c);
     if (postIdResult.error) {
@@ -491,7 +441,7 @@ export const deletePostImage = async (c: Context<{ Bindings: Env }>) => {
     if (!existingPost) {
       return c.json({ error: "Post not found" }, 404);
     }
-    if (existingPost.userId !== authResult.session.userId) {
+    if (existingPost.userId !== session.userId) {
       return c.json(
         { error: "Not authorized to delete images from this post" },
         403,

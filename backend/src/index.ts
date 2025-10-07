@@ -38,6 +38,7 @@ import {
   refundPayment,
   reconcilePayments,
 } from "./api/payments";
+import { authMiddleware, adminMiddleware } from "./middleware/auth-middleware";
 import type { Env } from "./types/env";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -75,52 +76,52 @@ app.use(
   }),
 );
 
-// API endpoints
+// Public endpoints (no auth required)
 app.get("/api/health", healthHandler);
 app.post("/webhook", handleWebhook);
-
-// Authentication endpoints
 app.get("/api/auth", authHandler);
 app.post("/api/auth", authHandler);
 
-// Post endpoints
+// Public read endpoints (no auth required)
 app.get("/api/posts", getAllPosts);
 app.get("/api/posts/:postId", getPostById);
 app.get("/api/posts/user/:userId", getUserPosts);
-app.post("/api/posts", createPost);
-app.put("/api/posts/:postId", updatePost);
-app.delete("/api/posts/:postId", deletePost);
-
-// Image endpoints
-app.post("/api/posts/:postId/images", uploadPostImages);
-app.delete("/api/posts/:postId/images/:imageId", deletePostImage);
-
-// Comment endpoints
 app.get("/api/posts/:postId/comments", getCommentsByPostId);
-app.post("/api/posts/:postId/comments", createComment);
-app.put("/api/comments/:commentId", updateComment);
-app.delete("/api/comments/:commentId", deleteComment);
-app.post("/api/comments/:commentId/hide", hideComment);
-app.post("/api/comments/:commentId/unhide", unhideComment);
 
-// Profile endpoints
-app.get("/api/profile/me", getMyProfile);
-app.put("/api/profile/me", updateMyProfile);
-app.post("/api/profile/me/avatar", uploadProfileAvatar);
+// Post endpoints (auth required for write operations)
+app.post("/api/posts", authMiddleware, createPost);
+app.put("/api/posts/:postId", authMiddleware, updatePost);
+app.delete("/api/posts/:postId", authMiddleware, deletePost);
+
+// Image endpoints (auth required)
+app.post("/api/posts/:postId/images", authMiddleware, uploadPostImages);
+app.delete("/api/posts/:postId/images/:imageId", authMiddleware, deletePostImage);
+
+// Comment endpoints (auth required for write operations)
+app.post("/api/posts/:postId/comments", authMiddleware, createComment);
+app.put("/api/comments/:commentId", authMiddleware, updateComment);
+app.delete("/api/comments/:commentId", authMiddleware, deleteComment);
+app.post("/api/comments/:commentId/hide", authMiddleware, adminMiddleware, hideComment);
+app.post("/api/comments/:commentId/unhide", authMiddleware, adminMiddleware, unhideComment);
+
+// Profile endpoints (specific routes first, then dynamic routes)
+app.get("/api/profile/me", authMiddleware, getMyProfile);
+app.put("/api/profile/me", authMiddleware, updateMyProfile);
+app.post("/api/profile/me/avatar", authMiddleware, uploadProfileAvatar);
 app.get("/api/profile/:telegramId", getProfile);
 
-// Admin endpoints
-app.post("/api/admin/ban/:telegramId", banUser);
-app.post("/api/admin/unban/:telegramId", unbanUser);
+// Admin endpoints (auth + admin required)
+app.post("/api/admin/ban/:telegramId", authMiddleware, adminMiddleware, banUser);
+app.post("/api/admin/unban/:telegramId", authMiddleware, adminMiddleware, unbanUser);
 
-// Payment endpoints
-app.post("/api/posts/:postId/make-premium", makePremium);
-app.post("/api/posts/:postId/clear-pending", clearPending);
-app.get("/api/payments", getAllPayments);
-app.get("/api/payments/balance", getBalance);
-app.post("/api/payments/refresh-balance", refreshBalance);
-app.post("/api/payments/reconcile", reconcilePayments);
-app.post("/api/payments/:paymentId/refund", refundPayment);
+// Payment endpoints (auth required, some admin-only)
+app.post("/api/posts/:postId/make-premium", authMiddleware, makePremium);
+app.post("/api/posts/:postId/clear-pending", authMiddleware, clearPending);
+app.get("/api/payments", authMiddleware, adminMiddleware, getAllPayments);
+app.get("/api/payments/balance", authMiddleware, adminMiddleware, getBalance);
+app.post("/api/payments/refresh-balance", authMiddleware, adminMiddleware, refreshBalance);
+app.post("/api/payments/reconcile", authMiddleware, adminMiddleware, reconcilePayments);
+app.post("/api/payments/:paymentId/refund", authMiddleware, adminMiddleware, refundPayment);
 
 // R2 image serving for local development
 app.get("/r2/*", async (c) => {

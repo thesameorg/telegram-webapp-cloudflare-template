@@ -1,11 +1,12 @@
 import { Context, Next } from "hono";
 import { SessionManager } from "../services/session-manager";
 import { isAdmin } from "../services/admin-auth";
+import { mockUser } from "../dev/mock-user";
 import type { Env } from "../types/env";
 import type { SessionData } from "../types/env";
 
 // Define context variables type
-type AuthContext = {
+export type AuthContext = {
   Bindings: Env;
   Variables: {
     session: SessionData;
@@ -32,9 +33,27 @@ function extractSessionId(c: Context): string | null {
 
 /**
  * Authentication middleware - validates session and attaches to context
+ * Supports DEV_AUTH_BYPASS_ENABLED for local development
  */
 export async function authMiddleware(c: Context<AuthContext>, next: Next) {
   const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
+
+  // DEV MODE: Auto-create session if bypass enabled and no session exists
+  if (c.env.DEV_AUTH_BYPASS_ENABLED === "true") {
+    const sessionId = extractSessionId(c);
+
+    if (!sessionId) {
+      // No session header? Create dev session on-the-fly
+      const devSession = await sessionManager.createSession(mockUser);
+      if (devSession) {
+        c.set("session", devSession);
+        await next();
+        return;
+      }
+    }
+  }
+
+  // NORMAL FLOW: Validate session
   const sessionId = extractSessionId(c);
 
   if (!sessionId) {
@@ -57,6 +76,10 @@ export async function authMiddleware(c: Context<AuthContext>, next: Next) {
  */
 export async function adminMiddleware(c: Context<AuthContext>, next: Next) {
   const session = c.get("session");
+
+  if (!session) {
+    return c.json({ error: "Session not found - use authMiddleware first" }, 500);
+  }
 
   if (!isAdmin(session.telegramId, c.env)) {
     return c.json({ error: "Admin privileges required" }, 403);

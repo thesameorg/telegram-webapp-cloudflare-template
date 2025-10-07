@@ -1,71 +1,17 @@
 import { Context } from "hono";
 import { createDatabase } from "../db";
-import { SessionManager } from "../services/session-manager";
 import { ProfileService } from "../services/profile-service";
-import { isAdmin } from "../services/admin-auth";
 import { sendBanNotification } from "../services/notification-service";
-import type { Env } from "../types/env";
+import type { AuthContext } from "../middleware/auth-middleware";
 import { eq } from "drizzle-orm";
 import { userProfiles } from "../db/schema";
-
-// Helper: Extract and validate admin session
-async function authenticateAdmin(c: Context<{ Bindings: Env }>) {
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  let sessionId: string;
-  if (authHeader.startsWith("Bearer ")) {
-    sessionId = authHeader.substring(7).trim();
-  } else if (authHeader.startsWith("Session ")) {
-    sessionId = authHeader.substring(8).trim();
-  } else {
-    sessionId = authHeader.trim();
-  }
-
-  if (!sessionId) {
-    return {
-      error: { message: "Authentication required", status: 401 as const },
-    };
-  }
-
-  const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
-  const session = await sessionManager.validateSession(sessionId);
-  if (!session) {
-    return {
-      error: { message: "Invalid or expired session", status: 401 as const },
-    };
-  }
-
-  // Check if user is admin
-  if (!isAdmin(session.telegramId, c.env)) {
-    return {
-      error: { message: "Admin privileges required", status: 401 as const },
-    };
-  }
-
-  return { session };
-}
 
 /**
  * POST /api/admin/ban/:telegramId
  * Ban a user (admin only)
  */
-export async function banUser(c: Context<{ Bindings: Env }>) {
-  // Authenticate as admin
-  const auth = await authenticateAdmin(c);
-  if ("error" in auth && auth.error) {
-    return c.json({ error: auth.error.message }, auth.error.status);
-  }
-
-  if (!("session" in auth)) {
-    return c.json({ error: "Authentication failed" }, 401);
-  }
-
-  const { session } = auth;
+export async function banUser(c: Context<AuthContext>) {
+  const session = c.get("session");
 
   // Get target telegram ID
   const targetTelegramId = parseInt(c.req.param("telegramId"), 10);
@@ -124,17 +70,7 @@ export async function banUser(c: Context<{ Bindings: Env }>) {
  * POST /api/admin/unban/:telegramId
  * Unban a user (admin only)
  */
-export async function unbanUser(c: Context<{ Bindings: Env }>) {
-  // Authenticate as admin
-  const auth = await authenticateAdmin(c);
-  if ("error" in auth && auth.error) {
-    return c.json({ error: auth.error.message }, auth.error.status);
-  }
-
-  if (!("session" in auth)) {
-    return c.json({ error: "Authentication failed" }, 401);
-  }
-
+export async function unbanUser(c: Context<AuthContext>) {
   // Get target telegram ID
   const targetTelegramId = parseInt(c.req.param("telegramId"), 10);
   if (isNaN(targetTelegramId)) {
