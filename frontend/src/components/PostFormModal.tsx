@@ -6,6 +6,7 @@ import { useToast } from "../hooks/use-toast";
 import { useTelegramMainButton } from "../hooks/use-telegram-main-button";
 import { config } from "../config";
 import type { Post } from "../types/post";
+import WebApp from "@twa-dev/sdk";
 
 interface PostFormModalProps {
   mode: "create" | "edit";
@@ -162,6 +163,9 @@ export default function PostFormModal({
           }
         }
 
+        // Trigger haptic feedback
+        WebApp.HapticFeedback.notificationOccurred("success");
+
         showToast("Post created successfully!", "success");
         setContent("");
         setImages([]);
@@ -209,7 +213,9 @@ export default function PostFormModal({
       ? {
           text: getButtonText(),
           onClick: () => {
-            const form = document.getElementById("post-form") as HTMLFormElement;
+            const form = document.getElementById(
+              "post-form",
+            ) as HTMLFormElement;
             form?.requestSubmit();
           },
           disabled: isSubmitDisabled,

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTelegramMainButton } from "../hooks/use-telegram-main-button";
+import WebApp from "@twa-dev/sdk";
 
 interface CommentFormProps {
   postId: number;
@@ -31,6 +32,10 @@ export default function CommentForm({
     try {
       setError(null);
       await onSubmit(trimmedContent);
+
+      // Trigger haptic feedback
+      WebApp.HapticFeedback.notificationOccurred("success");
+
       setContent("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post comment");
