@@ -55,6 +55,6 @@
     "wrangler": "^4.42.0"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^2.0.5"
+    "@anthropic-ai/claude-code": "^2.0.8"
   }
 }
