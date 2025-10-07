@@ -8,20 +8,7 @@ import CommentList from "../components/CommentList";
 import ShareButton from "../components/ShareButton";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Post } from "../types/post";
 
 export default function PostPage() {
   const { postId } = useParams<{ postId: string }>();

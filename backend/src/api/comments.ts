@@ -10,6 +10,7 @@ import {
 import { SessionManager } from "../services/session-manager";
 import type { Env } from "../types/env";
 import { sendNewCommentNotification } from "../services/notification-service";
+import { parsePagination, parsePostId } from "../utils/request-helpers";
 
 // Helper: Extract and validate session
 async function authenticateUser(c: Context<{ Bindings: Env }>) {
@@ -35,7 +36,7 @@ async function authenticateUser(c: Context<{ Bindings: Env }>) {
     };
   }
 
-  const sessionManager = SessionManager.create(c.env);
+  const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
   const session = await sessionManager.validateSession(sessionId);
   if (!session) {
     return {
@@ -46,24 +47,6 @@ async function authenticateUser(c: Context<{ Bindings: Env }>) {
   return { session };
 }
 
-// Helper: Parse pagination parameters
-function parsePagination(c: Context) {
-  const limitParam = c.req.query("limit") || "50";
-  const offsetParam = c.req.query("offset") || "0";
-  const limit = Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 100);
-  const offset = Math.max(parseInt(offsetParam, 10) || 0, 0);
-  return { limit, offset };
-}
-
-// Helper: Parse and validate post ID
-function parsePostId(c: Context) {
-  const postId = parseInt(c.req.param("postId"), 10);
-  if (isNaN(postId)) {
-    return { error: { message: "Invalid post ID", status: 400 as const } };
-  }
-  return { postId };
-}
-
 // Helper: Parse and validate comment ID
 function parseCommentId(c: Context) {
   const commentId = parseInt(c.req.param("commentId"), 10);
@@ -71,22 +54,6 @@ function parseCommentId(c: Context) {
     return { error: { message: "Invalid comment ID", status: 400 as const } };
   }
   return { commentId };
-}
-
-// Helper: Create pagination response
-function createPaginationResponse(
-  comments: unknown[],
-  limit: number,
-  offset: number,
-) {
-  return {
-    comments,
-    pagination: {
-      limit,
-      offset,
-      hasMore: comments.length === limit,
-    },
-  };
 }
 
 export const getCommentsByPostId = async (c: Context<{ Bindings: Env }>) => {
@@ -109,7 +76,14 @@ export const getCommentsByPostId = async (c: Context<{ Bindings: Env }>) => {
       { limit, offset },
     );
 
-    return c.json(createPaginationResponse(comments, limit, offset));
+    return c.json({
+      comments,
+      pagination: {
+        limit,
+        offset,
+        hasMore: comments.length === limit,
+      },
+    });
   } catch (error) {
     console.error("Error fetching comments:", error);
     return c.json({ error: "Failed to fetch comments" }, 500);

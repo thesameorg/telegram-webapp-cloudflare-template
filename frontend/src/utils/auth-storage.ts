@@ -2,6 +2,7 @@ const STORAGE_KEYS = {
   SESSION_ID: "telegram_session_id",
   EXPIRES_AT: "telegram_session_expires_at",
   USER_DATA: "telegram_user_data",
+  IS_ADMIN: "telegram_is_admin",
 } as const;
 
 export interface StoredUserData {
@@ -78,10 +79,20 @@ export const AuthStorage = {
     }
   },
 
+  setIsAdmin(isAdmin: boolean): void {
+    safeStorage.set(STORAGE_KEYS.IS_ADMIN, isAdmin.toString());
+  },
+
+  getIsAdmin(): boolean {
+    const value = safeStorage.get(STORAGE_KEYS.IS_ADMIN);
+    return value === "true";
+  },
+
   clearSession(): void {
     safeStorage.remove(STORAGE_KEYS.SESSION_ID);
     safeStorage.remove(STORAGE_KEYS.EXPIRES_AT);
     safeStorage.remove(STORAGE_KEYS.USER_DATA);
+    safeStorage.remove(STORAGE_KEYS.IS_ADMIN);
   },
 
   getAuthState() {
@@ -97,8 +108,12 @@ export const AuthStorage = {
     sessionId: string,
     expiresAt: number,
     userData: StoredUserData,
+    isAdmin?: boolean,
   ): void {
     this.setSession(sessionId, expiresAt);
     this.setUserData(userData);
+    if (isAdmin !== undefined) {
+      this.setIsAdmin(isAdmin);
+    }
   },
 };

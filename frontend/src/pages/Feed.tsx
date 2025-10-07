@@ -1,25 +1,12 @@
 import { useState, useRef } from "react";
 import PostList from "../components/PostList";
 import CreatePostButton from "../components/CreatePostButton";
-import CreatePost from "../components/CreatePost";
+import PostFormModal from "../components/PostFormModal";
 import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
 import MakePremiumModal from "../components/MakePremiumModal";
 import { useAuth } from "../contexts/AuthContext";
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Post } from "../types/post";
 
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -83,9 +70,10 @@ export default function Feed() {
 
       {/* Create Post Modal */}
       {showCreatePost && (
-        <CreatePost
+        <PostFormModal
+          mode="create"
           onClose={() => setShowCreatePost(false)}
-          onPostCreated={handlePostCreated}
+          onSuccess={handlePostCreated}
         />
       )}
 
