@@ -59,7 +59,7 @@ export const getProfile = async (c: Context<{ Bindings: Env }>) => {
 // Get current user's profile
 export const getMyProfile = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const sessionManager = SessionManager.create(c.env);
+    const sessionManager = new SessionManager(c.env.SESSIONS);
     const sessionId = c.req.header("x-session-id");
 
     if (!sessionId) {
@@ -112,7 +112,7 @@ export const getMyProfile = async (c: Context<{ Bindings: Env }>) => {
 // Update current user's profile
 export const updateMyProfile = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const sessionManager = SessionManager.create(c.env);
+    const sessionManager = new SessionManager(c.env.SESSIONS);
     const sessionId = c.req.header("x-session-id");
 
     if (!sessionId) {
@@ -174,7 +174,7 @@ export const updateMyProfile = async (c: Context<{ Bindings: Env }>) => {
 // Upload profile avatar
 export const uploadProfileAvatar = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const sessionManager = SessionManager.create(c.env);
+    const sessionManager = new SessionManager(c.env.SESSIONS);
     const sessionId = c.req.header("x-session-id");
 
     if (!sessionId) {

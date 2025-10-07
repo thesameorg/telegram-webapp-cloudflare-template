@@ -1,23 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { config } from "../config";
+import type { Post } from "../types/post";
 
 interface CreatePostData {
   content: string;
-}
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface CreatePostResult {

@@ -58,8 +58,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Check if we already have valid stored auth
         const stored = AuthStorage.getAuthState();
         if (stored.isValid && stored.sessionId && stored.userData) {
-          // Need to re-authenticate to get fresh role data
-          // (stored auth doesn't include role, so we'll fall through to full auth)
+          // Use stored auth including admin status
+          if (mounted) {
+            setAuthState({
+              isAuthenticated: true,
+              isLoading: false,
+              user: stored.userData as TelegramUser,
+              sessionId: stored.sessionId,
+              expiresAt: stored.expiresAt,
+              isAdmin: AuthStorage.getIsAdmin(),
+            });
+          }
+          return;
         }
 
         // Need to authenticate with backend
@@ -92,12 +102,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log("[AuthContext] Auth response:", authData);
 
           if (authData.authenticated) {
-            // Store auth state
+            // Store auth state including admin status
             console.log("[AuthContext] Storing auth state to localStorage");
             AuthStorage.setAuthState(
               authData.sessionId,
               authData.expiresAt,
               authData.user,
+              authData.isAdmin,
             );
 
             if (mounted) {

@@ -2,28 +2,8 @@ import { useNavigate } from "react-router-dom";
 import ImageGallery, { ImageUrlData } from "./ImageGallery";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import ShareButton from "./ShareButton";
-
-interface PostProfile {
-  displayName?: string;
-  bio?: string;
-  profileImageKey?: string;
-}
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  images?: ImageUrlData[];
-  profile?: PostProfile | null;
-}
+import type { Post } from "../types/post";
+import { formatTimeAgo } from "../utils/format";
 
 interface PostItemProps {
   post: Post;
@@ -45,22 +25,6 @@ export default function PostItem({
   onMakePremium,
 }: PostItemProps) {
   const navigate = useNavigate();
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return `${diffInSeconds}s`;
-    } else if (diffInSeconds < 3600) {
-      return `${Math.floor(diffInSeconds / 60)}m`;
-    } else if (diffInSeconds < 86400) {
-      return `${Math.floor(diffInSeconds / 3600)}h`;
-    } else {
-      return `${Math.floor(diffInSeconds / 86400)}d`;
-    }
-  };
 
   const getGoldenGradientStyle = (starCount: number) => {
     if (starCount === 0) return {};

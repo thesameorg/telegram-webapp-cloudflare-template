@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { Comment } from "../services/api";
+import { formatTimeAgo } from "../utils/format";
 
 interface CommentItemProps {
   comment: Comment;
@@ -28,22 +29,6 @@ export default function CommentItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [error, setError] = useState<string | null>(null);
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return `${diffInSeconds}s`;
-    } else if (diffInSeconds < 3600) {
-      return `${Math.floor(diffInSeconds / 60)}m`;
-    } else if (diffInSeconds < 86400) {
-      return `${Math.floor(diffInSeconds / 3600)}h`;
-    } else {
-      return `${Math.floor(diffInSeconds / 86400)}d`;
-    }
-  };
 
   const handleUserClick = () => {
     navigate(`/profile/${comment.userId}`);

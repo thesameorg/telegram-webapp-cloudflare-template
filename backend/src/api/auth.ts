@@ -35,7 +35,7 @@ import { mockUser as devMockUser } from "../dev/mock-user";
 async function handleAuthentication(
   c: Context<{ Bindings: Env }>,
 ): Promise<Response> {
-  const sessionManager = SessionManager.create(c.env);
+  const sessionManager = new SessionManager(c.env.SESSIONS);
 
   // DEV-ONLY: Auth bypass for local development
   if (c.env.DEV_AUTH_BYPASS_ENABLED === "true") {

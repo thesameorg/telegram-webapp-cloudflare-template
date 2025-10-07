@@ -4,20 +4,7 @@ import { useCreatePost } from "../hooks/use-create-post";
 import ImageUpload, { ImageData } from "./ImageUpload";
 import { useToast } from "../hooks/use-toast";
 import { config } from "../config";
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Post } from "../types/post";
 
 interface PostFormModalProps {
   mode: "create" | "edit";

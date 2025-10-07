@@ -3,20 +3,7 @@ import PostItem from "./PostItem";
 import { useInfinitePosts } from "../hooks/use-infinite-posts";
 import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import { PostListSkeleton } from "./skeletons";
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Post } from "../types/post";
 
 interface PostListProps {
   userId?: number; // If provided, only shows posts from this user

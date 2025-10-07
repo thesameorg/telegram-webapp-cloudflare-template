@@ -32,7 +32,7 @@ async function authenticateAdmin(c: Context<{ Bindings: Env }>) {
     };
   }
 
-  const sessionManager = SessionManager.create(c.env);
+  const sessionManager = new SessionManager(c.env.SESSIONS);
   const session = await sessionManager.validateSession(sessionId);
   if (!session) {
     return {

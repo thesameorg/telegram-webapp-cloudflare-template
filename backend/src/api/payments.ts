@@ -7,6 +7,7 @@ import { isAdmin } from "../services/admin-auth";
 import type { Env } from "../types/env";
 import { eq } from "drizzle-orm";
 import { posts } from "../db/schema";
+import { parsePagination } from "../utils/request-helpers";
 
 // Helper: Extract and validate session
 async function authenticateUser(c: Context<{ Bindings: Env }>) {
@@ -32,7 +33,7 @@ async function authenticateUser(c: Context<{ Bindings: Env }>) {
     };
   }
 
-  const sessionManager = SessionManager.create(c.env);
+  const sessionManager = new SessionManager(c.env.SESSIONS);
   const session = await sessionManager.validateSession(sessionId);
   if (!session) {
     return {
@@ -41,15 +42,6 @@ async function authenticateUser(c: Context<{ Bindings: Env }>) {
   }
 
   return { session };
-}
-
-// Helper: Parse pagination parameters
-function parsePagination(c: Context) {
-  const limitParam = c.req.query("limit") || "50";
-  const offsetParam = c.req.query("offset") || "0";
-  const limit = Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 100);
-  const offset = Math.max(parseInt(offsetParam, 10) || 0, 0);
-  return { limit, offset };
 }
 
 /**

@@ -6,20 +6,7 @@ import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
 import MakePremiumModal from "../components/MakePremiumModal";
 import { useAuth } from "../contexts/AuthContext";
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Post } from "../types/post";
 
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);

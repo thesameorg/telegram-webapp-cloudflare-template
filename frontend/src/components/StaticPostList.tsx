@@ -1,27 +1,5 @@
 import PostItem from "./PostItem";
-import { ImageUrlData } from "./ImageGallery";
-
-interface PostProfile {
-  displayName?: string;
-  bio?: string;
-  profileImageKey?: string;
-}
-
-interface Post {
-  id: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  starCount?: number;
-  commentCount?: number;
-  paymentId?: string | null;
-  isPaymentPending?: number;
-  createdAt: string;
-  updatedAt: string;
-  images?: ImageUrlData[];
-  profile?: PostProfile | null;
-}
+import type { Post } from "../types/post";
 
 interface StaticPostListProps {
   posts: Post[];
