@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import ImageGallery, { ImageUrlData } from "./ImageGallery";
+import ImageGallery from "./ImageGallery";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import ShareButton from "./ShareButton";
 import type { Post } from "../types/post";

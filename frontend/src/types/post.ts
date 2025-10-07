@@ -1,6 +1,12 @@
 export interface ImageUrlData {
-  originalUrl: string;
-  thumbnailUrl: string;
+  id: number;
+  imageKey: string;
+  thumbnailKey: string;
+  width: number;
+  height: number;
+  originalName: string;
+  fileSize: number;
+  uploadOrder: number;
 }
 
 export interface PostProfile {

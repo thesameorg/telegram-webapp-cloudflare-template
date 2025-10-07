@@ -2,13 +2,13 @@ import { Context, Next } from "hono";
 import { SessionManager } from "../services/session-manager";
 import { isAdmin } from "../services/admin-auth";
 import type { Env } from "../types/env";
-import type { Session } from "../services/session-manager";
+import type { SessionData } from "../types/env";
 
 // Define context variables type
 type AuthContext = {
   Bindings: Env;
   Variables: {
-    session: Session;
+    session: SessionData;
   };
 };
 
@@ -34,7 +34,7 @@ function extractSessionId(c: Context): string | null {
  * Authentication middleware - validates session and attaches to context
  */
 export async function authMiddleware(c: Context<AuthContext>, next: Next) {
-  const sessionManager = new SessionManager(c.env.SESSIONS);
+  const sessionManager = new SessionManager(c.env.SESSIONS, c.env);
   const sessionId = extractSessionId(c);
 
   if (!sessionId) {

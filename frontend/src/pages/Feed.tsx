@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import PostList from "../components/PostList";
 import CreatePostButton from "../components/CreatePostButton";
-import CreatePost from "../components/CreatePost";
+import PostFormModal from "../components/PostFormModal";
 import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
 import MakePremiumModal from "../components/MakePremiumModal";
@@ -70,9 +70,10 @@ export default function Feed() {
 
       {/* Create Post Modal */}
       {showCreatePost && (
-        <CreatePost
+        <PostFormModal
+          mode="create"
           onClose={() => setShowCreatePost(false)}
-          onPostCreated={handlePostCreated}
+          onSuccess={handlePostCreated}
         />
       )}
 
