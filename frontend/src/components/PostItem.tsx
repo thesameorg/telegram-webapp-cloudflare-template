@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import ImageGallery, { ImageUrlData } from "./ImageGallery";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
+import ShareButton from "./ShareButton";
 
 interface PostProfile {
   displayName?: string;
@@ -160,6 +161,8 @@ export default function PostItem({
                 />
               </svg>
             </button>
+            <span className="text-gray-500 dark:text-gray-400">·</span>
+            <ShareButton postId={post.id} className="p-1" />
           </div>
         </div>
 

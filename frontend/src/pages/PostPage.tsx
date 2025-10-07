@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import PostItem from "../components/PostItem";
 import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
 import MakePremiumModal from "../components/MakePremiumModal";
 import CommentList from "../components/CommentList";
+import ShareButton from "../components/ShareButton";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../hooks/use-toast";
 import { api } from "../services/api";
 
 interface Post {
@@ -25,7 +27,9 @@ interface Post {
 export default function PostPage() {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAdmin } = useAuth();
+  const { showToast } = useToast();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +65,21 @@ export default function PostPage() {
   useEffect(() => {
     fetchPost();
   }, [postId]);
+
+  // Show toast and redirect to home if post not found (e.g., from deep link)
+  useEffect(() => {
+    if (!loading && (error || !post)) {
+      // Show error toast
+      showToast(`tgStartParam=post_${postId} Not found`, "error", 4000);
+
+      // Redirect to home after a brief delay
+      const timer = setTimeout(() => {
+        navigate("/");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading, error, post, postId, showToast, navigate]);
 
   const handleEdit = (post: Post) => {
     setEditingPost(post);
@@ -145,29 +164,32 @@ export default function PostPage() {
     <div className="max-w-2xl mx-auto">
       {/* Header with back button */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Go back"
-          >
-            <svg
-              className="w-5 h-5 text-gray-900 dark:text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title="Go back"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            Post
-          </h1>
+              <svg
+                className="w-5 h-5 text-gray-900 dark:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+            </button>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              Post
+            </h1>
+          </div>
+          {post && <ShareButton postId={post.id} />}
         </div>
       </div>
 

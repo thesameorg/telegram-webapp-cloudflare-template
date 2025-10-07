@@ -6,6 +6,7 @@ import EditPost from "../components/EditPost";
 import DeletePostConfirm from "../components/DeletePostConfirm";
 import MakePremiumModal from "../components/MakePremiumModal";
 import { useAuth } from "../contexts/AuthContext";
+import { useDeepLink } from "../hooks/useDeepLink";
 
 interface Post {
   id: number;
@@ -30,6 +31,9 @@ export default function Feed() {
   );
   const refetchRef = useRef<(() => void) | null>(null);
   const { user, isAdmin } = useAuth();
+
+  // Handle deep linking from Telegram start parameters
+  useDeepLink();
 
   const handlePostCreated = () => {
     if (refetchRef.current) {
