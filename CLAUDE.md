@@ -43,6 +43,7 @@ A full-stack Telegram Web App template with bot integration, deployed on Cloudfl
 - `payments` - Telegram Stars payment records
 - `userProfiles` - user profiles with avatar & contact info
 - `postImages` - image metadata (R2 keys for originals + thumbnails)
+- `comments` - post comments with hide/unhide functionality
 
 **Image Flow**:
 
@@ -93,9 +94,10 @@ npm run clean-check      # clean + install + build + check
 ### Database
 
 ```bash
-npm run db:migrate:local      # Apply migrations to local D1
+npm run db:migrate:local           # Apply migrations to local D1
 cd backend && npm run db:generate  # Generate migration from schema changes
-cd backend && npm run db:studio    # Open Drizzle Studio
+cd backend && npm run db:studio    # Open Drizzle Studio (GUI for viewing DB)
+cd backend && npm run db:push      # Push schema changes directly (dev only)
 ```
 
 ### Local Telegram Integration
@@ -122,9 +124,10 @@ See `.github/workflows/` for CI/CD pipeline:
 
 ### Authentication
 
-- All API endpoints (except `/api/health`) require authentication
+- All API endpoints (except `/api/health`) require authentication via middleware
 - Session cookies are httpOnly, validated against KV store
-- Admin endpoints check `role === 'admin'` (set when `telegramId === TELEGRAM_ADMIN_ID`)
+- Admin endpoints use `admin-auth.ts` middleware (checks `telegramId === TELEGRAM_ADMIN_ID`)
+- Regular endpoints use `telegram-auth.ts` middleware (validates session)
 - Dev bypass: Creates mock user when `DEV_AUTH_BYPASS_ENABLED=true`
 
 ### Payment Flow
@@ -143,10 +146,11 @@ See `.github/workflows/` for CI/CD pipeline:
 
 ### Frontend Routing
 
-- React Router v6 with client-side routing
-- Main routes: `/` (Feed), `/profile` (UnifiedProfile), `/edit-profile`, `/payments`
-- AuthRequired wrapper protects routes
+- React Router v7 with client-side routing
+- Main routes: `/` (Feed), `/post/:postId` (PostPage), `/profile/:telegramId` (UnifiedProfile), `/edit-profile`, `/payments`
+- Layout component wraps all routes with DeepLinkHandler for Telegram start parameters
 - Bottom navigation for mobile UX
+- IMPORTANT: When adding a new endpoint, add it to `Router.tsx`!
 
 ### Environment Variables
 
@@ -162,3 +166,36 @@ Wrangler bindings in `wrangler.toml`:
 - `SESSIONS` (KV) - Session storage
 - `DB` (D1) - Main database
 - `IMAGES` (R2) - Image storage
+
+## Critical Implementation Details
+
+-  Run & fix `npm run check` to find possible lint, type, test flaws
+
+
+### Adding New API Endpoints
+
+1. Create handler in `backend/src/api/*.ts`
+2. Add route to `backend/src/index.ts`
+3. Apply authentication middleware (`telegram-auth.ts` or `admin-auth.ts`)
+4. Add corresponding route to `frontend/src/Router.tsx` if needed
+
+### Database Schema Changes
+
+1. Modify `backend/src/db/schema.ts`
+2. Run `cd backend && npm run db:generate` to create migration
+3. Review generated migration in `backend/drizzle/migrations/`
+4. Apply locally: `npm run db:migrate:local`
+5. Production migrations run automatically via `wrangler.toml` `migrations_dir` setting
+
+### Comments System
+
+- Comments stored in `comments` table with cascade delete on parent post
+- Admin can hide/unhide comments (sets `isHidden` flag)
+- Comment count cached in `posts.commentCount` for performance
+- Notification sent to post author when new comment is created
+
+### Deep Linking
+
+- Telegram start parameters handled by `DeepLinkHandler` component
+- Format: `https://t.me/bot_name?start=post_123` navigates to `/post/123`
+- `ShareButton` component generates share links with deep link support
