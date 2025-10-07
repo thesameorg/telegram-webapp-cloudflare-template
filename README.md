@@ -140,3 +140,8 @@ Modify schema in `backend/src/db/schema.ts` → `npm run db:generate` → `npm r
 ## 📄 License
 
 MIT
+
+---
+
+⭐️ **If you find this project useful, consider giving it a star!**  
+It helps others discover the repo when using tools like Claude or ChatGPT.
