@@ -284,6 +284,12 @@ export default function ImageUpload({
     }
   };
 
+  const openCameraDialog = () => {
+    if (!disabled && !isProcessing) {
+      document.getElementById("camera-input")?.click();
+    }
+  };
+
   const handleCropCancel = () => {
     setShowCropQueue(false);
     setFilesToCrop([]);
@@ -311,6 +317,88 @@ export default function ImageUpload({
         className="hidden"
         disabled={disabled || isProcessing}
       />
+
+      {/* Camera Input */}
+      <input
+        id="camera-input"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileInput}
+        className="hidden"
+        disabled={disabled || isProcessing}
+      />
+
+      {/* Upload Options */}
+      <div className="flex gap-3 mb-4">
+        <button
+          type="button"
+          onClick={openFileDialog}
+          disabled={disabled || isProcessing}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-colors
+            ${
+              disabled || isProcessing
+                ? "opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-600"
+                : "border-blue-500 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer"
+            }
+          `}
+        >
+          <svg
+            className="w-5 h-5 text-blue-600 dark:text-blue-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+            Gallery
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={openCameraDialog}
+          disabled={disabled || isProcessing}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-colors
+            ${
+              disabled || isProcessing
+                ? "opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-600"
+                : "border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer"
+            }
+          `}
+        >
+          <svg
+            className="w-5 h-5 text-green-600 dark:text-green-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <span className="text-sm font-medium text-green-600 dark:text-green-400">
+            Camera
+          </span>
+        </button>
+      </div>
 
       {/* Drop Zone */}
       <div
