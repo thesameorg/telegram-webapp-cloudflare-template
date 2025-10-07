@@ -10,6 +10,9 @@ lerna-debug.log*
 # my custom text files
 temp_docs/
 
+# Sonarqube files
+.scannerwork
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
