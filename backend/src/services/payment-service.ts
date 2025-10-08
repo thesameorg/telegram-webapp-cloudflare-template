@@ -458,8 +458,17 @@ export class PaymentService {
 
   // Helper: Process single payment reconciliation
   private async processPaymentReconciliation(
-    payment: { id: string; status: string; telegramPaymentChargeId: string | null; postId: number | null; createdAt: string },
-    telegramTxMap: Map<string, { id: string; amount: number; source?: unknown; receiver?: unknown }>,
+    payment: {
+      id: string;
+      status: string;
+      telegramPaymentChargeId: string | null;
+      postId: number | null;
+      createdAt: string;
+    },
+    telegramTxMap: Map<
+      string,
+      { id: string; amount: number; source?: unknown; receiver?: unknown }
+    >,
     result: ReconciliationResult,
   ) {
     if (!payment.telegramPaymentChargeId) {
@@ -542,9 +551,7 @@ export class PaymentService {
       );
 
       const telegramTxMap = new Map(
-        allTransactions
-          .filter((tx) => tx.id)
-          .map((tx) => [tx.id, tx]),
+        allTransactions.filter((tx) => tx.id).map((tx) => [tx.id, tx]),
       );
 
       for (const payment of dbPayments) {
