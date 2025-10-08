@@ -6,24 +6,20 @@
     <title>404 - Page Not Found</title>
 
     <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"
+    ></script>
     <script>
-      // Only load GA if measurement ID is configured
-      window.GA_MEASUREMENT_ID = '%VITE_GA_MEASUREMENT_ID%';
-      if (window.GA_MEASUREMENT_ID && window.GA_MEASUREMENT_ID !== '%VITE_GA_MEASUREMENT_ID%') {
-        var script = document.createElement('script');
-        script.async = true;
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA_MEASUREMENT_ID;
-        document.head.appendChild(script);
-
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', window.GA_MEASUREMENT_ID, {
-          page_title: '404 - Page Not Found',
-          page_path: window.location.pathname
-        });
-        window.gtag = gtag;
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
       }
+      gtag("js", new Date());
+      gtag("config", "%VITE_GA_MEASUREMENT_ID%", {
+        page_title: "404 - Page Not Found",
+        page_path: window.location.pathname,
+      });
     </script>
 
     <style>
