@@ -80,6 +80,30 @@ export default function UnifiedProfile() {
     return new Date(timestamp).toLocaleString();
   };
 
+  // Helper: Build fetch options for profile
+  const buildProfileFetchOptions = (
+    isOwn: boolean,
+    sid: string | null,
+  ): RequestInit => {
+    const options: RequestInit = { credentials: "include" };
+    if (isOwn && sid) {
+      options.headers = { "x-session-id": sid };
+    }
+    return options;
+  };
+
+  // Helper: Handle profile response
+  const handleProfileResponse = (
+    response: Response,
+    setErr: (msg: string) => void,
+  ) => {
+    if (response.status === 404) {
+      setErr("Profile not found");
+    } else {
+      setErr("Failed to load profile");
+    }
+  };
+
   // Fetch profile
   useEffect(() => {
     const fetchProfile = async () => {
@@ -93,13 +117,7 @@ export default function UnifiedProfile() {
         const endpoint = isOwnProfile
           ? "/api/profile/me"
           : `/api/profile/${actualUserId}`;
-        const fetchOptions: RequestInit = {
-          credentials: "include",
-        };
-
-        if (isOwnProfile && sessionId) {
-          fetchOptions.headers = { "x-session-id": sessionId };
-        }
+        const fetchOptions = buildProfileFetchOptions(isOwnProfile, sessionId);
 
         const response = await fetch(
           `${config.apiBaseUrl}${endpoint}`,
@@ -107,11 +125,7 @@ export default function UnifiedProfile() {
         );
 
         if (!response.ok) {
-          if (response.status === 404) {
-            setError("Profile not found");
-          } else {
-            setError("Failed to load profile");
-          }
+          handleProfileResponse(response, setError);
           return;
         }
 
@@ -198,67 +212,67 @@ export default function UnifiedProfile() {
     setShowBanConfirm(true);
   };
 
-  const handleBanActionCompleted = () => {
-    // Refetch profile to get updated ban status
-    setProfileLoading(true);
-    const fetchProfile = async () => {
-      if (!actualUserId) return;
+  // Helper: Refetch profile data
+  const refetchProfile = async () => {
+    if (!actualUserId) return;
 
-      try {
-        const response = await fetch(
-          `${config.apiBaseUrl}/api/profile/${actualUserId}`,
-          {
-            credentials: "include",
-          },
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data.profile);
-        }
-      } catch (error) {
-        console.error("Error refetching profile:", error);
-      } finally {
-        setProfileLoading(false);
+    setProfileLoading(true);
+    try {
+      const response = await fetch(
+        `${config.apiBaseUrl}/api/profile/${actualUserId}`,
+        {
+          credentials: "include",
+        },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data.profile);
       }
-    };
-    fetchProfile();
+    } catch (error) {
+      console.error("Error refetching profile:", error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleBanActionCompleted = () => {
+    refetchProfile();
     setShowBanConfirm(false);
   };
 
-  if (isLoading || profileLoading) {
-    return (
-      <div className="max-w-2xl mx-auto p-4">
-        <ProfileSkeleton />
+  // Helper: Render loading state
+  const renderLoading = () => (
+    <div className="max-w-2xl mx-auto p-4">
+      <ProfileSkeleton />
+    </div>
+  );
+
+  // Helper: Render error state
+  const renderError = () => (
+    <div className="max-w-2xl mx-auto p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center border border-gray-200 dark:border-gray-700">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          {error || "Profile not found"}
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          The profile you&apos;re looking for doesn&apos;t exist or
+          couldn&apos;t be loaded.
+        </p>
       </div>
-    );
+    </div>
+  );
+
+  if (isLoading || profileLoading) {
+    return renderLoading();
   }
 
   if (error || !profile) {
-    return (
-      <div className="max-w-2xl mx-auto p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            {error || "Profile not found"}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            The profile you&apos;re looking for doesn&apos;t exist or
-            couldn&apos;t be loaded.
-          </p>
-        </div>
-      </div>
-    );
+    return renderError();
   }
 
-  return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {isOwnProfile ? "My Profile" : "Profile"}
-        </h1>
-      </div>
-
-      {/* Edit Post Modal */}
+  // Helper: Render modals
+  const renderModals = () => (
+    <>
       {editingPost && (
         <EditPost
           post={editingPost}
@@ -267,7 +281,6 @@ export default function UnifiedProfile() {
         />
       )}
 
-      {/* Delete Post Confirmation */}
       {deletingPostId && (
         <DeletePostConfirm
           postId={deletingPostId}
@@ -276,7 +289,6 @@ export default function UnifiedProfile() {
         />
       )}
 
-      {/* Make Premium Modal */}
       {makingPremiumPostId && (
         <MakePremiumModal
           postId={makingPremiumPostId}
@@ -285,7 +297,6 @@ export default function UnifiedProfile() {
         />
       )}
 
-      {/* Ban User Confirmation */}
       {showBanConfirm && profile && (
         <BanUserConfirm
           telegramId={profile.telegram_id}
@@ -295,6 +306,22 @@ export default function UnifiedProfile() {
           onActionCompleted={handleBanActionCompleted}
         />
       )}
+    </>
+  );
+
+  // Helper: Get page title
+  const getPageTitle = () => (isOwnProfile ? "My Profile" : "Profile");
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {getPageTitle()}
+        </h1>
+      </div>
+
+      {renderModals()}
 
       <div className="p-4 space-y-6">
         {/* Profile Section - Always visible */}
@@ -302,7 +329,7 @@ export default function UnifiedProfile() {
           profile={profile}
           isOwnProfile={isOwnProfile}
           onEditClick={isOwnProfile ? handleEditProfile : undefined}
-          onBanClick={!isOwnProfile && isAdmin ? handleBanClick : undefined}
+          onBanClick={isAdmin && !isOwnProfile ? handleBanClick : undefined}
           postCount={posts.length}
           isAdmin={isAdmin}
         />

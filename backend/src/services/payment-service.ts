@@ -257,6 +257,90 @@ export class PaymentService {
     await this.env.SESSIONS.delete("bot_star_balance");
   }
 
+  // Helper: Validate refund eligibility
+  private validateRefundEligibility(payment: {
+    status: string;
+    createdAt: string;
+    telegramPaymentChargeId: string | null;
+  }): { error?: string } {
+    if (payment.status !== "succeeded") {
+      return { error: `Cannot refund payment with status '${payment.status}'` };
+    }
+
+    const paymentAge = Date.now() - new Date(payment.createdAt).getTime();
+    const SEVEN_DAYS_MS = 168 * 60 * 60 * 1000;
+    if (paymentAge > SEVEN_DAYS_MS) {
+      return { error: "Payment is older than 7 days and cannot be refunded" };
+    }
+
+    if (!payment.telegramPaymentChargeId) {
+      return { error: "Payment missing telegram_payment_charge_id" };
+    }
+
+    return {};
+  }
+
+  // Helper: Check if error is permanent
+  private isPermanentRefundError(error: unknown): boolean {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode =
+      typeof error === "object" && error !== null && "error_code" in error
+        ? (error.error_code as number)
+        : undefined;
+
+    return (
+      errorMessage.includes("payment not found") ||
+      errorMessage.includes("already refunded") ||
+      errorMessage.includes("PAYMENT_NOT_FOUND") ||
+      errorMessage.includes("PAYMENT_ALREADY_REFUNDED") ||
+      errorCode === 400
+    );
+  }
+
+  // Helper: Check if error is transient
+  private isTransientRefundError(error: unknown): boolean {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode =
+      typeof error === "object" && error !== null && "error_code" in error
+        ? (error.error_code as number)
+        : undefined;
+
+    return (
+      errorMessage.includes("timeout") ||
+      errorMessage.includes("network") ||
+      errorMessage.includes("ETIMEDOUT") ||
+      errorMessage.includes("ECONNRESET") ||
+      (errorCode !== undefined && (errorCode === 429 || errorCode >= 500))
+    );
+  }
+
+  // Helper: Handle refund retry logic
+  private async handleRefundRetry(
+    error: unknown,
+    attempt: number,
+    maxRetries: number,
+  ): Promise<{ shouldRetry: boolean; errorMessage?: string }> {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (this.isPermanentRefundError(error)) {
+      console.error(`[Refund] Permanent error, not retrying:`, errorMessage);
+      return { shouldRetry: false, errorMessage };
+    }
+
+    if (!this.isTransientRefundError(error) && attempt === maxRetries) {
+      return { shouldRetry: false, errorMessage };
+    }
+
+    if (attempt < maxRetries) {
+      const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+      console.log(`[Refund] Waiting ${delayMs}ms before retry...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      return { shouldRetry: true };
+    }
+
+    return { shouldRetry: false, errorMessage };
+  }
+
   /**
    * Refund a payment (admin only)
    * Validates 7-day window and calls Telegram API
@@ -264,39 +348,16 @@ export class PaymentService {
   async refundPayment(
     paymentId: string,
   ): Promise<{ success: boolean; error?: string }> {
-    // Get payment
     const payment = await this.getPaymentById(paymentId);
     if (!payment) {
       return { success: false, error: "Payment not found" };
     }
 
-    // Validate status
-    if (payment.status !== "succeeded") {
-      return {
-        success: false,
-        error: `Cannot refund payment with status '${payment.status}'`,
-      };
+    const validationResult = this.validateRefundEligibility(payment);
+    if (validationResult.error) {
+      return { success: false, error: validationResult.error };
     }
 
-    // Validate 7-day window (168 hours)
-    const paymentAge = Date.now() - new Date(payment.createdAt).getTime();
-    const SEVEN_DAYS_MS = 168 * 60 * 60 * 1000; // 168 hours in milliseconds
-    if (paymentAge > SEVEN_DAYS_MS) {
-      return {
-        success: false,
-        error: "Payment is older than 7 days and cannot be refunded",
-      };
-    }
-
-    // Validate telegram payment charge ID exists
-    if (!payment.telegramPaymentChargeId) {
-      return {
-        success: false,
-        error: "Payment missing telegram_payment_charge_id",
-      };
-    }
-
-    // Call Telegram API with retry logic
     const bot = new Bot(this.env.TELEGRAM_BOT_TOKEN);
     const maxRetries = 3;
     let lastError: unknown = null;
@@ -309,7 +370,7 @@ export class PaymentService {
 
         await bot.api.refundStarPayment(
           payment.userId,
-          payment.telegramPaymentChargeId,
+          payment.telegramPaymentChargeId!,
         );
 
         console.log(`[Refund] Success for payment ${paymentId}`);
@@ -318,52 +379,18 @@ export class PaymentService {
         lastError = error;
         console.error(`[Refund] Attempt ${attempt} failed:`, error);
 
-        // Check if error is permanent (don't retry)
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        const errorCode =
-          typeof error === "object" && error !== null && "error_code" in error
-            ? (error.error_code as number)
-            : undefined;
+        const retryResult = await this.handleRefundRetry(
+          error,
+          attempt,
+          maxRetries,
+        );
 
-        const isPermanentError =
-          errorMessage.includes("payment not found") ||
-          errorMessage.includes("already refunded") ||
-          errorMessage.includes("PAYMENT_NOT_FOUND") ||
-          errorMessage.includes("PAYMENT_ALREADY_REFUNDED") ||
-          errorCode === 400;
-
-        if (isPermanentError) {
-          console.error(
-            `[Refund] Permanent error, not retrying:`,
-            errorMessage,
-          );
-          return { success: false, error: errorMessage };
-        }
-
-        // Retry for transient errors (network, timeout, rate limit, 5xx)
-        const isTransientError =
-          errorMessage.includes("timeout") ||
-          errorMessage.includes("network") ||
-          errorMessage.includes("ETIMEDOUT") ||
-          errorMessage.includes("ECONNRESET") ||
-          (errorCode && (errorCode === 429 || errorCode >= 500));
-
-        if (!isTransientError && attempt === maxRetries) {
-          // Unknown error, exhausted retries
-          return { success: false, error: errorMessage };
-        }
-
-        // Wait before retry (exponential backoff)
-        if (attempt < maxRetries) {
-          const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5s
-          console.log(`[Refund] Waiting ${delayMs}ms before retry...`);
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        if (!retryResult.shouldRetry) {
+          return { success: false, error: retryResult.errorMessage };
         }
       }
     }
 
-    // All retries exhausted
     return {
       success: false,
       error:
@@ -371,6 +398,118 @@ export class PaymentService {
           ? lastError.message
           : "Refund failed after all retries",
     };
+  }
+
+  // Helper: Fetch all Telegram star transactions
+  private async fetchTelegramTransactions(bot: Bot) {
+    const allTransactions: Array<{
+      id: string;
+      amount: number;
+      source?: unknown;
+      receiver?: unknown;
+    }> = [];
+    let offset = 0;
+    const limit = 100;
+    const maxPages = 10;
+
+    console.log("[Reconcile] Fetching Telegram star transactions...");
+
+    for (let page = 0; page < maxPages; page++) {
+      const response = await bot.api.getStarTransactions({ offset, limit });
+
+      if (!response.transactions || response.transactions.length === 0) {
+        break;
+      }
+
+      allTransactions.push(...response.transactions);
+      console.log(
+        `[Reconcile] Fetched ${response.transactions.length} transactions (page ${page + 1})`,
+      );
+
+      if (response.transactions.length < limit) {
+        break;
+      }
+
+      offset += limit;
+    }
+
+    console.log(
+      `[Reconcile] Total Telegram transactions: ${allTransactions.length}`,
+    );
+    return allTransactions;
+  }
+
+  // Helper: Determine payment status from Telegram transaction
+  private getExpectedStatusFromTelegram(tx: {
+    amount: number;
+    source?: unknown;
+    receiver?: unknown;
+  }): PaymentStatus | null {
+    const isRefund = tx.amount < 0 || tx.receiver;
+
+    if (isRefund) {
+      return "refunded";
+    } else if (tx.source) {
+      return "succeeded";
+    }
+
+    return null;
+  }
+
+  // Helper: Process single payment reconciliation
+  private async processPaymentReconciliation(
+    payment: { id: string; status: string; telegramPaymentChargeId: string | null; postId: number | null; createdAt: string },
+    telegramTxMap: Map<string, { id: string; amount: number; source?: unknown; receiver?: unknown }>,
+    result: ReconciliationResult,
+  ) {
+    if (!payment.telegramPaymentChargeId) {
+      return;
+    }
+
+    const telegramTx = telegramTxMap.get(payment.telegramPaymentChargeId);
+
+    if (!telegramTx) {
+      if (payment.status === "succeeded") {
+        result.notFoundInTelegram.push({
+          paymentId: payment.id,
+          status: payment.status,
+          createdAt: payment.createdAt,
+        });
+      }
+      return;
+    }
+
+    const expectedStatus = this.getExpectedStatusFromTelegram(telegramTx);
+
+    if (expectedStatus && expectedStatus !== payment.status) {
+      console.log(
+        `[Reconcile] Updating payment ${payment.id}: ${payment.status} -> ${expectedStatus}`,
+      );
+
+      await this.updatePaymentStatus(payment.id, {
+        status: expectedStatus,
+        rawUpdate: { reconciled: true, telegramTx },
+      });
+
+      result.updated.push({
+        paymentId: payment.id,
+        oldStatus: payment.status,
+        newStatus: expectedStatus,
+      });
+
+      if (expectedStatus === "refunded" && payment.postId) {
+        await this.db
+          .update(posts)
+          .set({
+            starCount: 0,
+            paymentId: null,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(posts.id, payment.postId));
+      }
+    } else {
+      result.unchanged++;
+    }
   }
 
   /**
@@ -387,46 +526,8 @@ export class PaymentService {
 
     try {
       const bot = new Bot(this.env.TELEGRAM_BOT_TOKEN);
+      const allTransactions = await this.fetchTelegramTransactions(bot);
 
-      // Fetch star transactions from Telegram (last 30 days worth)
-      // We'll fetch in batches since API has pagination
-      const allTransactions: Array<{
-        id: string;
-        amount: number;
-        source?: unknown;
-        receiver?: unknown;
-      }> = [];
-      let offset = 0;
-      const limit = 100; // Max per request
-      const maxPages = 10; // Safety limit (1000 transactions max)
-
-      console.log("[Reconcile] Fetching Telegram star transactions...");
-
-      for (let page = 0; page < maxPages; page++) {
-        const response = await bot.api.getStarTransactions({ offset, limit });
-
-        if (!response.transactions || response.transactions.length === 0) {
-          break;
-        }
-
-        allTransactions.push(...response.transactions);
-        console.log(
-          `[Reconcile] Fetched ${response.transactions.length} transactions (page ${page + 1})`,
-        );
-
-        // If we got less than limit, we've reached the end
-        if (response.transactions.length < limit) {
-          break;
-        }
-
-        offset += limit;
-      }
-
-      console.log(
-        `[Reconcile] Total Telegram transactions: ${allTransactions.length}`,
-      );
-
-      // Fetch all payments from DB (last 30 days for performance)
       const thirtyDaysAgo = new Date(
         Date.now() - 30 * 24 * 60 * 60 * 1000,
       ).toISOString();
@@ -440,93 +541,19 @@ export class PaymentService {
         `[Reconcile] DB payments (last 30 days): ${dbPayments.length}`,
       );
 
-      // Build a map of Telegram transactions by charge ID
-      // Note: Telegram transactions have an 'id' field which is the transaction ID
-      // We need to match this with our telegramPaymentChargeId
-      const telegramTxMap = new Map<
-        string,
-        { id: string; amount: number; source?: unknown; receiver?: unknown }
-      >();
+      const telegramTxMap = new Map(
+        allTransactions
+          .filter((tx) => tx.id)
+          .map((tx) => [tx.id, tx]),
+      );
 
-      for (const tx of allTransactions) {
-        // Star transactions can be incoming (payments) or outgoing (refunds)
-        // Incoming: tx.source is defined (user who paid)
-        // Outgoing: tx.receiver is defined (user who received refund)
-        if (tx.id) {
-          telegramTxMap.set(tx.id, tx);
-        }
-      }
-
-      // Process each DB payment
       for (const payment of dbPayments) {
         try {
-          // Skip payments that don't have a Telegram charge ID yet
-          if (!payment.telegramPaymentChargeId) {
-            // These are likely still in 'created' status, waiting for payment
-            continue;
-          }
-
-          const telegramTx = telegramTxMap.get(payment.telegramPaymentChargeId);
-
-          if (!telegramTx) {
-            // Payment not found in Telegram transactions
-            // This could be normal if payment is very old or failed
-            if (payment.status === "succeeded") {
-              // This is concerning - succeeded payment not in Telegram
-              result.notFoundInTelegram.push({
-                paymentId: payment.id,
-                status: payment.status,
-                createdAt: payment.createdAt,
-              });
-            }
-            continue;
-          }
-
-          // Determine expected status from Telegram transaction
-          let expectedStatus: PaymentStatus | null = null;
-
-          // Check if this is a refund transaction (negative amount or receiver present)
-          const isRefund = telegramTx.amount < 0 || telegramTx.receiver;
-
-          if (isRefund) {
-            expectedStatus = "refunded";
-          } else if (telegramTx.source) {
-            // Incoming payment with source (user paid)
-            expectedStatus = "succeeded";
-          }
-
-          // Compare and update if different
-          if (expectedStatus && expectedStatus !== payment.status) {
-            console.log(
-              `[Reconcile] Updating payment ${payment.id}: ${payment.status} -> ${expectedStatus}`,
-            );
-
-            await this.updatePaymentStatus(payment.id, {
-              status: expectedStatus,
-              rawUpdate: { reconciled: true, telegramTx },
-            });
-
-            result.updated.push({
-              paymentId: payment.id,
-              oldStatus: payment.status,
-              newStatus: expectedStatus,
-            });
-
-            // If refunded, also update the post
-            if (expectedStatus === "refunded" && payment.postId) {
-              const now = new Date().toISOString();
-              await this.db
-                .update(posts)
-                .set({
-                  starCount: 0,
-                  paymentId: null,
-                  updatedAt: now,
-                })
-                .where(eq(posts.id, payment.postId));
-            }
-          } else {
-            result.unchanged++;
-          }
+          await this.processPaymentReconciliation(
+            payment,
+            telegramTxMap,
+            result,
+          );
         } catch (error) {
           console.error(
             `[Reconcile] Error processing payment ${payment.id}:`,

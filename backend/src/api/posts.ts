@@ -272,6 +272,82 @@ export const deletePost = asyncHandler(
   },
 );
 
+// Helper: Process single image from form data
+async function processImageFromForm(
+  key: string,
+  value: File,
+  formData: FormData,
+  imageService: ImageService,
+): Promise<{ image?: ImageUploadData; error?: string }> {
+  const arrayBuffer = await value.arrayBuffer();
+
+  // Validate image
+  if (!(await imageService.validateImageFile(arrayBuffer, value.type))) {
+    return { error: `Invalid image file: ${value.name}` };
+  }
+
+  // Get thumbnail data from form
+  const thumbnailKey = key.replace("image_", "thumbnail_");
+  const thumbnailFile = formData.get(thumbnailKey) as File;
+  if (!thumbnailFile) {
+    return { error: `Thumbnail missing for image: ${value.name}` };
+  }
+
+  const thumbnailBuffer = await thumbnailFile.arrayBuffer();
+  if (!(await imageService.validateThumbnailFile(thumbnailBuffer))) {
+    return { error: `Invalid thumbnail file: ${value.name}` };
+  }
+
+  // Get metadata from form
+  const orderKey = key.replace("image_", "order_");
+  const widthKey = key.replace("image_", "width_");
+  const heightKey = key.replace("image_", "height_");
+
+  const uploadOrder = parseInt(formData.get(orderKey) as string) || 1;
+  const width = parseInt(formData.get(widthKey) as string) || 0;
+  const height = parseInt(formData.get(heightKey) as string) || 0;
+
+  return {
+    image: {
+      originalName: value.name,
+      mimeType: value.type,
+      fileSize: arrayBuffer.byteLength,
+      width,
+      height,
+      uploadOrder,
+      imageBuffer: arrayBuffer,
+      thumbnailBuffer,
+    },
+  };
+}
+
+// Helper: Parse images from form data
+async function parseImagesFromFormData(
+  formData: FormData,
+  imageService: ImageService,
+): Promise<{ images?: ImageUploadData[]; error?: string }> {
+  const images: ImageUploadData[] = [];
+
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("image_") && value instanceof File) {
+      const result = await processImageFromForm(
+        key,
+        value,
+        formData,
+        imageService,
+      );
+      if (result.error) {
+        return { error: result.error };
+      }
+      if (result.image) {
+        images.push(result.image);
+      }
+    }
+  }
+
+  return { images };
+}
+
 export const uploadPostImages = asyncHandler(
   async (c: Context<AuthContext & DBContext>) => {
     const session = c.get("session");
@@ -302,56 +378,13 @@ export const uploadPostImages = asyncHandler(
 
     // Parse multipart form data
     const formData = await c.req.formData();
-    const images: ImageUploadData[] = [];
+    const parseResult = await parseImagesFromFormData(formData, imageService);
 
-    for (const [key, value] of formData.entries()) {
-      if (key.startsWith("image_") && value instanceof File) {
-        const arrayBuffer = await value.arrayBuffer();
-
-        // Validate image
-        if (!(await imageService.validateImageFile(arrayBuffer, value.type))) {
-          return c.json({ error: `Invalid image file: ${value.name}` }, 400);
-        }
-
-        // Get thumbnail data from form
-        const thumbnailKey = key.replace("image_", "thumbnail_");
-        const thumbnailFile = formData.get(thumbnailKey) as File;
-        if (!thumbnailFile) {
-          return c.json(
-            { error: `Thumbnail missing for image: ${value.name}` },
-            400,
-          );
-        }
-
-        const thumbnailBuffer = await thumbnailFile.arrayBuffer();
-        if (!(await imageService.validateThumbnailFile(thumbnailBuffer))) {
-          return c.json(
-            { error: `Invalid thumbnail file: ${value.name}` },
-            400,
-          );
-        }
-
-        // Get metadata from form
-        const orderKey = key.replace("image_", "order_");
-        const widthKey = key.replace("image_", "width_");
-        const heightKey = key.replace("image_", "height_");
-
-        const uploadOrder = parseInt(formData.get(orderKey) as string) || 1;
-        const width = parseInt(formData.get(widthKey) as string) || 0;
-        const height = parseInt(formData.get(heightKey) as string) || 0;
-
-        images.push({
-          originalName: value.name,
-          mimeType: value.type,
-          fileSize: arrayBuffer.byteLength,
-          width,
-          height,
-          uploadOrder,
-          imageBuffer: arrayBuffer,
-          thumbnailBuffer,
-        });
-      }
+    if (parseResult.error) {
+      return c.json({ error: parseResult.error }, 400);
     }
+
+    const images = parseResult.images || [];
 
     if (images.length === 0) {
       return c.json({ error: "No valid images provided" }, 400);

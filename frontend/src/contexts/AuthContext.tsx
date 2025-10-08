@@ -50,6 +50,79 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const { webApp, isWebAppReady } = useTelegram();
 
+  // Helper: Set authenticated state
+  const setAuthenticatedState = (
+    mounted: boolean,
+    authData: {
+      user: TelegramUser;
+      sessionId: string;
+      expiresAt: number | null;
+      isAdmin: boolean;
+    },
+  ) => {
+    if (!mounted) return;
+
+    setAuthState({
+      isAuthenticated: true,
+      isLoading: false,
+      user: authData.user,
+      sessionId: authData.sessionId,
+      expiresAt: authData.expiresAt,
+      isAdmin: authData.isAdmin,
+    });
+  };
+
+  // Helper: Set unauthenticated state
+  const setUnauthenticatedState = (mounted: boolean) => {
+    AuthStorage.clearSession();
+    if (!mounted) return;
+
+    setAuthState({
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+      sessionId: null,
+      expiresAt: null,
+      isAdmin: false,
+    });
+  };
+
+  // Helper: Perform backend authentication
+  const performBackendAuth = async (
+    stored: ReturnType<typeof AuthStorage.getAuthState>,
+  ) => {
+    const requestBody: Record<string, unknown> = {};
+
+    if (stored.sessionId) {
+      requestBody.sessionId = stored.sessionId;
+    }
+
+    if (webApp?.initData) {
+      requestBody.initData = webApp.initData;
+    }
+
+    console.log(
+      "Frontend: Sending authentication request with body:",
+      requestBody,
+    );
+
+    const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const authData = await response.json();
+    console.log("[AuthContext] Auth response:", authData);
+
+    return authData.authenticated ? authData : null;
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -58,99 +131,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Check if we already have valid stored auth
         const stored = AuthStorage.getAuthState();
         if (stored.isValid && stored.sessionId && stored.userData) {
-          // Use stored auth including admin status
-          if (mounted) {
-            setAuthState({
-              isAuthenticated: true,
-              isLoading: false,
-              user: stored.userData as TelegramUser,
-              sessionId: stored.sessionId,
-              expiresAt: stored.expiresAt,
-              isAdmin: AuthStorage.getIsAdmin(),
-            });
-          }
+          setAuthenticatedState(mounted, {
+            user: stored.userData as TelegramUser,
+            sessionId: stored.sessionId,
+            expiresAt: stored.expiresAt,
+            isAdmin: AuthStorage.getIsAdmin(),
+          });
           return;
         }
 
         // Need to authenticate with backend
-        const requestBody: Record<string, unknown> = {};
+        const authData = await performBackendAuth(stored);
 
-        // Add sessionId if we have one (even if expired)
-        if (stored.sessionId) {
-          requestBody.sessionId = stored.sessionId;
-        }
+        if (authData) {
+          console.log("[AuthContext] Storing auth state to localStorage");
+          AuthStorage.setAuthState(
+            authData.sessionId,
+            authData.expiresAt,
+            authData.user,
+            authData.isAdmin,
+          );
 
-        // Add initData if available
-        if (webApp?.initData) {
-          requestBody.initData = webApp.initData;
-        }
-
-        console.log(
-          "Frontend: Sending authentication request with body:",
-          requestBody,
-        );
-
-        const response = await fetch(`${config.apiBaseUrl}/api/auth`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const authData = await response.json();
-          console.log("[AuthContext] Auth response:", authData);
-
-          if (authData.authenticated) {
-            // Store auth state including admin status
-            console.log("[AuthContext] Storing auth state to localStorage");
-            AuthStorage.setAuthState(
-              authData.sessionId,
-              authData.expiresAt,
-              authData.user,
-              authData.isAdmin,
-            );
-
-            if (mounted) {
-              console.log("[AuthContext] Setting auth state in context");
-              setAuthState({
-                isAuthenticated: true,
-                isLoading: false,
-                user: authData.user,
-                sessionId: authData.sessionId,
-                expiresAt: authData.expiresAt,
-                isAdmin: authData.isAdmin || false,
-              });
-            }
-            return;
-          }
+          setAuthenticatedState(mounted, {
+            user: authData.user,
+            sessionId: authData.sessionId,
+            expiresAt: authData.expiresAt,
+            isAdmin: authData.isAdmin || false,
+          });
+          return;
         }
 
         // Authentication failed
-        AuthStorage.clearSession();
-        if (mounted) {
-          setAuthState({
-            isAuthenticated: false,
-            isLoading: false,
-            user: null,
-            sessionId: null,
-            expiresAt: null,
-            isAdmin: false,
-          });
-        }
+        setUnauthenticatedState(mounted);
       } catch (error) {
         console.error("Authentication error:", error);
-        AuthStorage.clearSession();
-        if (mounted) {
-          setAuthState({
-            isAuthenticated: false,
-            isLoading: false,
-            user: null,
-            sessionId: null,
-            expiresAt: null,
-            isAdmin: false,
-          });
-        }
+        setUnauthenticatedState(mounted);
       }
     };
 

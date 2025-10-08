@@ -45,7 +45,9 @@ export class TelegramAuthService {
       if (!hash) return false;
 
       urlParams.delete("hash");
-      const sortedParams = Array.from(urlParams.entries()).sort();
+      const sortedParams = Array.from(urlParams.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0]),
+      );
       const dataToCheck = sortedParams
         .map(([key, value]) => `${key}=${value}`)
         .join("\n");
