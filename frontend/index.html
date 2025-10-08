@@ -21,6 +21,24 @@
     />
     <meta name="twitter:image" content="/og-image.png" />
 
+    <!-- Google tag (gtag.js) -->
+    <script>
+      // Only load GA if measurement ID is configured
+      window.GA_MEASUREMENT_ID = '%VITE_GA_MEASUREMENT_ID%';
+      if (window.GA_MEASUREMENT_ID && window.GA_MEASUREMENT_ID !== '%VITE_GA_MEASUREMENT_ID%') {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA_MEASUREMENT_ID;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', window.GA_MEASUREMENT_ID);
+        window.gtag = gtag;
+      }
+    </script>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>

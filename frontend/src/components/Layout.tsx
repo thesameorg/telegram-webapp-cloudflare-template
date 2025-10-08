@@ -1,12 +1,19 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import BottomNavigation from "./BottomNavigation";
 import AuthRequired from "./AuthRequired";
 import LoadingSpinner from "./LoadingSpinner";
 import DeepLinkHandler from "./DeepLinkHandler";
 import { useAuth } from "../contexts/AuthContext";
+import { trackPageView } from "../utils/analytics";
 
 export default function Layout() {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location]);
 
   if (isLoading) {
     return <LoadingSpinner />;

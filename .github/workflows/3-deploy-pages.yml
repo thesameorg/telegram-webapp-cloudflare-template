@@ -64,6 +64,7 @@ jobs:
           VITE_WORKER_URL: ${{ vars.WORKER_URL }}
           VITE_R2_URL: ${{ vars.R2_URL }}
           VITE_TELEGRAM_BOT_USERNAME: ${{ vars.TELEGRAM_BOT_USERNAME }}
+          VITE_GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
 
       - name: Deploy to Cloudflare Pages
         id: deploy-pages
