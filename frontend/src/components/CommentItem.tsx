@@ -134,7 +134,7 @@ export default function CommentItem({
                   <ActionButton
                     onClick={() => setIsEditing(true)}
                     icon={EditIcon}
-                    colorClass="text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    variant="edit"
                     title="Edit comment"
                   />
                 )}
@@ -142,7 +142,7 @@ export default function CommentItem({
                   <ActionButton
                     onClick={() => onDelete?.(comment.id)}
                     icon={DeleteIcon}
-                    colorClass="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    variant="delete"
                     title="Delete comment"
                   />
                 )}
@@ -150,7 +150,7 @@ export default function CommentItem({
                   <ActionButton
                     onClick={() => onHide?.(comment.id)}
                     icon={HideIcon}
-                    colorClass="text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                    variant="hide"
                     title="Hide comment"
                   />
                 )}
@@ -158,7 +158,7 @@ export default function CommentItem({
                   <ActionButton
                     onClick={() => onUnhide?.(comment.id)}
                     icon={UnhideIcon}
-                    colorClass="text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    variant="edit"
                     title="Unhide comment"
                   />
                 )}

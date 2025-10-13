@@ -124,7 +124,7 @@ export default function PostItem({
               <ActionButton
                 onClick={() => onMakePremium(post.id)}
                 icon={StarIcon}
-                colorClass="text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                variant="star"
                 title="Make Premium"
               />
             )}
@@ -132,7 +132,7 @@ export default function PostItem({
               <ActionButton
                 onClick={() => onEdit?.(post)}
                 icon={EditIcon}
-                colorClass="text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                variant="edit"
                 title="Edit post"
               />
             )}
@@ -140,11 +140,7 @@ export default function PostItem({
               <ActionButton
                 onClick={() => onDelete?.(post.id)}
                 icon={DeleteIcon}
-                colorClass={
-                  isAdminDeletingOthers
-                    ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    : "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                }
+                variant={isAdminDeletingOthers ? "danger" : "delete"}
                 title={isAdminDeletingOthers ? "Delete post (Admin)" : "Delete post"}
               />
             )}
