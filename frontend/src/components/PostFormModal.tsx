@@ -53,7 +53,7 @@ export default function PostFormModal({
     try {
       const formData = new FormData();
 
-      images.forEach((image, index) => {
+      for (const [index, image] of images.entries()) {
         if (image.compressedFile && image.thumbnailFile) {
           formData.append(
             `image_${index}`,
@@ -69,7 +69,7 @@ export default function PostFormModal({
           formData.append(`width_${index}`, image.width.toString());
           formData.append(`height_${index}`, image.height.toString());
         }
-      });
+      }
 
       const sessionId = localStorage.getItem("telegram_session_id");
       if (!sessionId) {

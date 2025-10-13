@@ -33,7 +33,10 @@ export function SkeletonText({
 }) {
   return (
     <div className={`space-y-2 ${className}`}>
-      {Array.from({ length: lines }, (_, i) => ({ id: crypto.randomUUID(), isLast: i === lines - 1 })).map((item) => (
+      {Array.from({ length: lines }, (_, i) => ({
+        id: crypto.randomUUID(),
+        isLast: i === lines - 1,
+      })).map((item) => (
         <Skeleton
           key={item.id}
           className={`h-4 ${item.isLast ? "w-3/4" : "w-full"}`}
@@ -105,7 +108,10 @@ export function SkeletonImageGrid({
 
   return (
     <div className={`grid gap-1 ${getGridClasses()} ${className}`}>
-      {Array.from({ length: Math.min(count, 4) }, (_, i) => ({ id: crypto.randomUUID(), index: i })).map((item) => (
+      {Array.from({ length: Math.min(count, 4) }, (_, i) => ({
+        id: crypto.randomUUID(),
+        index: i,
+      })).map((item) => (
         <SkeletonImage
           key={item.id}
           className={getImageClasses(item.index)}

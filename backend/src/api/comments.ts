@@ -12,8 +12,8 @@ import type { DBContext } from "../middleware/db-middleware";
 
 // Helper: Parse and validate comment ID
 function parseCommentId(c: Context) {
-  const commentId = parseInt(c.req.param("commentId"), 10);
-  if (isNaN(commentId)) {
+  const commentId = Number.parseInt(c.req.param("commentId"), 10);
+  if (Number.isNaN(commentId)) {
     return { error: { message: "Invalid comment ID", status: 400 as const } };
   }
   return { commentId };

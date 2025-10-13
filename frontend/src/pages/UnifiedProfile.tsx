@@ -72,7 +72,7 @@ export default function UnifiedProfile() {
   const refetchRef = useRef<(() => void) | null>(null);
 
   // Parse telegram ID and determine if own profile
-  const actualUserId = telegramId ? parseInt(telegramId) : null;
+  const actualUserId = telegramId ? Number.parseInt(telegramId) : null;
   const isOwnProfile = user?.id === actualUserId;
 
   const formatExpiryDate = (timestamp: number | null) => {

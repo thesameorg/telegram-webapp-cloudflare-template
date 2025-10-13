@@ -96,8 +96,8 @@ export const getUserPosts = asyncHandler(async (c: Context<DBContext>) => {
     return c.json({ error: "User ID is required" }, 400);
   }
 
-  const userId = parseInt(userIdParam, 10);
-  if (isNaN(userId)) {
+  const userId = Number.parseInt(userIdParam, 10);
+  if (Number.isNaN(userId)) {
     return c.json({ error: "Invalid user ID" }, 400);
   }
 
@@ -303,9 +303,9 @@ async function processImageFromForm(
   const widthKey = key.replace("image_", "width_");
   const heightKey = key.replace("image_", "height_");
 
-  const uploadOrder = parseInt(formData.get(orderKey) as string) || 1;
-  const width = parseInt(formData.get(widthKey) as string) || 0;
-  const height = parseInt(formData.get(heightKey) as string) || 0;
+  const uploadOrder = Number.parseInt(formData.get(orderKey) as string) || 1;
+  const width = Number.parseInt(formData.get(widthKey) as string) || 0;
+  const height = Number.parseInt(formData.get(heightKey) as string) || 0;
 
   return {
     image: {
@@ -437,8 +437,8 @@ export const deletePostImage = asyncHandler(
       );
     }
 
-    const imageId = parseInt(c.req.param("imageId"), 10);
-    if (isNaN(imageId)) {
+    const imageId = Number.parseInt(c.req.param("imageId"), 10);
+    if (Number.isNaN(imageId)) {
       return c.json({ error: "Invalid image ID" }, 400);
     }
 

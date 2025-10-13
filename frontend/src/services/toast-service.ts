@@ -25,7 +25,9 @@ class ToastService {
    * Show a toast notification
    */
   show(message: string, type: ToastType = "info", duration?: number) {
-    this.listeners.forEach((listener) => listener(message, type, duration));
+    for (const listener of this.listeners) {
+      listener(message, type, duration);
+    }
   }
 
   /**

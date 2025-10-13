@@ -14,7 +14,7 @@ describe("POST /api/auth", () => {
     },
   ];
 
-  testCases.forEach(({ name, authHeader }) => {
+  for (const { name, authHeader } of testCases) {
     it(`should return 401 for ${name}`, async () => {
       const response = await makeRequest("/api/auth", {
         method: "POST",
@@ -23,7 +23,7 @@ describe("POST /api/auth", () => {
 
       expect(response.status).toBe(401);
     });
-  });
+  }
 
   it("should return 401 when authorization header is missing", async () => {
     const response = await makeRequest("/api/auth", { method: "POST" });

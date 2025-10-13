@@ -33,16 +33,16 @@ export const getCommentsSchema = z.object({
     .optional()
     .transform((val) => {
       if (!val) return 50;
-      const num = parseInt(val, 10);
-      return isNaN(num) ? 50 : Math.min(Math.max(num, 1), 100);
+      const num = Number.parseInt(val, 10);
+      return Number.isNaN(num) ? 50 : Math.min(Math.max(num, 1), 100);
     }),
   offset: z
     .string()
     .optional()
     .transform((val) => {
       if (!val) return 0;
-      const num = parseInt(val, 10);
-      return isNaN(num) ? 0 : Math.max(num, 0);
+      const num = Number.parseInt(val, 10);
+      return Number.isNaN(num) ? 0 : Math.max(num, 0);
     }),
 });
 

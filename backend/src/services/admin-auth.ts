@@ -20,11 +20,11 @@ export function isAdmin(telegramId: number, env: Env): boolean {
   // Parse admin ID from environment (could be string or number)
   const adminId =
     typeof env.TELEGRAM_ADMIN_ID === "string"
-      ? parseInt(env.TELEGRAM_ADMIN_ID, 10)
+      ? Number.parseInt(env.TELEGRAM_ADMIN_ID, 10)
       : env.TELEGRAM_ADMIN_ID;
 
   // Return false if admin ID is not configured or invalid
-  if (!adminId || isNaN(adminId)) {
+  if (!adminId || Number.isNaN(adminId)) {
     return false;
   }
 

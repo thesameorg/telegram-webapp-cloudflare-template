@@ -15,7 +15,10 @@ export function useTelegram() {
 
   useEffect(() => {
     const initializeTelegram = () => {
-      if (typeof globalThis.window !== "undefined" && globalThis.window.Telegram?.WebApp) {
+      if (
+        globalThis.window !== undefined &&
+        globalThis.window.Telegram?.WebApp
+      ) {
         const tg = globalThis.window.Telegram.WebApp;
         setWebApp(tg);
         tg.ready();

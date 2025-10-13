@@ -57,7 +57,7 @@ export const AuthStorage = {
 
   getExpiresAt(): number | null {
     const value = safeStorage.get(STORAGE_KEYS.EXPIRES_AT);
-    return value ? parseInt(value, 10) : null;
+    return value ? Number.parseInt(value, 10) : null;
   },
 
   isSessionValid(): boolean {

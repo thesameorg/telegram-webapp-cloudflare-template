@@ -7,4 +7,4 @@ export function createDatabase(d1: D1Database) {
 }
 
 export type Database = ReturnType<typeof createDatabase>;
-export { schema };
+export * as schema from "./schema";

@@ -38,7 +38,7 @@ export function useInfinitePosts(userId?: number): UseInfinitePostsResult {
         setError(null);
 
         // If userId is explicitly requested but not available, don't fetch
-        if (userId !== undefined && (userId === null || isNaN(userId))) {
+        if (userId !== undefined && (userId === null || Number.isNaN(userId))) {
           setPosts([]);
           setHasMore(false);
           return;

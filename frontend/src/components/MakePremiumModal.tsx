@@ -309,7 +309,7 @@ export default function MakePremiumModal({
                 min="1"
                 max="10"
                 value={starCount}
-                onChange={(e) => setStarCount(parseInt(e.target.value))}
+                onChange={(e) => setStarCount(Number.parseInt(e.target.value))}
                 disabled={isProcessing}
                 className="flex-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 disabled:opacity-50 touch-slider"
                 style={{

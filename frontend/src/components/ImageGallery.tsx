@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import GalleryImageItem, { type ImageUrlData } from "./GalleryImageItem";
+import GalleryImageItem from "./GalleryImageItem";
+import type { ImageUrlData } from "./GalleryImageItem";
 import { getImageUrl } from "../utils/image-url";
 
 interface ImageGalleryProps {
@@ -128,4 +129,4 @@ export default function ImageGallery({
   );
 }
 
-export type { ImageUrlData };
+export type { ImageUrlData } from "./GalleryImageItem";

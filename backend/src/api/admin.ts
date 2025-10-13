@@ -14,8 +14,8 @@ export async function banUser(c: Context<AuthContext>) {
   const session = c.get("session");
 
   // Get target telegram ID
-  const targetTelegramId = parseInt(c.req.param("telegramId"), 10);
-  if (isNaN(targetTelegramId)) {
+  const targetTelegramId = Number.parseInt(c.req.param("telegramId"), 10);
+  if (Number.isNaN(targetTelegramId)) {
     return c.json({ error: "Invalid telegram ID" }, 400);
   }
 
@@ -72,8 +72,8 @@ export async function banUser(c: Context<AuthContext>) {
  */
 export async function unbanUser(c: Context<AuthContext>) {
   // Get target telegram ID
-  const targetTelegramId = parseInt(c.req.param("telegramId"), 10);
-  if (isNaN(targetTelegramId)) {
+  const targetTelegramId = Number.parseInt(c.req.param("telegramId"), 10);
+  if (Number.isNaN(targetTelegramId)) {
     return c.json({ error: "Invalid telegram ID" }, 400);
   }
 

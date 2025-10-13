@@ -30,7 +30,7 @@ export class TelegramAuthService {
     try {
       return {
         user: JSON.parse(decodeURIComponent(userParam)),
-        auth_date: authDate ? parseInt(authDate, 10) : undefined,
+        auth_date: authDate ? Number.parseInt(authDate, 10) : undefined,
       };
     } catch {
       throw new Error("Invalid user data in initData");

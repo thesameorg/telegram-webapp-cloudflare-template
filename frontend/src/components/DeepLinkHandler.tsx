@@ -50,7 +50,8 @@ export default function DeepLinkHandler() {
 
     // Parse the start parameter
     // Expected format: post_123
-    const postMatch = startParam.match(/^post_(\d+)$/);
+    const postRegex = /^post_(\d+)$/;
+    const postMatch = postRegex.exec(startParam);
 
     if (postMatch) {
       const postId = postMatch[1];

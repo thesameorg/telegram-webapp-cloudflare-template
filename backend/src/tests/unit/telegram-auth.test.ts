@@ -53,10 +53,10 @@ describe("Telegram Auth Service Unit Tests", () => {
     it("should handle invalid inputs gracefully", () => {
       const invalidCases = ["", "   ", "InvalidFormat", "Bearer", "tma"];
 
-      invalidCases.forEach((header) => {
+      for (const header of invalidCases) {
         const extracted = telegramAuth.extractInitData(header);
         expect(extracted === null || extracted === header.trim()).toBe(true);
-      });
+      }
     });
   });
 

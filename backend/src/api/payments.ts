@@ -17,8 +17,8 @@ export const makePremium = async (c: Context<AuthContext>) => {
     const session = c.get("session");
 
     // Parse post ID
-    const postId = parseInt(c.req.param("postId"), 10);
-    if (isNaN(postId)) {
+    const postId = Number.parseInt(c.req.param("postId"), 10);
+    if (Number.isNaN(postId)) {
       return c.json({ error: "Invalid post ID" }, 400);
     }
 
@@ -85,8 +85,8 @@ export const clearPending = async (c: Context<AuthContext>) => {
     const session = c.get("session");
 
     // Parse post ID
-    const postId = parseInt(c.req.param("postId"), 10);
-    if (isNaN(postId)) {
+    const postId = Number.parseInt(c.req.param("postId"), 10);
+    if (Number.isNaN(postId)) {
       return c.json({ error: "Invalid post ID" }, 400);
     }
 
