@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { Comment } from "../services/api";
 import { formatTimeAgo } from "../utils/format";
+import ActionButton from "./ActionButton";
+import EditIcon from "./icons/edit.svg";
+import DeleteIcon from "./icons/delete.svg";
+import HideIcon from "./icons/hide.svg";
+import UnhideIcon from "./icons/unhide.svg";
 
 interface CommentItemProps {
   comment: Comment;
@@ -100,24 +105,64 @@ export default function CommentItem({
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-1">
-            <button
-              onClick={handleUserClick}
-              className="text-sm font-semibold text-gray-900 dark:text-white truncate hover:underline"
-            >
-              {comment.displayName}
-            </button>
-            <span className="text-gray-500 dark:text-gray-400">·</span>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {formatTimeAgo(comment.createdAt)}
-            </p>
-            {comment.isHidden === 1 && isOwner && (
-              <>
-                <span className="text-gray-500 dark:text-gray-400">·</span>
-                <span className="text-xs text-orange-500 dark:text-orange-400">
-                  Hidden
-                </span>
-              </>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center space-x-2 min-w-0">
+              <button
+                onClick={handleUserClick}
+                className="text-sm font-semibold text-gray-900 dark:text-white truncate hover:underline"
+              >
+                {comment.displayName}
+              </button>
+              <span className="text-gray-500 dark:text-gray-400">·</span>
+              <p className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+                {formatTimeAgo(comment.createdAt)}
+              </p>
+              {comment.isHidden === 1 && isOwner && (
+                <>
+                  <span className="text-gray-500 dark:text-gray-400">·</span>
+                  <span className="text-xs text-orange-500 dark:text-orange-400">
+                    Hidden
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {!isEditing && (canEdit || canDelete || canHide) && (
+              <div className="flex items-center space-x-2">
+                {canEdit && (
+                  <ActionButton
+                    onClick={() => setIsEditing(true)}
+                    icon={EditIcon}
+                    colorClass="text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    title="Edit comment"
+                  />
+                )}
+                {canDelete && (
+                  <ActionButton
+                    onClick={() => onDelete?.(comment.id)}
+                    icon={DeleteIcon}
+                    colorClass="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="Delete comment"
+                  />
+                )}
+                {canHide && comment.isHidden === 0 && (
+                  <ActionButton
+                    onClick={() => onHide?.(comment.id)}
+                    icon={HideIcon}
+                    colorClass="text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                    title="Hide comment"
+                  />
+                )}
+                {isPostAuthor && comment.isHidden === 1 && (
+                  <ActionButton
+                    onClick={() => onUnhide?.(comment.id)}
+                    icon={UnhideIcon}
+                    colorClass="text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    title="Unhide comment"
+                  />
+                )}
+              </div>
             )}
           </div>
 
@@ -150,49 +195,9 @@ export default function CommentItem({
               )}
             </div>
           ) : (
-            <>
-              <p className="text-gray-900 dark:text-white whitespace-pre-wrap break-words text-sm">
-                {comment.content}
-              </p>
-
-              {/* Action buttons */}
-              {(canEdit || canDelete || canHide) && (
-                <div className="flex items-center space-x-3 mt-2">
-                  {canEdit && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="text-xs text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      onClick={() => onDelete?.(comment.id)}
-                      className="text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  {canHide && comment.isHidden === 0 && (
-                    <button
-                      onClick={() => onHide?.(comment.id)}
-                      className="text-xs text-gray-500 hover:text-orange-500 dark:text-gray-400 dark:hover:text-orange-400"
-                    >
-                      Hide
-                    </button>
-                  )}
-                  {isPostAuthor && comment.isHidden === 1 && (
-                    <button
-                      onClick={() => onUnhide?.(comment.id)}
-                      className="text-xs text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
-                    >
-                      Unhide
-                    </button>
-                  )}
-                </div>
-              )}
-            </>
+            <p className="text-gray-900 dark:text-white whitespace-pre-wrap break-words text-sm">
+              {comment.content}
+            </p>
           )}
         </div>
       </div>
