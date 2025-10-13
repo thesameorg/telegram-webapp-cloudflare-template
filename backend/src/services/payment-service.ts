@@ -37,8 +37,8 @@ export interface ReconciliationResult {
 
 export class PaymentService {
   constructor(
-    private db: Database,
-    private env: Env,
+    private readonly db: Database,
+    private readonly env: Env,
   ) {}
 
   /**

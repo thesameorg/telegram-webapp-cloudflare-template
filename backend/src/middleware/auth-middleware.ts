@@ -2,8 +2,7 @@ import { Context, Next } from "hono";
 import { SessionManager } from "../services/session-manager";
 import { isAdmin } from "../services/admin-auth";
 import { mockUser } from "../dev/mock-user";
-import type { Env } from "../types/env";
-import type { SessionData } from "../types/env";
+import type { Env, SessionData } from "../types/env";
 
 // Define context variables type
 export type AuthContext = {

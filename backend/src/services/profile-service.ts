@@ -6,7 +6,7 @@ import type { UpdateProfileInput, ContactLinks } from "../models/profile";
 import type { D1Database } from "@cloudflare/workers-types";
 
 export class ProfileService {
-  private db: ReturnType<typeof drizzle>;
+  private readonly db: ReturnType<typeof drizzle>;
 
   constructor(database: D1Database) {
     this.db = drizzle(database);
@@ -58,9 +58,9 @@ export class ProfileService {
     data: UpdateProfileInput,
   ): Promise<UserProfile> {
     // First, ensure profile exists
-    let profile = await this.getProfile(telegramId);
+    const profile = await this.getProfile(telegramId);
     if (!profile) {
-      profile = await this.createProfile(telegramId);
+      await this.createProfile(telegramId);
     }
 
     const updateData: Partial<NewUserProfile> = {
@@ -94,9 +94,9 @@ export class ProfileService {
     imageKey: string,
   ): Promise<UserProfile> {
     // First, ensure profile exists
-    let profile = await this.getProfile(telegramId);
+    const profile = await this.getProfile(telegramId);
     if (!profile) {
-      profile = await this.createProfile(telegramId);
+      await this.createProfile(telegramId);
     }
 
     const result = await this.db

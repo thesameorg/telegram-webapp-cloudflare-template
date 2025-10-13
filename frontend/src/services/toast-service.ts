@@ -11,7 +11,7 @@ type ToastListener = (
  * Can be used from anywhere in the app, including outside React components
  */
 class ToastService {
-  private listeners: Set<ToastListener> = new Set();
+  private readonly listeners: Set<ToastListener> = new Set();
 
   /**
    * Subscribe to toast notifications (used by ToastProvider)

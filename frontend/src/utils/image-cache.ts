@@ -3,9 +3,9 @@
  * when components re-render or re-mount during navigation/scrolling
  */
 class ImageCache {
-  private loadedImages = new Set<string>();
-  private errorImages = new Set<string>();
-  private loadingPromises = new Map<string, Promise<void>>();
+  private readonly loadedImages = new Set<string>();
+  private readonly errorImages = new Set<string>();
+  private readonly loadingPromises = new Map<string, Promise<void>>();
 
   isLoaded(url: string): boolean {
     return this.loadedImages.has(url);

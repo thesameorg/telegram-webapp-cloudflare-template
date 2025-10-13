@@ -27,10 +27,10 @@ export interface ImageUrlData {
 }
 
 export class ImageService {
-  private r2: Env["IMAGES"];
+  private readonly r2: Env["IMAGES"];
 
   constructor(
-    private db: Database,
+    private readonly db: Database,
     r2: Env["IMAGES"],
   ) {
     this.r2 = r2;

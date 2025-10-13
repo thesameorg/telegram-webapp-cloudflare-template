@@ -8,7 +8,7 @@ import type {
 } from "../models/comment";
 
 export class CommentService {
-  constructor(private db: Database) {}
+  constructor(private readonly db: Database) {}
 
   async createComment(
     postId: number,
@@ -68,7 +68,7 @@ export class CommentService {
 
         // Use profile display name if available, otherwise use comment's display name
         const effectiveDisplayName =
-          profile?.displayName || comment.displayName;
+          profile?.displayName ?? comment.displayName;
 
         return {
           ...comment,

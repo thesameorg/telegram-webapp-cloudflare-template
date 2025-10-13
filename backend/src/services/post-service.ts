@@ -11,8 +11,8 @@ import type { Env } from "../types/env";
 
 export class PostService {
   constructor(
-    private db: Database,
-    private env: Env,
+    private readonly db: Database,
+    private readonly env: Env,
   ) {}
 
   async createPost(
@@ -167,7 +167,7 @@ export class PostService {
         const profile = profileResult[0] || null;
 
         // Use profile display name if available, otherwise use post's display name
-        const effectiveDisplayName = profile?.displayName || post.displayName;
+        const effectiveDisplayName = profile?.displayName ?? post.displayName;
 
         return {
           ...post,
@@ -211,7 +211,7 @@ export class PostService {
         const profile = profileResult[0] || null;
 
         // Use profile display name if available, otherwise use post's display name
-        const effectiveDisplayName = profile?.displayName || post.displayName;
+        const effectiveDisplayName = profile?.displayName ?? post.displayName;
 
         return {
           ...post,

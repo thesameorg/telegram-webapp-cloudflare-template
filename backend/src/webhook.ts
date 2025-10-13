@@ -20,7 +20,7 @@ export async function handleWebhook(c: Context) {
   const bot = new Bot(botToken);
 
   bot.command("start", async (ctx: GrammyContext) => {
-    const firstName = ctx.from?.first_name || "User";
+    const firstName = ctx.from?.first_name ?? "User";
 
     await ctx.reply(
       `👋 Hello ${firstName}!\n\nWelcome to the Telegram Web App Template!\n\nhttps://github.com/thesameorg/telegram-webapp-cloudflare-template/`,

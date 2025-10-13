@@ -201,9 +201,9 @@ app.get("/r2/*", async (c) => {
 });
 
 app.get("/", async (c) => {
-  const env = c.env.ENVIRONMENT || "local";
+  const env = c.env.ENVIRONMENT ?? "local";
 
-  let kvStatus = "unknown";
+  let kvStatus: string;
   try {
     const kv = c.env.SESSIONS;
     if (kv) {

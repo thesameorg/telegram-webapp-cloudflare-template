@@ -16,7 +16,7 @@ export async function healthHandler(c: Context) {
       {
         status: kvStatus.available ? "healthy" : "degraded",
         timestamp,
-        environment: c.env.ENVIRONMENT || "local",
+        environment: c.env.ENVIRONMENT ?? "local",
         version: "0.0.1",
         services: { kv: kvStatus },
       },
@@ -33,7 +33,7 @@ export async function healthHandler(c: Context) {
       {
         status: "unhealthy",
         timestamp: new Date().toISOString(),
-        environment: c.env.ENVIRONMENT || "local",
+        environment: c.env.ENVIRONMENT ?? "local",
         version: "1.0.0",
         error: "Health check failed",
       },
