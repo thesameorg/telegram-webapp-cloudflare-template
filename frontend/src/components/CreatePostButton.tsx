@@ -1,7 +1,7 @@
 import PlusIcon from "./icons/plus.svg";
 
 interface CreatePostButtonProps {
-  onClick: () => void;
+  readonly onClick: () => void;
 }
 
 export default function CreatePostButton({ onClick }: CreatePostButtonProps) {

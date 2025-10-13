@@ -14,14 +14,14 @@ interface ImageUrlData {
 }
 
 interface GalleryImageItemProps {
-  image: ImageUrlData;
-  imageClasses: string;
-  remainingCount: number;
-  isLast: boolean;
-  canDelete: boolean;
-  showInfo: boolean;
-  onClick: () => void;
-  onDelete?: (imageId: number) => void;
+  readonly image: ImageUrlData;
+  readonly imageClasses: string;
+  readonly remainingCount: number;
+  readonly isLast: boolean;
+  readonly canDelete: boolean;
+  readonly showInfo: boolean;
+  readonly onClick: () => void;
+  readonly onDelete?: (imageId: number) => void;
 }
 
 export default function GalleryImageItem({

@@ -23,12 +23,16 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastProvider({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const showToast = useCallback(
     (message: string, type: ToastType, duration = 3000) => {
-      const id = Math.random().toString(36).substr(2, 9);
+      const id = Math.random().toString(36).slice(2, 11);
       const newToast: ToastItem = { id, message, type, duration };
 
       setToasts((prev) => [...prev, newToast]);

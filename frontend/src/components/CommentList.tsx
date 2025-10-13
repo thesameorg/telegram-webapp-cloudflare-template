@@ -133,7 +133,6 @@ export default function CommentList({
         {/* Comment Form */}
         {user && (
           <CommentForm
-            postId={postId}
             onSubmit={handleSubmitComment}
             isSubmitting={isSubmitting}
           />

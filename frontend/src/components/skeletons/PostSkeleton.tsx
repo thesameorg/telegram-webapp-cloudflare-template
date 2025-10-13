@@ -6,8 +6,8 @@ import {
 } from "./Skeleton";
 
 interface PostSkeletonProps {
-  withImages?: boolean;
-  imageCount?: number;
+  readonly withImages?: boolean;
+  readonly imageCount?: number;
 }
 
 export function PostSkeleton({
@@ -39,7 +39,11 @@ export function PostSkeleton({
   );
 }
 
-export function PostListSkeleton({ count = 3 }: { count?: number }) {
+export function PostListSkeleton({
+  count = 3,
+}: {
+  readonly count?: number;
+}) {
   return (
     <div className="space-y-0">
       {Array.from({ length: count }, () => crypto.randomUUID()).map((id) => (

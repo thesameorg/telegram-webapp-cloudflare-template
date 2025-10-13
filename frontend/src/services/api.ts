@@ -91,7 +91,7 @@ export const apiRequest = async <T = unknown>(
     successMessage,
     headers,
     ...fetchOptions
-  } = options || {};
+  } = options ?? {};
 
   const requestHeaders: Record<string, string> = {
     "Content-Type": "application/json",
@@ -312,8 +312,8 @@ export const api = {
   },
 };
 
+export type { Post } from "../types/post";
 export type {
-  Post,
   CreatePostData,
   PostsResponse,
   Comment,

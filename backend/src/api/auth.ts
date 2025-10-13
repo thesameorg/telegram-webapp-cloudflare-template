@@ -43,7 +43,7 @@ async function handleAuthentication(
 
     return c.json({
       authenticated: true,
-      sessionId: session!.sessionId,
+      sessionId: session.sessionId,
       user: {
         id: devMockUser.id,
         first_name: devMockUser.first_name,
@@ -53,9 +53,9 @@ async function handleAuthentication(
         is_premium: devMockUser.is_premium,
         photo_url: devMockUser.photo_url,
       },
-      expiresAt: session!.expiresAt,
-      role: session!.role,
-      isAdmin: session!.role === "admin",
+      expiresAt: session.expiresAt,
+      role: session.role,
+      isAdmin: session.role === "admin",
       source: "dev_bypass",
     });
   }
@@ -144,7 +144,7 @@ async function handleAuthentication(
 
     return c.json({
       authenticated: true,
-      sessionId: session!.sessionId,
+      sessionId: session.sessionId,
       user: {
         id: user.id,
         first_name: user.first_name,
@@ -154,9 +154,9 @@ async function handleAuthentication(
         is_premium: user.is_premium,
         photo_url: user.photo_url,
       },
-      expiresAt: session!.expiresAt,
-      role: session!.role,
-      isAdmin: session!.role === "admin",
+      expiresAt: session.expiresAt,
+      role: session.role,
+      isAdmin: session.role === "admin",
       source: "initdata",
     });
   } catch (error) {

@@ -7,7 +7,7 @@ interface User {
 }
 
 interface UserInfoProps {
-  user: User;
+  readonly user: User;
 }
 
 export default function UserInfo({ user }: UserInfoProps) {

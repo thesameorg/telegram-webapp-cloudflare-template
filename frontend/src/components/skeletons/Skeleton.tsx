@@ -20,7 +20,11 @@ export function Skeleton({ className = "", width, height }: SkeletonProps) {
   );
 }
 
-export function SkeletonAvatar({ size = "w-10 h-10" }: { size?: string }) {
+export function SkeletonAvatar({
+  size = "w-10 h-10",
+}: {
+  readonly size?: string;
+}) {
   return <Skeleton className={`${size} rounded-full`} />;
 }
 
@@ -28,8 +32,8 @@ export function SkeletonText({
   lines = 1,
   className = "",
 }: {
-  lines?: number;
-  className?: string;
+  readonly lines?: number;
+  readonly className?: string;
 }) {
   return (
     <div className={`space-y-2 ${className}`}>
@@ -50,8 +54,8 @@ export function SkeletonCard({
   className = "",
   children,
 }: {
-  className?: string;
-  children?: React.ReactNode;
+  readonly className?: string;
+  readonly children?: React.ReactNode;
 }) {
   return (
     <div
@@ -77,8 +81,8 @@ export function SkeletonImage({
   className = "",
   aspectRatio = "aspect-square",
 }: {
-  className?: string;
-  aspectRatio?: string;
+  readonly className?: string;
+  readonly aspectRatio?: string;
 }) {
   return <Skeleton className={`${aspectRatio} rounded-lg ${className}`} />;
 }
@@ -87,8 +91,8 @@ export function SkeletonImageGrid({
   count = 1,
   className = "",
 }: {
-  count?: number;
-  className?: string;
+  readonly count?: number;
+  readonly className?: string;
 }) {
   const getGridClasses = () => {
     if (count === 1) return "grid-cols-1";

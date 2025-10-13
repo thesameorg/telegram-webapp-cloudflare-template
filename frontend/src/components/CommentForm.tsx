@@ -3,7 +3,6 @@ import { useTelegramMainButton } from "../hooks/use-telegram-main-button";
 import WebApp from "@twa-dev/sdk";
 
 interface CommentFormProps {
-  readonly postId: number;
   readonly onSubmit: (content: string) => Promise<void>;
   readonly isSubmitting?: boolean;
 }

@@ -55,7 +55,9 @@ export function ProfileAvatar({
       "bg-gradient-to-br from-teal-400 to-teal-600",
     ];
 
-    const hash = name.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+    const hash = name
+      .split("")
+      .reduce((a, b) => a + (b.codePointAt(0) ?? 0), 0);
     return colors[hash % colors.length];
   };
 

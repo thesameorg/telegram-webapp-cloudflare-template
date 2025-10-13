@@ -38,12 +38,12 @@ describe("Telegram Auth Service Unit Tests", () => {
       { format: "whitespace trimming", header: `  Bearer ${testInitData}  ` },
     ];
 
-    validCases.forEach(({ format, header }) => {
+    for (const { format, header } of validCases) {
       it(`should extract from ${format} format`, () => {
         const extracted = telegramAuth.extractInitData(header);
         expect(extracted).toBe(testInitData);
       });
-    });
+    }
 
     it("should fallback to parameter when header is invalid", () => {
       const extracted = telegramAuth.extractInitData("", testInitData);
