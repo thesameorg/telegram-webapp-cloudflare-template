@@ -285,7 +285,7 @@ export default function Payments() {
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
               <div
-                key={i}
+                key={`payment-skeleton-${i}`}
                 className="h-16 bg-gray-200 dark:bg-gray-700 rounded"
               ></div>
             ))}
@@ -439,11 +439,11 @@ export default function Payments() {
                     </button>
                   ) : (
                     <span className="text-xs text-gray-400 dark:text-gray-600 px-2">
-                      {payment.status === "refunded"
-                        ? "✓"
-                        : payment.status !== "succeeded"
-                          ? "-"
-                          : "✗"}
+                      {(() => {
+                        if (payment.status === "refunded") return "✓";
+                        if (payment.status !== "succeeded") return "-";
+                        return "✗";
+                      })()}
                     </span>
                   )}
                 </div>

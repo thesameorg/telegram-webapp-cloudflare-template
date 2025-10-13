@@ -35,7 +35,7 @@ export function SkeletonText({
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
-          key={i}
+          key={`skeleton-text-${i}`}
           className={`h-4 ${i === lines - 1 ? "w-3/4" : "w-full"}`}
         />
       ))}
@@ -106,7 +106,7 @@ export function SkeletonImageGrid({
   return (
     <div className={`grid gap-1 ${getGridClasses()} ${className}`}>
       {Array.from({ length: Math.min(count, 4) }).map((_, i) => (
-        <SkeletonImage key={i} className={getImageClasses(i)} aspectRatio="" />
+        <SkeletonImage key={`skeleton-img-${i}`} className={getImageClasses(i)} aspectRatio="" />
       ))}
     </div>
   );

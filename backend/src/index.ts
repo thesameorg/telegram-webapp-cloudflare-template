@@ -187,7 +187,7 @@ app.get("/r2/*", async (c) => {
     const headers = new Headers();
     headers.set(
       "Content-Type",
-      object.httpMetadata?.contentType || "application/octet-stream",
+      object.httpMetadata?.contentType ?? "application/octet-stream",
     );
     headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
 

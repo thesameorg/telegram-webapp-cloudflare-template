@@ -4,8 +4,8 @@ import { Context } from "hono";
  * Parse pagination parameters from request query
  */
 export function parsePagination(c: Context) {
-  const limitParam = c.req.query("limit") || "50";
-  const offsetParam = c.req.query("offset") || "0";
+  const limitParam = c.req.query("limit") ?? "50";
+  const offsetParam = c.req.query("offset") ?? "0";
   const limit = Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 100);
   const offset = Math.max(parseInt(offsetParam, 10) || 0, 0);
   return { limit, offset };

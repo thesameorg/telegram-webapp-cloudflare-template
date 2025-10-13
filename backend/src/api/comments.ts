@@ -78,7 +78,7 @@ export const createComment = asyncHandler(
     const newComment = await commentService.createComment(
       postIdResult.postId,
       session.userId,
-      session.username || `user_${session.userId}`,
+      session.username ?? `user_${session.userId}`,
       session.displayName,
       validation.data,
     );

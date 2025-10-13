@@ -40,10 +40,10 @@ export function ProfileEditor({
 }: ProfileEditorProps) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
-    display_name: profile.display_name || "",
-    bio: profile.bio || "",
-    phone_number: profile.phone_number || "",
-    contact_links: profile.contact_links || {},
+    display_name: profile.display_name ?? "",
+    bio: profile.bio ?? "",
+    phone_number: profile.phone_number ?? "",
+    contact_links: profile.contact_links ?? {},
   });
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -128,11 +128,11 @@ export function ProfileEditor({
 
   const isFormValid = formData.display_name.trim() !== "";
   const isFormChanged =
-    formData.display_name !== (profile.display_name || "") ||
-    formData.bio !== (profile.bio || "") ||
-    formData.phone_number !== (profile.phone_number || "") ||
+    formData.display_name !== (profile.display_name ?? "") ||
+    formData.bio !== (profile.bio ?? "") ||
+    formData.phone_number !== (profile.phone_number ?? "") ||
     JSON.stringify(formData.contact_links) !==
-      JSON.stringify(profile.contact_links || {});
+      JSON.stringify(profile.contact_links ?? {});
 
   // Use Telegram MainButton
   useTelegramMainButton(

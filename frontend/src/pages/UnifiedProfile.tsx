@@ -407,44 +407,53 @@ export default function UnifiedProfile() {
             </h3>
           </div>
 
-          {postsLoading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">
-                Loading posts...
-              </p>
-            </div>
-          ) : posts.length > 0 ? (
-            isOwnProfile ? (
-              <PostList
-                userId={actualUserId!}
-                currentUserId={user?.id}
-                showActions={true}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onMakePremium={handleMakePremium}
-                onRefetchReady={(refetch) => {
-                  refetchRef.current = refetch;
-                }}
-              />
-            ) : (
-              <StaticPostList
-                posts={posts}
-                currentUserId={user?.id}
-                showActions={isAdmin}
-                isAdmin={isAdmin}
-                onDelete={handleDelete}
-              />
-            )
-          ) : (
-            <div className="p-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">
-                {isOwnProfile
-                  ? "You haven't posted anything yet."
-                  : "No posts yet."}
-              </p>
-            </div>
-          )}
+          {(() => {
+            if (postsLoading) {
+              return (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">
+                    Loading posts...
+                  </p>
+                </div>
+              );
+            }
+            if (posts.length > 0) {
+              if (isOwnProfile) {
+                return (
+                  <PostList
+                    userId={actualUserId!}
+                    currentUserId={user?.id}
+                    showActions={true}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onMakePremium={handleMakePremium}
+                    onRefetchReady={(refetch) => {
+                      refetchRef.current = refetch;
+                    }}
+                  />
+                );
+              }
+              return (
+                <StaticPostList
+                  posts={posts}
+                  currentUserId={user?.id}
+                  showActions={isAdmin}
+                  isAdmin={isAdmin}
+                  onDelete={handleDelete}
+                />
+              );
+            }
+            return (
+              <div className="p-8 text-center">
+                <p className="text-gray-500 dark:text-gray-400">
+                  {isOwnProfile
+                    ? "You haven't posted anything yet."
+                    : "No posts yet."}
+                </p>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

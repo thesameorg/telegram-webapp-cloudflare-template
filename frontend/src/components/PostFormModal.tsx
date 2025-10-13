@@ -151,7 +151,7 @@ export default function PostFormModal({
 
       // Create post first
       const postResult = await createPost({ content: postContent });
-      if (postResult && postResult.post) {
+      if (postResult?.post) {
         // Upload images if any
         if (images.length > 0) {
           const imageUploadSuccess = await uploadImages(
@@ -195,7 +195,9 @@ export default function PostFormModal({
 
   const getButtonText = () => {
     if (mode === "create") {
-      return isLoading ? "Creating..." : isUploading ? "Uploading..." : "Post";
+      if (isLoading) return "Creating...";
+      if (isUploading) return "Uploading...";
+      return "Post";
     }
     return isLoading ? "Updating..." : "Update";
   };

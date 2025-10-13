@@ -227,9 +227,12 @@ export default function PostItem({
                 />
               </svg>
               <span>
-                {(post.commentCount ?? 0) > 0
-                  ? `${post.commentCount} ${post.commentCount === 1 ? "Comment" : "Comments"}`
-                  : "Comments"}
+                {(() => {
+                  const count = post.commentCount ?? 0;
+                  if (count === 0) return "Comments";
+                  const label = count === 1 ? "Comment" : "Comments";
+                  return `${count} ${label}`;
+                })()}
               </span>
             </button>
             <ShareButton postId={post.id} className="p-2" />

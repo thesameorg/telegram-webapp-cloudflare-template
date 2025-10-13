@@ -140,21 +140,31 @@ export default function CommentList({
         )}
 
         {/* Comments List */}
-        {loading && offset === 0 ? (
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        ) : error ? (
-          <div className="p-4 text-center text-red-500 dark:text-red-400">
-            {error}
-          </div>
-        ) : comments.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            <p>No comments yet. Be the first to comment!</p>
-          </div>
-        ) : (
-          <>
-            {comments.map((comment) => (
+        {(() => {
+          if (loading && offset === 0) {
+            return (
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            );
+          }
+          if (error) {
+            return (
+              <div className="p-4 text-center text-red-500 dark:text-red-400">
+                {error}
+              </div>
+            );
+          }
+          if (comments.length === 0) {
+            return (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <p>No comments yet. Be the first to comment!</p>
+              </div>
+            );
+          }
+          return (
+            <>
+              {comments.map((comment) => (
               <CommentItem
                 key={comment.id}
                 comment={comment}
@@ -166,21 +176,22 @@ export default function CommentList({
                 onHide={handleHideComment}
                 onUnhide={handleUnhideComment}
               />
-            ))}
+              ))}
 
-            {hasMore && (
-              <div className="p-4 text-center">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {loading ? "Loading..." : "Load More Comments"}
-                </button>
-              </div>
-            )}
-          </>
-        )}
+              {hasMore && (
+                <div className="p-4 text-center">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {loading ? "Loading..." : "Load More Comments"}
+                  </button>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

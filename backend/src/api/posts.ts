@@ -25,7 +25,7 @@ async function isViewerAdmin(
 ): Promise<boolean> {
   try {
     const authHeader = c.req.header("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return false;
     }
 
@@ -150,7 +150,7 @@ export const createPost = asyncHandler(
 
     const newPost = await postService.createPost(
       session.userId,
-      session.username || `user_${session.userId}`,
+      session.username ?? `user_${session.userId}`,
       session.displayName,
       { content: validation.data.content },
     );

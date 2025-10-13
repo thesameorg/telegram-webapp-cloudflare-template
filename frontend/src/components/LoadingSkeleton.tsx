@@ -20,7 +20,7 @@ export function LoadingSkeleton({
       <div className="animate-pulse space-y-2">
         {[...Array(count)].map((_, i) => (
           <div
-            key={i}
+            key={`skeleton-list-${i}`}
             className="h-16 bg-gray-200 dark:bg-gray-700 rounded"
           ></div>
         ))}

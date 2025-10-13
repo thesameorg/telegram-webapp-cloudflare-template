@@ -39,14 +39,14 @@ export class ImageService {
   private generateImageKey(postId: number, filename: string): string {
     const timestamp = Date.now();
     const uuid = crypto.randomUUID();
-    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
+    const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
     return `images/${postId}/full/${timestamp}_${uuid}.${ext}`;
   }
 
   private generateThumbnailKey(postId: number, filename: string): string {
     const timestamp = Date.now();
     const uuid = crypto.randomUUID();
-    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
+    const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
     return `images/${postId}/thumbs/${timestamp}_${uuid}.${ext}`;
   }
 

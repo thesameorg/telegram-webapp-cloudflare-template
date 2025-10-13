@@ -72,7 +72,7 @@ async function handleAuthentication(
   const authHeader = c.req.header("Authorization");
   const sessionIdHeader = c.req.header("X-Session-ID");
 
-  const finalSessionId = (sessionId || sessionIdHeader) as string | undefined;
+  const finalSessionId = (sessionId ?? sessionIdHeader) as string | undefined;
   const initDataParam = initData as string | undefined;
 
   const telegramAuth = new TelegramAuthService(c.env.TELEGRAM_BOT_TOKEN);

@@ -19,7 +19,7 @@ function extractSessionId(c: Context): string | null {
   const authHeader = c.req.header("Authorization");
   const sessionIdHeader = c.req.header("X-Session-ID");
 
-  if (authHeader && authHeader.startsWith("Bearer ")) {
+  if (authHeader?.startsWith("Bearer ")) {
     return authHeader.substring(7);
   }
 

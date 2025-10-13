@@ -43,7 +43,7 @@ export function PostListSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-0">
       {Array.from({ length: count }).map((_, i) => (
-        <PostSkeleton key={i} />
+        <PostSkeleton key={`post-skeleton-${i}`} />
       ))}
     </div>
   );
