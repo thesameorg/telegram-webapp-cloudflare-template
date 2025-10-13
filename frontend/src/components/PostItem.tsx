@@ -104,9 +104,10 @@ export default function PostItem({
               {post.displayName}
             </button>
             <span className="text-gray-500 dark:text-gray-400">·</span>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
               {formatTimeAgo(post.createdAt)}
             </p>
+            <span className="text-gray-500 dark:text-gray-400">·</span>
             <ShareButton postId={post.id} className="p-1" />
           </div>
         </div>
