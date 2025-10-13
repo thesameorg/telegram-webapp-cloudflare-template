@@ -18,10 +18,14 @@ export default function Feed() {
   const refetchRef = useRef<(() => void) | null>(null);
   const { user, isAdmin } = useAuth();
 
-  const handlePostCreated = () => {
+  const refetchPosts = () => {
     if (refetchRef.current) {
       refetchRef.current();
     }
+  };
+
+  const handlePostCreated = () => {
+    refetchPosts();
   };
 
   const handleEdit = (post: Post) => {
@@ -29,9 +33,7 @@ export default function Feed() {
   };
 
   const handlePostUpdated = () => {
-    if (refetchRef.current) {
-      refetchRef.current();
-    }
+    refetchPosts();
     setEditingPost(null);
   };
 
@@ -40,9 +42,7 @@ export default function Feed() {
   };
 
   const handlePostDeleted = () => {
-    if (refetchRef.current) {
-      refetchRef.current();
-    }
+    refetchPosts();
     setDeletingPostId(null);
   };
 
@@ -51,9 +51,7 @@ export default function Feed() {
   };
 
   const handlePaymentSuccess = () => {
-    if (refetchRef.current) {
-      refetchRef.current();
-    }
+    refetchPosts();
   };
 
   return (

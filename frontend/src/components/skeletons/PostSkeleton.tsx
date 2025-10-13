@@ -42,8 +42,8 @@ export function PostSkeleton({
 export function PostListSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-0">
-      {Array.from({ length: count }).map((_, i) => (
-        <PostSkeleton key={`post-skeleton-${i}`} />
+      {Array.from({ length: count }, () => crypto.randomUUID()).map((id) => (
+        <PostSkeleton key={id} />
       ))}
     </div>
   );

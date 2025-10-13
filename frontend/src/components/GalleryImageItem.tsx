@@ -40,18 +40,11 @@ export default function GalleryImageItem({
   });
 
   return (
-    <div
+    <button
       key={image.id}
-      role="button"
-      tabIndex={0}
+      type="button"
       className={`relative group cursor-pointer overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 ${imageClasses}`}
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
       aria-label={`View image: ${image.originalName}`}
     >
       {/* Loading placeholder */}
@@ -158,7 +151,7 @@ export default function GalleryImageItem({
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 

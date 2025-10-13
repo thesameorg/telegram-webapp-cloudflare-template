@@ -401,11 +401,10 @@ export default function ImageUpload({
       </div>
 
       {/* Drop Zone */}
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         className={`
-          border-2 border-dashed rounded-lg p-6 text-center transition-colors
+          border-2 border-dashed rounded-lg p-6 text-center transition-colors w-full
           ${
             dragActive
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
@@ -422,12 +421,7 @@ export default function ImageUpload({
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={openFileDialog}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openFileDialog();
-          }
-        }}
+        disabled={disabled || isProcessing}
       >
         <div className="space-y-2">
           <svg
@@ -459,7 +453,7 @@ export default function ImageUpload({
             </p>
           )}
         </div>
-      </div>
+      </button>
 
       {/* Image Previews */}
       {images.length > 0 && (

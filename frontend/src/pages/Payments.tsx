@@ -283,9 +283,9 @@ export default function Payments() {
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
           <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
           <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
+            {Array.from({ length: 5 }, () => crypto.randomUUID()).map((id) => (
               <div
-                key={`payment-skeleton-${i}`}
+                key={id}
                 className="h-16 bg-gray-200 dark:bg-gray-700 rounded"
               ></div>
             ))}

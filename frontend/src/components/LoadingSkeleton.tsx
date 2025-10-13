@@ -18,9 +18,9 @@ export function LoadingSkeleton({
   if (variant === "list") {
     return (
       <div className="animate-pulse space-y-2">
-        {[...Array(count)].map((_, i) => (
+        {Array.from({ length: count }, () => crypto.randomUUID()).map((id) => (
           <div
-            key={`skeleton-list-${i}`}
+            key={id}
             className="h-16 bg-gray-200 dark:bg-gray-700 rounded"
           ></div>
         ))}

@@ -139,16 +139,20 @@ export function ProfileAvatar({
       </div>
     );
 
-  const avatar = (
-    <div
-      className={`${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 ${onClick ? "cursor-pointer hover:opacity-80" : ""} ${editable ? "relative" : ""}`}
+  const avatarElement = onClick && !editable ? (
+    <button
+      type="button"
+      className={`${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80`}
       onClick={onClick}
-      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      role={onClick ? "button" : undefined}
     >
       {avatarContent}
-      {editable && (
+    </button>
+  ) : (
+    <div
+      className={`${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 ${editable ? "relative" : ""}`}
+    >
+      {avatarContent}
+      {editable && onImageUpload && (
         <>
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <svg
@@ -184,7 +188,7 @@ export function ProfileAvatar({
 
   return (
     <>
-      {avatar}
+      {avatarElement}
       {showCropModal && fileToCrop && (
         <ImageCropModal
           image={fileToCrop}

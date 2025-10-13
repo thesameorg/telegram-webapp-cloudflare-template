@@ -195,17 +195,11 @@ export default function MakePremiumModal({
   // If waiting for update, show success screen
   if (isWaitingForUpdate) {
     return (
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
-        onClick={(e) => e.stopPropagation()}
-        role="presentation"
-        tabIndex={-1}
-      >
+      <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div
           className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <div className="text-center space-y-4">
             <div className="flex justify-center">
@@ -256,18 +250,21 @@ export default function MakePremiumModal({
     <div
       className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
       onClick={onClose}
-      onKeyDown={(e) => e.key === "Escape" && onClose()}
-      role="presentation"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
+      role="button"
       tabIndex={-1}
+      aria-label="Close modal"
     >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
       <div
         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        tabIndex={-1}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">

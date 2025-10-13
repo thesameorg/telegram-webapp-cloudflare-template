@@ -6,8 +6,8 @@ import { Context } from "hono";
 export function parsePagination(c: Context) {
   const limitParam = c.req.query("limit") ?? "50";
   const offsetParam = c.req.query("offset") ?? "0";
-  const limit = Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 100);
-  const offset = Math.max(parseInt(offsetParam, 10) || 0, 0);
+  const limit = Math.min(Math.max(Number.parseInt(limitParam, 10) || 50, 1), 100);
+  const offset = Math.max(Number.parseInt(offsetParam, 10) || 0, 0);
   return { limit, offset };
 }
 
@@ -15,8 +15,8 @@ export function parsePagination(c: Context) {
  * Parse post ID from request params
  */
 export function parsePostId(c: Context) {
-  const postId = parseInt(c.req.param("postId"), 10);
-  if (isNaN(postId)) {
+  const postId = Number.parseInt(c.req.param("postId"), 10);
+  if (Number.isNaN(postId)) {
     return { error: { message: "Invalid post ID", status: 400 as const } };
   }
   return { postId };

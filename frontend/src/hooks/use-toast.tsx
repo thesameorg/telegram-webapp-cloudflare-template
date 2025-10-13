@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   ReactNode,
 } from "react";
 import Toast, { ToastType } from "../components/Toast";
@@ -47,8 +48,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     };
   }, [showToast]);
 
+  const contextValue = useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
         {toasts.map((toast) => (
