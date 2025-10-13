@@ -33,7 +33,9 @@
     "tunnel:status": "./scripts/tunnel.sh status",
     "webhook:set": "./scripts/webhook.sh set",
     "webhook:status": "./scripts/webhook.sh status",
-    "webhook:clear": "./scripts/webhook.sh clear"
+    "webhook:clear": "./scripts/webhook.sh clear",
+    "sonar": "set -a && source .env && set +a && sonar-scanner",
+    "sonar:report": "./scripts/sonar-report.sh"
   },
   "keywords": [
     "telegram",
