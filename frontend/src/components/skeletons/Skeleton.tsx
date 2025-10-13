@@ -106,7 +106,11 @@ export function SkeletonImageGrid({
   return (
     <div className={`grid gap-1 ${getGridClasses()} ${className}`}>
       {Array.from({ length: Math.min(count, 4) }).map((_, i) => (
-        <SkeletonImage key={`skeleton-img-${i}`} className={getImageClasses(i)} aspectRatio="" />
+        <SkeletonImage
+          key={`skeleton-img-${i}`}
+          className={getImageClasses(i)}
+          aspectRatio=""
+        />
       ))}
     </div>
   );

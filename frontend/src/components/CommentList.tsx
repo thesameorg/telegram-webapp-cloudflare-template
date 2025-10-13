@@ -165,17 +165,17 @@ export default function CommentList({
           return (
             <>
               {comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                currentUserId={user?.id}
-                postAuthorId={postAuthorId}
-                isAdmin={isAdmin}
-                onEdit={handleEditComment}
-                onDelete={handleDeleteComment}
-                onHide={handleHideComment}
-                onUnhide={handleUnhideComment}
-              />
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  currentUserId={user?.id}
+                  postAuthorId={postAuthorId}
+                  isAdmin={isAdmin}
+                  onEdit={handleEditComment}
+                  onDelete={handleDeleteComment}
+                  onHide={handleHideComment}
+                  onUnhide={handleUnhideComment}
+                />
               ))}
 
               {hasMore && (

@@ -141,7 +141,9 @@ export default function PostItem({
                 onClick={() => onDelete?.(post.id)}
                 icon={DeleteIcon}
                 variant={isAdminDeletingOthers ? "danger" : "delete"}
-                title={isAdminDeletingOthers ? "Delete post (Admin)" : "Delete post"}
+                title={
+                  isAdminDeletingOthers ? "Delete post (Admin)" : "Delete post"
+                }
               />
             )}
           </div>
