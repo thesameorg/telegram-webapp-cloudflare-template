@@ -107,8 +107,6 @@ export default function PostItem({
             <p className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
               {formatTimeAgo(post.createdAt)}
             </p>
-            <span className="text-gray-500 dark:text-gray-400">·</span>
-            <ShareButton postId={post.id} className="p-1" />
           </div>
         </div>
 
@@ -208,9 +206,9 @@ export default function PostItem({
           </div>
         )}
 
-        {/* Comments button */}
+        {/* Bottom action row - Comments and Share */}
         {!hideCommentsButton && (
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex justify-between items-center">
             <button
               onClick={() => navigate(`/post/${post.id}`)}
               className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-yellow-800 dark:text-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-400 dark:from-yellow-500 dark:to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 dark:hover:from-yellow-600 dark:hover:to-yellow-700 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
@@ -234,6 +232,7 @@ export default function PostItem({
                   : "Comments"}
               </span>
             </button>
+            <ShareButton postId={post.id} className="p-2" />
           </div>
         )}
       </div>
