@@ -83,19 +83,19 @@ echo "Fetching issues..."
 echo ""
 
 blocker_issues=$(fetch_issues "BLOCKER")
-display_issues "BLOCKER" "$RED" "$blocker_issues"
+display_issues "Blocker" "$RED" "$blocker_issues"
 
 critical_issues=$(fetch_issues "CRITICAL")
-display_issues "CRITICAL" "$RED" "$critical_issues"
+display_issues "High" "$RED" "$critical_issues"
 
 major_issues=$(fetch_issues "MAJOR")
-display_issues "MAJOR" "$YELLOW" "$major_issues"
+display_issues "Medium" "$YELLOW" "$major_issues"
 
 minor_issues=$(fetch_issues "MINOR")
-display_issues "MINOR" "$GREEN" "$minor_issues"
+display_issues "Low" "$GREEN" "$minor_issues"
 
 info_issues=$(fetch_issues "INFO")
-display_issues "INFO" "$BLUE" "$info_issues"
+display_issues "Info" "$BLUE" "$info_issues"
 
 # Summary
 total_blocker=$(echo "$blocker_issues" | jq -r '.total // 0')
@@ -107,9 +107,9 @@ total_issues=$((total_blocker + total_critical + total_major + total_minor + tot
 
 echo -e "${BLUE}=== Summary ===${NC}"
 echo -e "${RED}Blocker: $total_blocker${NC}"
-echo -e "${RED}Critical: $total_critical${NC}"
-echo -e "${YELLOW}Major: $total_major${NC}"
-echo -e "${GREEN}Minor: $total_minor${NC}"
+echo -e "${RED}High: $total_critical${NC}"
+echo -e "${YELLOW}Medium: $total_major${NC}"
+echo -e "${GREEN}Low: $total_minor${NC}"
 echo -e "${BLUE}Info: $total_info${NC}"
 echo "Total: $total_issues"
 echo ""
