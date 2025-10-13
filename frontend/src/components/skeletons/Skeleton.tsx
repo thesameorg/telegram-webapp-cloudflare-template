@@ -1,9 +1,9 @@
 import React from "react";
 
 interface SkeletonProps {
-  className?: string;
-  width?: string;
-  height?: string;
+  readonly className?: string;
+  readonly width?: string;
+  readonly height?: string;
 }
 
 export function Skeleton({ className = "", width, height }: SkeletonProps) {

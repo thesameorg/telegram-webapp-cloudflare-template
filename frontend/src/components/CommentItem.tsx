@@ -10,14 +10,14 @@ import HideIcon from "./icons/hide.svg";
 import UnhideIcon from "./icons/unhide.svg";
 
 interface CommentItemProps {
-  comment: Comment;
-  currentUserId?: number;
-  postAuthorId?: number;
-  isAdmin?: boolean;
-  onEdit?: (commentId: number, content: string) => void;
-  onDelete?: (commentId: number) => void;
-  onHide?: (commentId: number) => void;
-  onUnhide?: (commentId: number) => void;
+  readonly comment: Comment;
+  readonly currentUserId?: number;
+  readonly postAuthorId?: number;
+  readonly isAdmin?: boolean;
+  readonly onEdit?: (commentId: number, content: string) => void;
+  readonly onDelete?: (commentId: number) => void;
+  readonly onHide?: (commentId: number) => void;
+  readonly onUnhide?: (commentId: number) => void;
 }
 
 export default function CommentItem({

@@ -1,15 +1,15 @@
 interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-  is_premium?: boolean;
+  readonly id: number;
+  readonly first_name: string;
+  readonly last_name?: string;
+  readonly username?: string;
+  readonly language_code?: string;
+  readonly is_premium?: boolean;
 }
 
 interface TelegramInfoSectionProps {
-  user: TelegramUser | null;
-  isAdmin?: boolean;
+  readonly user: TelegramUser | null;
+  readonly isAdmin?: boolean;
 }
 
 export function TelegramInfoSection({

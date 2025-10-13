@@ -3,9 +3,9 @@ import { useToast } from "../hooks/use-toast";
 import { config } from "../config";
 
 interface MakePremiumModalProps {
-  postId: number;
-  onClose: () => void;
-  onSuccess?: () => void;
+  readonly postId: number;
+  readonly onClose: () => void;
+  readonly onSuccess?: () => void;
 }
 
 export default function MakePremiumModal({

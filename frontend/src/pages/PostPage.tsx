@@ -37,7 +37,7 @@ export default function PostPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getPostById(parseInt(postId, 10));
+      const response = await api.getPostById(Number.parseInt(postId, 10));
       setPost(response.post);
     } catch (err) {
       if (err instanceof Error) {

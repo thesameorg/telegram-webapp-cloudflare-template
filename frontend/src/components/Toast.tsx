@@ -3,10 +3,10 @@ import { useEffect } from "react";
 export type ToastType = "success" | "error" | "info";
 
 interface ToastProps {
-  message: string;
-  type: ToastType;
-  duration?: number;
-  onClose: () => void;
+  readonly message: string;
+  readonly type: ToastType;
+  readonly duration?: number;
+  readonly onClose: () => void;
 }
 
 export default function Toast({

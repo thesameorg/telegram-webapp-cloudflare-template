@@ -5,12 +5,12 @@ import GalleryImageItem, { type ImageUrlData } from "./GalleryImageItem";
 import { getImageUrl } from "../utils/image-url";
 
 interface ImageGalleryProps {
-  images: ImageUrlData[];
-  className?: string;
-  maxThumbnails?: number;
-  onImageDelete?: (imageId: number) => void;
-  canDelete?: boolean;
-  showInfo?: boolean;
+  readonly images: ImageUrlData[];
+  readonly className?: string;
+  readonly maxThumbnails?: number;
+  readonly onImageDelete?: (imageId: number) => void;
+  readonly canDelete?: boolean;
+  readonly showInfo?: boolean;
 }
 
 export default function ImageGallery({

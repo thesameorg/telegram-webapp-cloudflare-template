@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useToast } from "../hooks/use-toast";
 
 interface BanUserConfirmProps {
-  telegramId: number;
-  username?: string;
-  isBanned: boolean;
-  onClose: () => void;
-  onActionCompleted?: () => void;
+  readonly telegramId: number;
+  readonly username?: string;
+  readonly isBanned: boolean;
+  readonly onClose: () => void;
+  readonly onActionCompleted?: () => void;
 }
 
 export default function BanUserConfirm({

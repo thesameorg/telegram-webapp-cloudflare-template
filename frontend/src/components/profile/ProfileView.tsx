@@ -6,27 +6,27 @@ import { ContactLinks } from "./ContactLinks";
 import { getImageUrl } from "../../utils/image-url";
 
 interface ProfileData {
-  telegram_id: number;
-  display_name?: string;
-  bio?: string;
-  phone_number?: string;
-  contact_links?: {
-    website?: string;
-    telegram?: string;
+  readonly telegram_id: number;
+  readonly display_name?: string;
+  readonly bio?: string;
+  readonly phone_number?: string;
+  readonly contact_links?: {
+    readonly website?: string;
+    readonly telegram?: string;
   };
-  profile_image_key?: string;
-  created_at?: string;
-  updated_at?: string;
-  is_banned?: boolean;
+  readonly profile_image_key?: string;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+  readonly is_banned?: boolean;
 }
 
 interface ProfileViewProps {
-  profile: ProfileData;
-  isOwnProfile?: boolean;
-  onEditClick?: () => void;
-  onBanClick?: () => void;
-  postCount?: number;
-  isAdmin?: boolean;
+  readonly profile: ProfileData;
+  readonly isOwnProfile?: boolean;
+  readonly onEditClick?: () => void;
+  readonly onBanClick?: () => void;
+  readonly postCount?: number;
+  readonly isAdmin?: boolean;
 }
 
 export function ProfileView({

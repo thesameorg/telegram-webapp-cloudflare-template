@@ -6,28 +6,28 @@ import { useTelegramMainButton } from "../../hooks/use-telegram-main-button";
 import { config } from "../../config";
 
 interface ContactLinksData {
-  website?: string;
-  telegram?: string;
+  readonly website?: string;
+  readonly telegram?: string;
 }
 
 interface ProfileData {
-  telegram_id: number;
-  display_name?: string;
-  bio?: string;
-  phone_number?: string;
-  contact_links?: ContactLinksData;
-  profile_image_key?: string;
-  created_at: string;
-  updated_at?: string;
+  readonly telegram_id: number;
+  readonly display_name?: string;
+  readonly bio?: string;
+  readonly phone_number?: string;
+  readonly contact_links?: ContactLinksData;
+  readonly profile_image_key?: string;
+  readonly created_at: string;
+  readonly updated_at?: string;
 }
 
 interface ProfileEditorProps {
-  profile: ProfileData;
-  onSave: (updatedProfile: Partial<ProfileData>) => Promise<void>;
-  onCancel: () => void;
-  onAvatarUpdate?: () => Promise<void>;
-  loading?: boolean;
-  sessionId?: string;
+  readonly profile: ProfileData;
+  readonly onSave: (updatedProfile: Partial<ProfileData>) => Promise<void>;
+  readonly onCancel: () => void;
+  readonly onAvatarUpdate?: () => Promise<void>;
+  readonly loading?: boolean;
+  readonly sessionId?: string;
 }
 
 export function ProfileEditor({

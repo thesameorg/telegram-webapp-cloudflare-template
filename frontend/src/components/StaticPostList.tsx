@@ -2,12 +2,12 @@ import PostItem from "./PostItem";
 import type { Post } from "../types/post";
 
 interface StaticPostListProps {
-  posts: Post[];
-  currentUserId?: number;
-  showActions?: boolean;
-  isAdmin?: boolean;
-  onEdit?: (post: Post) => void;
-  onDelete?: (postId: number) => void;
+  readonly posts: Post[];
+  readonly currentUserId?: number;
+  readonly showActions?: boolean;
+  readonly isAdmin?: boolean;
+  readonly onEdit?: (post: Post) => void;
+  readonly onDelete?: (postId: number) => void;
 }
 
 export default function StaticPostList({

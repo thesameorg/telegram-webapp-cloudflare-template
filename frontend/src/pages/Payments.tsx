@@ -165,7 +165,7 @@ export default function Payments() {
     let attempts = 0;
     const maxAttempts = 20; // 10 seconds max (500ms * 20)
 
-    pollIntervalRef.current = window.setInterval(async () => {
+    pollIntervalRef.current = globalThis.setInterval(async () => {
       attempts++;
 
       const updatedPayments = await fetchPayments();

@@ -3,9 +3,9 @@ import { useToast } from "../hooks/use-toast";
 import { config } from "../config";
 
 interface DeletePostConfirmProps {
-  postId: number;
-  onClose: () => void;
-  onPostDeleted?: () => void;
+  readonly postId: number;
+  readonly onClose: () => void;
+  readonly onPostDeleted?: () => void;
 }
 
 export default function DeletePostConfirm({

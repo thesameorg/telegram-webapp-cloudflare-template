@@ -1,12 +1,12 @@
 interface ContactLinksData {
-  website?: string;
-  telegram?: string;
+  readonly website?: string;
+  readonly telegram?: string;
 }
 
 interface ContactLinksProps {
-  contactLinks?: ContactLinksData;
-  editable?: boolean;
-  onChange?: (links: ContactLinksData) => void;
+  readonly contactLinks?: ContactLinksData;
+  readonly editable?: boolean;
+  readonly onChange?: (links: ContactLinksData) => void;
 }
 
 const linkIcons = {

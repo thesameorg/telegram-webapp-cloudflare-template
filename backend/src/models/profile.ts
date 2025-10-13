@@ -3,11 +3,11 @@ import { z } from "zod";
 // Simple content sanitization for Cloudflare Workers
 const sanitizeContent = (content: string): string => {
   return content
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;")
+    .replaceAll("/", "&#x2F;")
     .trim();
 };
 
@@ -40,8 +40,8 @@ export const updateProfileSchema = z.object({
 
 export const getProfileSchema = z.object({
   telegramId: z.string().transform((val) => {
-    const num = parseInt(val, 10);
-    if (isNaN(num)) throw new Error("Invalid telegram ID");
+    const num = Number.parseInt(val, 10);
+    if (Number.isNaN(num)) throw new Error("Invalid telegram ID");
     return num;
   }),
 });

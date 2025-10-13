@@ -4,11 +4,11 @@ import { getCroppedImg, createImagePreview } from "../utils/image-crop";
 import { useToast } from "../hooks/use-toast";
 
 interface ImageCropModalProps {
-  image: File;
-  onCropComplete: (croppedFile: File) => void;
-  onCancel: () => void;
-  aspectRatio?: number;
-  showSkip?: boolean;
+  readonly image: File;
+  readonly onCropComplete: (croppedFile: File) => void;
+  readonly onCancel: () => void;
+  readonly aspectRatio?: number;
+  readonly showSkip?: boolean;
 }
 
 export default function ImageCropModal({
@@ -71,8 +71,8 @@ export default function ImageCropModal({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    globalThis.addEventListener("keydown", handleKeyDown);
+    return () => globalThis.removeEventListener("keydown", handleKeyDown);
   }, [croppedAreaPixels, isProcessing, onCancel, handleDone]);
 
   const handleSkip = () => {

@@ -3,11 +3,11 @@ import { z } from "zod";
 // Simple content sanitization for Cloudflare Workers
 const sanitizeContent = (content: string): string => {
   return content
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;")
+    .replaceAll("/", "&#x2F;")
     .trim();
 };
 

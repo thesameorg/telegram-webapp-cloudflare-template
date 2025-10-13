@@ -2,10 +2,10 @@ import { useState } from "react";
 import ImageCropModal from "./ImageCropModal";
 
 interface ImageCropQueueProps {
-  images: File[];
-  onAllCropped: (croppedFiles: File[]) => void;
-  onCancel: () => void;
-  aspectRatio?: number;
+  readonly images: File[];
+  readonly onAllCropped: (croppedFiles: File[]) => void;
+  readonly onCancel: () => void;
+  readonly aspectRatio?: number;
 }
 
 export default function ImageCropQueue({

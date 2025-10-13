@@ -10,10 +10,10 @@ import WebApp from "@twa-dev/sdk";
 import CloseIcon from "./icons/close.svg";
 
 interface PostFormModalProps {
-  mode: "create" | "edit";
-  post?: Post; // Required for edit mode
-  onClose: () => void;
-  onSuccess?: () => void;
+  readonly mode: "create" | "edit";
+  readonly post?: Post; // Required for edit mode
+  readonly onClose: () => void;
+  readonly onSuccess?: () => void;
 }
 
 export default function PostFormModal({

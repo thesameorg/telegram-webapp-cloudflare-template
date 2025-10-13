@@ -1,9 +1,9 @@
 import { useState, ReactNode } from "react";
 
 interface CollapsibleSectionProps {
-  title: string;
-  children: ReactNode;
-  defaultExpanded?: boolean;
+  readonly title: string;
+  readonly children: ReactNode;
+  readonly defaultExpanded?: boolean;
 }
 
 export function CollapsibleSection({

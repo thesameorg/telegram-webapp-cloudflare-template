@@ -1,8 +1,8 @@
 interface ActionButtonProps {
-  onClick: () => void;
-  icon: string;
-  variant?: "edit" | "delete" | "star" | "hide" | "danger";
-  title: string;
+  readonly onClick: () => void;
+  readonly icon: string;
+  readonly variant?: "edit" | "delete" | "star" | "hide" | "danger";
+  readonly title: string;
 }
 
 const variantClasses = {

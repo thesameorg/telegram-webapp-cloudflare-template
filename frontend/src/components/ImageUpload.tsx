@@ -4,21 +4,21 @@ import { useToast } from "../hooks/use-toast";
 import ImageCropQueue from "./ImageCropQueue";
 
 interface ImageData {
-  id: string;
-  file: File;
-  preview: string;
-  compressedFile?: File;
-  thumbnailFile?: File;
-  width: number;
-  height: number;
-  uploadOrder: number;
+  readonly id: string;
+  readonly file: File;
+  readonly preview: string;
+  readonly compressedFile?: File;
+  readonly thumbnailFile?: File;
+  readonly width: number;
+  readonly height: number;
+  readonly uploadOrder: number;
 }
 
 interface ImageUploadProps {
-  onImagesChange: (images: ImageData[]) => void;
-  existingImages?: ImageData[];
-  maxImages?: number;
-  disabled?: boolean;
+  readonly onImagesChange: (images: ImageData[]) => void;
+  readonly existingImages?: ImageData[];
+  readonly maxImages?: number;
+  readonly disabled?: boolean;
 }
 
 export default function ImageUpload({

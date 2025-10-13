@@ -2,9 +2,9 @@ import PostFormModal from "./PostFormModal";
 import type { Post } from "../types/post";
 
 interface EditPostProps {
-  post: Post;
-  onClose: () => void;
-  onPostUpdated?: () => void;
+  readonly post: Post;
+  readonly onClose: () => void;
+  readonly onPostUpdated?: () => void;
 }
 
 export default function EditPost({

@@ -3,11 +3,11 @@ import { z } from "zod";
 // Simple content sanitization for Cloudflare Workers
 const sanitizeContent = (content: string): string => {
   return content
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;")
+    .replaceAll("/", "&#x2F;")
     .trim();
 };
 
@@ -33,23 +33,23 @@ export const getPostsSchema = z.object({
     .optional()
     .transform((val) => {
       if (!val) return 50;
-      const num = parseInt(val, 10);
-      return isNaN(num) ? 50 : Math.min(Math.max(num, 1), 100);
+      const num = Number.parseInt(val, 10);
+      return Number.isNaN(num) ? 50 : Math.min(Math.max(num, 1), 100);
     }),
   offset: z
     .string()
     .optional()
     .transform((val) => {
       if (!val) return 0;
-      const num = parseInt(val, 10);
-      return isNaN(num) ? 0 : Math.max(num, 0);
+      const num = Number.parseInt(val, 10);
+      return Number.isNaN(num) ? 0 : Math.max(num, 0);
     }),
 });
 
 export const getUserPostsSchema = z.object({
   userId: z.string().transform((val) => {
-    const num = parseInt(val, 10);
-    if (isNaN(num)) throw new Error("Invalid user ID");
+    const num = Number.parseInt(val, 10);
+    if (Number.isNaN(num)) throw new Error("Invalid user ID");
     return num;
   }),
   limit: z
@@ -57,16 +57,16 @@ export const getUserPostsSchema = z.object({
     .optional()
     .transform((val) => {
       if (!val) return 50;
-      const num = parseInt(val, 10);
-      return isNaN(num) ? 50 : Math.min(Math.max(num, 1), 100);
+      const num = Number.parseInt(val, 10);
+      return Number.isNaN(num) ? 50 : Math.min(Math.max(num, 1), 100);
     }),
   offset: z
     .string()
     .optional()
     .transform((val) => {
       if (!val) return 0;
-      const num = parseInt(val, 10);
-      return isNaN(num) ? 0 : Math.max(num, 0);
+      const num = Number.parseInt(val, 10);
+      return Number.isNaN(num) ? 0 : Math.max(num, 0);
     }),
 });
 

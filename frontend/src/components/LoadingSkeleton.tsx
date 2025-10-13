@@ -1,6 +1,6 @@
 interface LoadingSkeletonProps {
-  variant?: "header" | "box" | "list";
-  count?: number;
+  readonly variant?: "header" | "box" | "list";
+  readonly count?: number;
 }
 
 export function LoadingSkeleton({

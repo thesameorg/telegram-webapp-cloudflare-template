@@ -10,28 +10,28 @@ import { useTelegram } from "../utils/telegram";
 import { config } from "../config";
 
 interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code: string;
-  is_premium?: boolean;
-  photo_url?: string;
+  readonly id: number;
+  readonly first_name: string;
+  readonly last_name?: string;
+  readonly username?: string;
+  readonly language_code: string;
+  readonly is_premium?: boolean;
+  readonly photo_url?: string;
 }
 
 interface AuthState {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  user: TelegramUser | null;
-  sessionId: string | null;
-  expiresAt: number | null;
-  isAdmin: boolean;
+  readonly isAuthenticated: boolean;
+  readonly isLoading: boolean;
+  readonly user: TelegramUser | null;
+  readonly sessionId: string | null;
+  readonly expiresAt: number | null;
+  readonly isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
 interface AuthProviderProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 /**

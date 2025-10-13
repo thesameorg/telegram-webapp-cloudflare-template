@@ -1,9 +1,9 @@
 interface StatusDisplayProps {
-  healthStatus: string;
-  kvStatus: string;
-  sessionId: string | null | undefined;
-  timeLeft: string;
-  healthTimestamp: string;
+  readonly healthStatus: string;
+  readonly kvStatus: string;
+  readonly sessionId: string | null | undefined;
+  readonly timeLeft: string;
+  readonly healthTimestamp: string;
 }
 
 export default function StatusDisplay({

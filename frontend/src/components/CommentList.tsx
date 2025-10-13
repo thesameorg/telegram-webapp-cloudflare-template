@@ -5,8 +5,8 @@ import CommentForm from "./CommentForm";
 import CommentItem from "./CommentItem";
 
 interface CommentListProps {
-  postId: number;
-  postAuthorId: number;
+  readonly postId: number;
+  readonly postAuthorId: number;
 }
 
 export default function CommentList({

@@ -5,9 +5,9 @@ import { useToast } from "../hooks/use-toast";
 import ShareIcon from "./icons/share.svg";
 
 interface ShareButtonProps {
-  postId: number;
-  className?: string;
-  title?: string;
+  readonly postId: number;
+  readonly className?: string;
+  readonly title?: string;
 }
 
 /**

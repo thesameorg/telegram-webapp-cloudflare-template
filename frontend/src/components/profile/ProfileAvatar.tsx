@@ -4,12 +4,12 @@ import { getImageUrl } from "../../utils/image-url";
 import ImageCropModal from "../ImageCropModal";
 
 interface ProfileAvatarProps {
-  profileImageKey?: string | null;
-  displayName?: string;
-  size?: "sm" | "md" | "lg" | "xl";
-  onClick?: () => void;
-  editable?: boolean;
-  onImageUpload?: (file: File) => void;
+  readonly profileImageKey?: string | null;
+  readonly displayName?: string;
+  readonly size?: "sm" | "md" | "lg" | "xl";
+  readonly onClick?: () => void;
+  readonly editable?: boolean;
+  readonly onImageUpload?: (file: File) => void;
 }
 
 const sizeClasses = {

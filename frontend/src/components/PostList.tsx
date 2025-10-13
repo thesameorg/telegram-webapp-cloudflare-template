@@ -6,14 +6,14 @@ import { PostListSkeleton } from "./skeletons";
 import type { Post } from "../types/post";
 
 interface PostListProps {
-  userId?: number; // If provided, only shows posts from this user
-  currentUserId?: number; // Current user's ID for permission checks
-  showActions?: boolean; // Whether to show edit/delete actions
-  isAdmin?: boolean; // Whether current user is admin
-  onEdit?: (post: Post) => void;
-  onDelete?: (postId: number) => void;
-  onMakePremium?: (postId: number) => void;
-  onRefetchReady?: (refetch: () => void) => void; // Callback to expose refetch function
+  readonly userId?: number; // If provided, only shows posts from this user
+  readonly currentUserId?: number; // Current user's ID for permission checks
+  readonly showActions?: boolean; // Whether to show edit/delete actions
+  readonly isAdmin?: boolean; // Whether current user is admin
+  readonly onEdit?: (post: Post) => void;
+  readonly onDelete?: (postId: number) => void;
+  readonly onMakePremium?: (postId: number) => void;
+  readonly onRefetchReady?: (refetch: () => void) => void; // Callback to expose refetch function
 }
 
 export default function PostList({

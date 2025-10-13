@@ -11,14 +11,14 @@ import type { Post } from "../types/post";
 import { formatTimeAgo } from "../utils/format";
 
 interface PostItemProps {
-  post: Post;
-  currentUserId?: number;
-  showActions?: boolean;
-  isAdmin?: boolean;
-  onEdit?: (post: Post) => void;
-  onDelete?: (postId: number) => void;
-  onMakePremium?: (postId: number) => void;
-  hideCommentsButton?: boolean;
+  readonly post: Post;
+  readonly currentUserId?: number;
+  readonly showActions?: boolean;
+  readonly isAdmin?: boolean;
+  readonly onEdit?: (post: Post) => void;
+  readonly onDelete?: (postId: number) => void;
+  readonly onMakePremium?: (postId: number) => void;
+  readonly hideCommentsButton?: boolean;
 }
 
 export default function PostItem({
