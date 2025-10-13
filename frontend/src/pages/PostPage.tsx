@@ -160,6 +160,7 @@ export default function PostPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onMakePremium={handleMakePremium}
+        hideCommentsButton={true}
       />
 
       {/* Comments Section */}

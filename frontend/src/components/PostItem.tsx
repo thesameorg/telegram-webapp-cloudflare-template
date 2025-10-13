@@ -13,6 +13,7 @@ interface PostItemProps {
   onEdit?: (post: Post) => void;
   onDelete?: (postId: number) => void;
   onMakePremium?: (postId: number) => void;
+  hideCommentsButton?: boolean;
 }
 
 export default function PostItem({
@@ -23,6 +24,7 @@ export default function PostItem({
   onEdit,
   onDelete,
   onMakePremium,
+  hideCommentsButton = false,
 }: PostItemProps) {
   const navigate = useNavigate();
 
@@ -105,27 +107,6 @@ export default function PostItem({
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {formatTimeAgo(post.createdAt)}
             </p>
-            <span className="text-gray-500 dark:text-gray-400">·</span>
-            <button
-              onClick={() => navigate(`/post/${post.id}`)}
-              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-              title="View post"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                />
-              </svg>
-            </button>
-            <span className="text-gray-500 dark:text-gray-400">·</span>
             <ShareButton postId={post.id} className="p-1" />
           </div>
         </div>
@@ -226,26 +207,32 @@ export default function PostItem({
           </div>
         )}
 
-        {/* Comment count */}
-        {(post.commentCount ?? 0) > 0 && (
-          <div className="mt-3 flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Comments button */}
+        {!hideCommentsButton && (
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => navigate(`/post/${post.id}`)}
+              className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-yellow-800 dark:text-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-400 dark:from-yellow-500 dark:to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 dark:hover:from-yellow-600 dark:hover:to-yellow-700 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            <span>
-              {post.commentCount}{" "}
-              {post.commentCount === 1 ? "comment" : "comments"}
-            </span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              <span>
+                {(post.commentCount ?? 0) > 0
+                  ? `${post.commentCount} ${post.commentCount === 1 ? "Comment" : "Comments"}`
+                  : "Comments"}
+              </span>
+            </button>
           </div>
         )}
       </div>
