@@ -237,7 +237,7 @@ export class PaymentService {
     await this.env.SESSIONS.put(
       "bot_star_balance",
       JSON.stringify({
-        balance: 0, // TODO: Calculate actual balance from transactions
+        balance: 0, // NOTE: Balance calculation from transactions not yet implemented
         cachedAt,
       }),
       { expirationTtl: 300 },

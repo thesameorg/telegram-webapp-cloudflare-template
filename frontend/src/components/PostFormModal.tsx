@@ -212,8 +212,9 @@ export default function PostFormModal({
 
   // Use Telegram MainButton
   useTelegramMainButton(
-    !isSubmitDisabled
-      ? {
+    isSubmitDisabled
+      ? null
+      : {
           text: getButtonText(),
           onClick: () => {
             const form = document.getElementById(
@@ -223,8 +224,7 @@ export default function PostFormModal({
           },
           disabled: isSubmitDisabled,
           loading: isProcessing,
-        }
-      : null,
+        },
   );
 
   return (

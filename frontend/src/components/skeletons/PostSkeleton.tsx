@@ -39,11 +39,7 @@ export function PostSkeleton({
   );
 }
 
-export function PostListSkeleton({
-  count = 3,
-}: {
-  readonly count?: number;
-}) {
+export function PostListSkeleton({ count = 3 }: { readonly count?: number }) {
   return (
     <div className="space-y-0">
       {Array.from({ length: count }, () => crypto.randomUUID()).map((id) => (
