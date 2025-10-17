@@ -78,7 +78,7 @@ export default function MakePremiumModal({
     setCountdown(5);
 
     // Start countdown
-    countdownIntervalRef.current = window.setInterval(() => {
+    countdownIntervalRef.current = globalThis.setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           if (countdownIntervalRef.current)
@@ -91,7 +91,7 @@ export default function MakePremiumModal({
     }, 1000);
 
     // Poll every 500ms for post update
-    pollIntervalRef.current = window.setInterval(async () => {
+    pollIntervalRef.current = globalThis.setInterval(async () => {
       const isUpdated = await pollPostUpdate();
       if (isUpdated) {
         // Payment processed! Refresh immediately
@@ -147,8 +147,8 @@ export default function MakePremiumModal({
       const { invoice_url } = await response.json();
 
       // Open invoice with Telegram WebApp
-      if (window.Telegram?.WebApp?.openInvoice) {
-        window.Telegram.WebApp.openInvoice(invoice_url, async (status) => {
+      if (globalThis.Telegram?.WebApp?.openInvoice) {
+        globalThis.Telegram.WebApp.openInvoice(invoice_url, async (status) => {
           setIsProcessing(false);
 
           if (status === "paid") {
@@ -236,7 +236,7 @@ export default function MakePremiumModal({
                 Reload Now
               </button>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Auto-reloading in {countdown} second{countdown !== 1 ? "s" : ""}
+                Auto-reloading in {countdown} second{countdown === 1 ? "" : "s"}
                 ...
               </p>
             </div>

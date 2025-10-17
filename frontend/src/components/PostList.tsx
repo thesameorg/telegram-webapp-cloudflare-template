@@ -67,7 +67,7 @@ export default function PostList({
         </div>
         <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => globalThis.location.reload()}
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
         >
           Try Again
