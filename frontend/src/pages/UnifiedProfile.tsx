@@ -419,10 +419,10 @@ export default function UnifiedProfile() {
               );
             }
             if (posts.length > 0) {
-              if (isOwnProfile) {
+              if (isOwnProfile && actualUserId !== null) {
                 return (
                   <PostList
-                    userId={actualUserId!}
+                    userId={actualUserId}
                     currentUserId={user?.id}
                     showActions={true}
                     onEdit={handleEdit}

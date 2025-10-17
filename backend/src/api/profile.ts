@@ -65,13 +65,11 @@ export const getMyProfile = async (c: Context<AuthContext>) => {
     let profile = await profileService.getProfile(session.userId);
 
     // Create profile if it doesn't exist
-    if (!profile) {
-      profile = await profileService.createProfile(
-        session.userId,
-        session.username,
-        session.displayName,
-      );
-    }
+    profile ??= await profileService.createProfile(
+      session.userId,
+      session.username,
+      session.displayName,
+    );
 
     const formattedProfile = profileService.formatProfile(profile);
 

@@ -86,7 +86,7 @@ export default function ImageGallery({
       {/* Image count info */}
       {images.length > 1 && (
         <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-          {images.length} image{images.length !== 1 ? "s" : ""}
+          {images.length} image{images.length === 1 ? "" : "s"}
           {remainingCount > 0 && ` • ${remainingCount} more`}
         </div>
       )}
