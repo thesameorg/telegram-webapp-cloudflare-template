@@ -255,7 +255,6 @@ export default function MakePremiumModal({
           onClose();
         }
       }}
-      role="button"
       tabIndex={-1}
       aria-label="Close modal"
     >
