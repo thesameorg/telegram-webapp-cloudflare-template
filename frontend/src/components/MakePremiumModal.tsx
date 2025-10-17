@@ -147,8 +147,10 @@ export default function MakePremiumModal({
       const { invoice_url } = await response.json();
 
       // Open invoice with Telegram WebApp
-      if (globalThis.Telegram?.WebApp?.openInvoice) {
-        globalThis.Telegram.WebApp.openInvoice(invoice_url, async (status) => {
+      if (window.Telegram?.WebApp?.openInvoice) {
+        window.Telegram.WebApp.openInvoice(
+          invoice_url,
+          async (status: string) => {
           setIsProcessing(false);
 
           if (status === "paid") {
@@ -179,7 +181,8 @@ export default function MakePremiumModal({
             showToast("Payment failed", "error");
             onSuccess?.(); // Refresh to clear loading state
           }
-        });
+        },
+        );
       } else {
         throw new Error("Telegram WebApp API not available");
       }
@@ -247,6 +250,7 @@ export default function MakePremiumModal({
   }
 
   return (
+    /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
     <div
       className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
       onClick={onClose}
