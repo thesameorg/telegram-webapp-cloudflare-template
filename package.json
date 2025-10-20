@@ -54,7 +54,7 @@
   "devDependencies": {
     "prettier": "^3.6.2",
     "ts-prune": "^0.10.3",
-    "wrangler": "^4.42.2"
+    "wrangler": "^4.43.0"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.0.21"
