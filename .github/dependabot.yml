@@ -4,13 +4,24 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "monthly"
+    # Only open pull requests for security updates
+    open-pull-requests-limit: 0
+    rebase-strategy: "auto"
+    # Add this line to enable security updates
+    security-updates: true
 
   - package-ecosystem: "npm"
     directory: "/backend"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 0
+    rebase-strategy: "auto"
+    security-updates: true
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 0
+    rebase-strategy: "auto"
+    security-updates: true
