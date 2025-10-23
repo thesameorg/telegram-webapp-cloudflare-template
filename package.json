@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "description": "Telegram Web App + Bot Template for Cloudflare",
   "scripts": {
-    "install": "npm run install:backend && npm run install:frontend",
-    "install:frontend": "cd frontend && npm install",
-    "install:backend": "cd backend && npm install",
     "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
@@ -48,6 +45,10 @@
   ],
   "author": "Your Name",
   "license": "MIT",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },
